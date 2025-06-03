@@ -10,6 +10,10 @@ import { GeometryGame } from './GeometryGame/GeometryGame';
 import { MemoryGame } from './MemoryGame/MemoryGame';
 import { WordGame } from './WordGame/WordGame';
 import { AimingGame } from './AimingGame/AimingGame';
+import { ScienceGame } from './ScienceGame/ScienceGame';
+import { GeographyGame } from './GeographyGame/GeographyGame';
+import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
+import { LadderSnake } from './LadderSnake/LadderSnake';
 
 export type GameType = 
   | 'hub' 
@@ -20,7 +24,11 @@ export type GameType =
   | 'geometry' 
   | 'memory' 
   | 'word' 
-  | 'aiming';
+  | 'aiming'
+  | 'science'
+  | 'geography'
+  | 'object-builder'
+  | 'ladder-snake';
 
 export const GameHub = () => {
   const [currentGame, setCurrentGame] = useState<GameType>('hub');
@@ -32,6 +40,7 @@ export const GameHub = () => {
         { id: 'tic-tac-toe', name: 'Tic Tac Toe', icon: '⭕', description: 'Classic strategy game with multiple variants' },
         { id: 'sudoku', name: 'Sudoku', icon: '🔢', description: 'Number puzzle with different difficulty levels' },
         { id: 'memory', name: 'Memory Game', icon: '🧠', description: 'Test your memory with various challenges' },
+        { id: 'ladder-snake', name: 'Snakes & Ladders', icon: '🐍', description: 'Classic board game with educational concepts' },
       ]
     },
     {
@@ -39,6 +48,7 @@ export const GameHub = () => {
       games: [
         { id: 'jigsaw', name: 'Jigsaw Puzzle', icon: '🧩', description: 'Interactive puzzles with custom images' },
         { id: 'word', name: 'Word Games', icon: '📝', description: 'Vocabulary and spelling challenges' },
+        { id: 'object-builder', name: 'Object Builder', icon: '🎨', description: 'Create objects using shapes and colors' },
       ]
     },
     {
@@ -46,6 +56,8 @@ export const GameHub = () => {
       games: [
         { id: 'math', name: 'Math Games', icon: '➕', description: 'Mathematical challenges for all levels' },
         { id: 'geometry', name: 'Geometry', icon: '📐', description: 'Shape and spatial reasoning games' },
+        { id: 'science', name: 'Science Challenge', icon: '🔬', description: 'Physics, chemistry, biology, and more' },
+        { id: 'geography', name: 'Geography Quest', icon: '🌍', description: 'Explore countries, capitals, and landmarks' },
       ]
     },
     {
@@ -74,6 +86,14 @@ export const GameHub = () => {
         return <WordGame onBack={() => setCurrentGame('hub')} />;
       case 'aiming':
         return <AimingGame onBack={() => setCurrentGame('hub')} />;
+      case 'science':
+        return <ScienceGame onBack={() => setCurrentGame('hub')} />;
+      case 'geography':
+        return <GeographyGame onBack={() => setCurrentGame('hub')} />;
+      case 'object-builder':
+        return <ObjectBuilder onBack={() => setCurrentGame('hub')} />;
+      case 'ladder-snake':
+        return <LadderSnake onBack={() => setCurrentGame('hub')} />;
       default:
         return renderHub();
     }
@@ -96,12 +116,12 @@ export const GameHub = () => {
             <h2 className="text-3xl font-bold text-white mb-4 text-center">
               {category.title}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {category.games.map((game, gameIndex) => (
                 <Card 
                   key={game.id} 
                   className="hover:scale-105 transition-all duration-300 cursor-pointer bg-white/90 hover:bg-white border-2 hover:border-purple-500 animate-scale-in"
-                  style={{ animationDelay: `${(categoryIndex * 3 + gameIndex) * 0.1}s` }}
+                  style={{ animationDelay: `${(categoryIndex * 4 + gameIndex) * 0.1}s` }}
                   onClick={() => setCurrentGame(game.id as GameType)}
                 >
                   <CardHeader className="text-center">

@@ -9,7 +9,7 @@ interface GeometryGameProps {
   onBack: () => void;
 }
 
-type QuestionType = 'area' | 'perimeter' | 'angle' | 'volume' | 'coordinate' | 'transform';
+type QuestionType = 'area' | 'perimeter' | 'angle' | 'volume' | 'coordinate' | 'transform' | 'random';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 interface GeometryQuestion {
@@ -20,7 +20,96 @@ interface GeometryQuestion {
   dimensions: { [key: string]: number };
   visual: JSX.Element;
   hint?: string;
+  concept?: string;
 }
+
+const geometryConcepts = {
+  area: {
+    title: "Area Concepts",
+    content: `
+      <h3>Understanding Area</h3>
+      <p>Area is the measure of the surface inside a shape.</p>
+      <ul>
+        <li><strong>Rectangle:</strong> Area = width × height</li>
+        <li><strong>Triangle:</strong> Area = (base × height) ÷ 2</li>
+        <li><strong>Circle:</strong> Area = π × radius²</li>
+        <li><strong>Trapezoid:</strong> Area = ((base1 + base2) × height) ÷ 2</li>
+        <li><strong>Parallelogram:</strong> Area = base × height</li>
+      </ul>
+      <p>Remember: Area is always measured in square units (cm², m², etc.)</p>
+    `
+  },
+  perimeter: {
+    title: "Perimeter Concepts",
+    content: `
+      <h3>Understanding Perimeter</h3>
+      <p>Perimeter is the distance around the outside of a shape.</p>
+      <ul>
+        <li><strong>Rectangle:</strong> Perimeter = 2 × (width + height)</li>
+        <li><strong>Square:</strong> Perimeter = 4 × side</li>
+        <li><strong>Circle (Circumference):</strong> C = 2 × π × radius</li>
+        <li><strong>Triangle:</strong> Add all three sides</li>
+      </ul>
+      <p>Remember: Perimeter is measured in linear units (cm, m, etc.)</p>
+    `
+  },
+  angle: {
+    title: "Angle Concepts",
+    content: `
+      <h3>Understanding Angles</h3>
+      <p>Angles are measured in degrees (°).</p>
+      <ul>
+        <li><strong>Triangle:</strong> Sum of all angles = 180°</li>
+        <li><strong>Quadrilateral:</strong> Sum of all angles = 360°</li>
+        <li><strong>Right angle:</strong> 90°</li>
+        <li><strong>Straight line:</strong> 180°</li>
+        <li><strong>Full circle:</strong> 360°</li>
+      </ul>
+      <p>Types: Acute (< 90°), Right (= 90°), Obtuse (> 90° but < 180°)</p>
+    `
+  },
+  volume: {
+    title: "Volume Concepts",
+    content: `
+      <h3>Understanding Volume</h3>
+      <p>Volume is the amount of space inside a 3D object.</p>
+      <ul>
+        <li><strong>Cube:</strong> Volume = side³</li>
+        <li><strong>Rectangular Prism:</strong> Volume = length × width × height</li>
+        <li><strong>Cylinder:</strong> Volume = π × radius² × height</li>
+        <li><strong>Sphere:</strong> Volume = (4/3) × π × radius³</li>
+      </ul>
+      <p>Remember: Volume is measured in cubic units (cm³, m³, etc.)</p>
+    `
+  },
+  coordinate: {
+    title: "Coordinate Geometry",
+    content: `
+      <h3>Understanding Coordinates</h3>
+      <p>Coordinates help us locate points on a plane.</p>
+      <ul>
+        <li><strong>Distance Formula:</strong> d = √[(x₂-x₁)² + (y₂-y₁)²]</li>
+        <li><strong>Midpoint Formula:</strong> M = ((x₁+x₂)/2, (y₁+y₂)/2)</li>
+        <li><strong>Slope:</strong> m = (y₂-y₁)/(x₂-x₁)</li>
+      </ul>
+      <p>Remember: Points are written as (x, y) coordinates.</p>
+    `
+  },
+  transform: {
+    title: "Transformations",
+    content: `
+      <h3>Understanding Transformations</h3>
+      <p>Transformations change the position or size of shapes.</p>
+      <ul>
+        <li><strong>Translation:</strong> Moving a shape without rotating</li>
+        <li><strong>Rotation:</strong> Turning a shape around a point</li>
+        <li><strong>Reflection:</strong> Flipping a shape over a line</li>
+        <li><strong>Scaling:</strong> Making a shape larger or smaller</li>
+      </ul>
+      <p>Remember: The shape's properties remain the same, only position changes.</p>
+    `
+  }
+};
 
 export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
   const [questionType, setQuestionType] = useState<QuestionType>('area');
@@ -33,9 +122,17 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
   const [gameStarted, setGameStarted] = useState(false);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [showConcept, setShowConcept] = useState(false);
+
+  const getRandomQuestionType = (): QuestionType => {
+    const types: QuestionType[] = ['area', 'perimeter', 'angle', 'volume', 'coordinate', 'transform'];
+    return types[Math.floor(Math.random() * types.length)];
+  };
 
   const generateQuestion = (): GeometryQuestion => {
-    switch (questionType) {
+    const actualType = questionType === 'random' ? getRandomQuestionType() : questionType;
+    
+    switch (actualType) {
       case 'area':
         return generateAreaQuestion();
       case 'perimeter':
@@ -72,6 +169,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: width * height,
           dimensions: { width, height },
           hint: 'Area of rectangle = width × height',
+          concept: 'Rectangle area is found by multiplying width and height. Think of it as counting unit squares that fit inside.',
           visual: (
             <div className="flex justify-center">
               <div 
@@ -94,6 +192,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: (base * triangleHeight) / 2,
           dimensions: { base, height: triangleHeight },
           hint: 'Area of triangle = (base × height) ÷ 2',
+          concept: 'Triangle area is half the area of a rectangle with the same base and height.',
           visual: (
             <div className="flex justify-center">
               <div className="relative">
@@ -127,6 +226,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: Math.round(Math.PI * radius * radius * 100) / 100,
           dimensions: { radius },
           hint: 'Area of circle = π × radius²',
+          concept: 'Circle area uses π (pi) ≈ 3.14159. The radius is squared because area is 2-dimensional.',
           visual: (
             <div className="flex justify-center">
               <div 
@@ -150,6 +250,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: ((base1 + base2) * trapHeight) / 2,
           dimensions: { base1, base2, height: trapHeight },
           hint: 'Area of trapezoid = ((base1 + base2) × height) ÷ 2',
+          concept: 'Trapezoid area is the average of the two parallel bases times the height.',
           visual: (
             <div className="flex justify-center">
               <svg width="160" height="100" viewBox="0 0 160 100">
@@ -182,6 +283,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: side * side * side,
           dimensions: { side },
           hint: 'Volume of cube = side³',
+          concept: 'A cube has all sides equal. Volume is side × side × side (side cubed).',
           visual: (
             <div className="flex justify-center">
               <div className="relative">
@@ -207,6 +309,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: length * width * height,
           dimensions: { length, width, height },
           hint: 'Volume of rectangular prism = length × width × height',
+          concept: 'Volume is the space inside a 3D shape. Multiply all three dimensions.',
           visual: (
             <div className="flex justify-center">
               <div className="relative">
@@ -232,6 +335,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: Math.round(Math.PI * radius * radius * cylHeight * 100) / 100,
           dimensions: { radius, height: cylHeight },
           hint: 'Volume of cylinder = π × radius² × height',
+          concept: 'Cylinder volume is the area of the circular base times the height.',
           visual: (
             <div className="flex justify-center">
               <svg width="120" height="100" viewBox="0 0 120 100">
@@ -263,6 +367,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
       answer: Math.round(distance * 100) / 100,
       dimensions: { x1, y1, x2, y2 },
       hint: 'Distance formula: √[(x2-x1)² + (y2-y1)²]',
+      concept: 'The distance formula comes from the Pythagorean theorem. Think of it as finding the hypotenuse of a right triangle.',
       visual: (
         <div className="flex justify-center">
           <svg width="200" height="200" viewBox="-10 -10 20 20">
@@ -303,6 +408,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: x + dx,
           dimensions: { x, y, dx, dy },
           hint: 'Translation: new point = (x + dx, y + dy)',
+          concept: 'Translation moves every point the same distance in the same direction. Add the translation values to the original coordinates.',
           visual: (
             <div className="flex justify-center">
               <svg width="200" height="150" viewBox="0 0 20 15">
@@ -343,6 +449,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: 2 * (width + height),
           dimensions: { width, height },
           hint: 'Perimeter of rectangle = 2 × (width + height)',
+          concept: 'Perimeter is the distance around the outside. For rectangles, add all four sides: width + height + width + height.',
           visual: (
             <div className="flex justify-center">
               <div 
@@ -364,6 +471,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: Math.round(2 * Math.PI * radius * 100) / 100,
           dimensions: { radius },
           hint: 'Circumference = 2 × π × radius',
+          concept: 'Circumference is the perimeter of a circle. It uses π because circles are curved.',
           visual: (
             <div className="flex justify-center">
               <div 
@@ -385,6 +493,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
           answer: 4 * side,
           dimensions: { side },
           hint: 'Perimeter of square = 4 × side',
+          concept: 'A square has four equal sides, so multiply the side length by 4.',
           visual: (
             <div className="flex justify-center">
               <div 
@@ -411,6 +520,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
       answer: missingAngle,
       dimensions: { angle1, angle2 },
       hint: 'Sum of angles in a triangle = 180°',
+      concept: 'All triangles have angles that add up to exactly 180°. This is always true!',
       visual: (
         <div className="flex justify-center">
           <div className="relative">
@@ -437,7 +547,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
   };
 
   const useHint = () => {
-    if (!currentQuestion || hintsUsed >= 2) return;
+    if (!currentQuestion) return;
     
     setFeedback(`💡 Hint: ${currentQuestion.hint}`);
     setHintsUsed(hintsUsed + 1);
@@ -449,7 +559,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
     if (!currentQuestion) return;
     
     const userNum = parseFloat(userAnswer);
-    const tolerance = 0.1; // Allow small rounding differences
+    const tolerance = 0.1;
     
     if (Math.abs(userNum - currentQuestion.answer) <= tolerance) {
       const basePoints = difficulty === 'easy' ? 15 : difficulty === 'medium' ? 25 : 40;
@@ -487,9 +597,15 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
       angle: '📐 Angles',
       volume: '📦 Volume',
       coordinate: '📍 Coordinates',
-      transform: '🔄 Transformations'
+      transform: '🔄 Transformations',
+      random: '🎲 Random'
     };
     return displays[questionType];
+  };
+
+  const getCurrentConcept = () => {
+    if (!currentQuestion) return null;
+    return geometryConcepts[currentQuestion.type as keyof typeof geometryConcepts];
   };
 
   return (
@@ -515,7 +631,9 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
                 <p><strong>Volume:</strong> Find volume of 3D shapes</p>
                 <p><strong>Coordinates:</strong> Work with coordinate geometry</p>
                 <p><strong>Transformations:</strong> Calculate after transformations</p>
-                <p>💡 Use hints for formulas (max 2 per game)</p>
+                <p><strong>Random:</strong> Mix of all question types</p>
+                <p>💡 Use hints for formulas</p>
+                <p>📚 Use concepts for detailed explanations</p>
               </div>
             </DialogContent>
           </Dialog>
@@ -540,6 +658,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
                     <SelectItem value="volume">📦 Volume</SelectItem>
                     <SelectItem value="coordinate">📍 Coordinates</SelectItem>
                     <SelectItem value="transform">🔄 Transformations</SelectItem>
+                    <SelectItem value="random">🎲 Random</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -600,7 +719,7 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
                   Type: {getQuestionTypeDisplay()} | Difficulty: {difficulty.toUpperCase()}
                 </div>
                 
-                <div className="flex justify-center gap-4 items-center">
+                <div className="flex justify-center gap-4 items-center flex-wrap">
                   <Input
                     type="number"
                     step="0.01"
@@ -616,12 +735,34 @@ export const GeometryGame: React.FC<GeometryGameProps> = ({ onBack }) => {
                   </Button>
                   <Button 
                     onClick={useHint} 
-                    disabled={hintsUsed >= 2} 
                     variant="outline"
                     className="bg-yellow-100 hover:bg-yellow-200"
                   >
-                    💡 Hint ({hintsUsed}/2)
+                    💡 Hint
                   </Button>
+                  <Dialog open={showConcept} onOpenChange={setShowConcept}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="bg-blue-100 hover:bg-blue-200">
+                        📚 Concept
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>{getCurrentConcept()?.title}</DialogTitle>
+                      </DialogHeader>
+                      <div 
+                        className="prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ __html: getCurrentConcept()?.content || '' }}
+                      />
+                      {currentQuestion.concept && (
+                        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                          <p className="text-sm text-blue-800">
+                            <strong>For this problem:</strong> {currentQuestion.concept}
+                          </p>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 
                 {feedback && (
