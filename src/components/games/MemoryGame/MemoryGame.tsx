@@ -3,22 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface MemoryGameProps {
   onBack: () => void;
 }
 
 type Difficulty = 'easy' | 'medium' | 'hard';
+type GameType = 'symbols' | 'numbers' | 'colors' | 'words' | 'patterns';
 
 interface MemoryCard {
   id: number;
   symbol: string;
   isFlipped: boolean;
   isMatched: boolean;
+  color?: string;
 }
 
 export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  const [gameType, setGameType] = useState<GameType>('symbols');
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
@@ -27,26 +31,48 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
   const [gameWon, setGameWon] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
   const [endTime, setEndTime] = useState<number>(0);
+  const [hintsUsed, setHintsUsed] = useState(0);
 
-  const symbols = ['🎮', '🎯', '🎲', '🃏', '🎪', '🎨', '🎭', '🎸', '🎹', '🎺', '🎻', '🥁', '🎤', '🎧', '🎬', '📱', '💎', '⭐'];
+  const gameContent = {
+    symbols: ['🎮', '🎯', '🎲', '🃏', '🎪', '🎨', '🎭', '🎸', '🎹', '🎺', '🎻', '🥁', '🎤', '🎧', '🎬', '📱', '💎', '⭐'],
+    numbers: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'],
+    colors: [
+      { symbol: '●', color: '#ff4444' }, { symbol: '●', color: '#44ff44' }, { symbol: '●', color: '#4444ff' },
+      { symbol: '●', color: '#ffff44' }, { symbol: '●', color: '#ff44ff' }, { symbol: '●', color: '#44ffff' },
+      { symbol: '●', color: '#ff8844' }, { symbol: '●', color: '#8844ff' }, { symbol: '●', color: '#44ff88' },
+      { symbol: '●', color: '#ff4488' }, { symbol: '●', color: '#88ff44' }, { symbol: '●', color: '#4488ff' },
+      { symbol: '●', color: '#888888' }, { symbol: '●', color: '#ffaa44' }, { symbol: '●', color: '#44aaff' },
+      { symbol: '●', color: '#aa44ff' }, { symbol: '●', color: '#ff44aa' }, { symbol: '●', color: '#44ffaa' }
+    ],
+    words: ['CAT', 'DOG', 'SUN', 'MOON', 'STAR', 'TREE', 'BOOK', 'FISH', 'BIRD', 'FLOWER', 'HOUSE', 'CAR', 'BOAT', 'PLANE', 'TRAIN', 'BIKE', 'BALL', 'CAKE'],
+    patterns: ['▲', '●', '■', '♦', '▼', '♠', '♥', '♣', '⬟', '⬢', '⬡', '⬠', '◆', '◇', '○', '□', '△', '▽']
+  };
 
   const getDifficultySettings = (diff: Difficulty) => {
     switch (diff) {
-      case 'easy': return { pairs: 6, cols: 3 };
-      case 'medium': return { pairs: 8, cols: 4 };
-      case 'hard': return { pairs: 12, cols: 4 };
+      case 'easy': return { pairs: 6, cols: 3, timeLimit: 120 };
+      case 'medium': return { pairs: 8, cols: 4, timeLimit: 90 };
+      case 'hard': return { pairs: 12, cols: 4, timeLimit: 60 };
     }
   };
 
   const initializeGame = () => {
     const settings = getDifficultySettings(difficulty);
-    const gameSymbols = symbols.slice(0, settings.pairs);
+    let gameSymbols: any[] = [];
+    
+    if (gameType === 'colors') {
+      gameSymbols = gameContent.colors.slice(0, settings.pairs);
+    } else {
+      gameSymbols = gameContent[gameType].slice(0, settings.pairs);
+    }
+    
     const duplicatedSymbols = [...gameSymbols, ...gameSymbols];
     
     const shuffledCards = duplicatedSymbols
-      .map((symbol, index) => ({
+      .map((item, index) => ({
         id: index,
-        symbol,
+        symbol: typeof item === 'object' ? item.symbol : item,
+        color: typeof item === 'object' ? item.color : undefined,
         isFlipped: false,
         isMatched: false,
       }))
@@ -60,6 +86,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
     setGameWon(false);
     setStartTime(Date.now());
     setEndTime(0);
+    setHintsUsed(0);
   };
 
   const flipCard = (cardId: number) => {
@@ -79,7 +106,11 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
       
       const [firstCard, secondCard] = newFlippedCards.map(id => newCards[id]);
       
-      if (firstCard.symbol === secondCard.symbol) {
+      const isMatch = gameType === 'colors' 
+        ? firstCard.color === secondCard.color
+        : firstCard.symbol === secondCard.symbol;
+      
+      if (isMatch) {
         setTimeout(() => {
           const updatedCards = [...newCards];
           updatedCards[newFlippedCards[0]].isMatched = true;
@@ -105,6 +136,39 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
     }
   };
 
+  const useHint = () => {
+    if (hintsUsed >= 2) return;
+    
+    const unmatched = cards.filter(card => !card.isMatched && !card.isFlipped);
+    if (unmatched.length < 2) return;
+    
+    // Find a matching pair
+    for (let i = 0; i < unmatched.length; i++) {
+      for (let j = i + 1; j < unmatched.length; j++) {
+        const isMatch = gameType === 'colors' 
+          ? unmatched[i].color === unmatched[j].color
+          : unmatched[i].symbol === unmatched[j].symbol;
+        
+        if (isMatch) {
+          // Briefly show the pair
+          const newCards = [...cards];
+          newCards[unmatched[i].id].isFlipped = true;
+          newCards[unmatched[j].id].isFlipped = true;
+          setCards(newCards);
+          setHintsUsed(hintsUsed + 1);
+          
+          setTimeout(() => {
+            const resetCards = [...newCards];
+            resetCards[unmatched[i].id].isFlipped = false;
+            resetCards[unmatched[j].id].isFlipped = false;
+            setCards(resetCards);
+          }, 2000);
+          return;
+        }
+      }
+    }
+  };
+
   const getGameTime = () => {
     if (!startTime) return 0;
     const endTimeToUse = endTime || Date.now();
@@ -121,7 +185,24 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
             ← Back to Hub
           </Button>
           <h1 className="text-4xl font-bold text-white">Memory Game</h1>
-          <div className="w-20"></div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="bg-white/90">How to Play</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>How to Play Memory Game</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 text-sm">
+                <p>1. Choose your difficulty and game type</p>
+                <p>2. Click cards to flip them over</p>
+                <p>3. Try to find matching pairs</p>
+                <p>4. Match all pairs to win!</p>
+                <p>💡 Use hints to reveal a matching pair briefly</p>
+                <p>🎯 Complete in minimum moves for better score</p>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card className="mb-6 bg-white/95">
@@ -129,7 +210,7 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
             <CardTitle className="text-center">Game Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4 justify-center items-center">
+            <div className="flex gap-4 justify-center items-center flex-wrap">
               <div>
                 <label className="block text-sm font-medium mb-1">Difficulty</label>
                 <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
@@ -140,6 +221,22 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
                     <SelectItem value="easy">Easy (6 pairs)</SelectItem>
                     <SelectItem value="medium">Medium (8 pairs)</SelectItem>
                     <SelectItem value="hard">Hard (12 pairs)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Game Type</label>
+                <Select value={gameType} onValueChange={(value) => setGameType(value as GameType)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="symbols">🎮 Symbols</SelectItem>
+                    <SelectItem value="numbers">🔢 Numbers</SelectItem>
+                    <SelectItem value="colors">🎨 Colors</SelectItem>
+                    <SelectItem value="words">📝 Words</SelectItem>
+                    <SelectItem value="patterns">⬟ Patterns</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -158,6 +255,15 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
                 <span>Moves: {moves}</span>
                 <span>Matches: {matches}/{settings.pairs}</span>
                 <span>Time: {getGameTime()}s</span>
+                <Button 
+                  onClick={useHint} 
+                  disabled={hintsUsed >= 2} 
+                  size="sm" 
+                  variant="outline"
+                  className="bg-yellow-100 hover:bg-yellow-200"
+                >
+                  💡 Hint ({hintsUsed}/2)
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -165,6 +271,9 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
                 <div className="text-center space-y-4">
                   <h3 className="text-3xl font-bold text-green-600 animate-bounce">🎉 Congratulations! 🎉</h3>
                   <p className="text-xl">You won in {moves} moves and {getGameTime()} seconds!</p>
+                  <div className="text-lg">
+                    <p>Performance: {moves <= settings.pairs ? '⭐⭐⭐ Perfect!' : moves <= settings.pairs * 1.5 ? '⭐⭐ Great!' : '⭐ Good!'}</p>
+                  </div>
                   <Button onClick={initializeGame} className="bg-blue-500 hover:bg-blue-600">
                     Play Again
                   </Button>
@@ -181,13 +290,14 @@ export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
                   {cards.map((card) => (
                     <Button
                       key={card.id}
-                      className={`w-20 h-20 text-3xl transition-all duration-500 transform ${
+                      className={`w-20 h-20 text-2xl transition-all duration-500 transform ${
                         card.isFlipped || card.isMatched
-                          ? 'bg-blue-500 hover:bg-blue-600 rotate-y-180'
+                          ? 'bg-blue-500 hover:bg-blue-600 scale-105'
                           : 'bg-gray-400 hover:bg-gray-500 hover:scale-105'
                       } ${card.isMatched ? 'ring-4 ring-green-400' : ''}`}
                       onClick={() => flipCard(card.id)}
                       disabled={card.isMatched || flippedCards.length === 2}
+                      style={card.isFlipped || card.isMatched ? { color: card.color } : {}}
                     >
                       {card.isFlipped || card.isMatched ? card.symbol : '?'}
                     </Button>
