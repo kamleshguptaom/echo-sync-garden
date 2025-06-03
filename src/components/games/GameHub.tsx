@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { TicTacToe } from './TicTacToe/TicTacToe';
@@ -32,6 +32,14 @@ export type GameType =
 
 export const GameHub = () => {
   const [currentGame, setCurrentGame] = useState<GameType>('hub');
+  const [recentGames, setRecentGames] = useState<GameType[]>([]);
+
+  // Real-time game state updates
+  useEffect(() => {
+    if (currentGame !== 'hub' && !recentGames.includes(currentGame)) {
+      setRecentGames(prev => [currentGame, ...prev.slice(0, 2)]);
+    }
+  }, [currentGame]);
 
   const gameCategories = [
     {
@@ -109,6 +117,31 @@ export const GameHub = () => {
           Interactive learning games with multiple levels and customization
         </p>
       </div>
+
+      {recentGames.length > 0 && (
+        <div className="mb-10 animate-fade-in">
+          <h2 className="text-2xl font-bold text-white mb-4 text-center">
+            Recently Played
+          </h2>
+          <div className="flex flex-wrap gap-4 justify-center">
+            {recentGames.map(gameType => {
+              const gameInfo = gameCategories.flatMap(cat => cat.games).find(g => g.id === gameType);
+              if (!gameInfo) return null;
+              
+              return (
+                <Button 
+                  key={gameType} 
+                  className="bg-white/90 hover:bg-white text-purple-800 p-4 flex items-center gap-2 hover:scale-105 transition-all"
+                  onClick={() => setCurrentGame(gameType as GameType)}
+                >
+                  <span className="text-2xl">{gameInfo.icon}</span>
+                  <span>{gameInfo.name}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8">
         {gameCategories.map((category, categoryIndex) => (

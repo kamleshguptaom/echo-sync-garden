@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ interface GeographyQuestion {
   concept: string;
   options?: string[];
   isMultiple?: boolean;
+  animation?: string;
 }
 
 const geographyConcepts = {
@@ -44,7 +45,15 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
   const [gameStarted, setGameStarted] = useState(false);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [skipsUsed, setSkipsUsed] = useState(0);
   const [showConcept, setShowConcept] = useState(false);
+
+  // Real-time updates when settings change
+  useEffect(() => {
+    if (gameStarted && currentQuestion) {
+      generateNewQuestion();
+    }
+  }, [questionType, difficulty]);
 
   const questionBank = {
     capitals: {
@@ -55,7 +64,8 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "City of Light, famous for the Eiffel Tower",
           concept: "Paris has been France's capital since 987 AD and is a global center for art, fashion, and culture.",
           isMultiple: true,
-          options: ["Paris", "Lyon", "Marseille", "Nice"]
+          options: ["Paris", "Lyon", "Marseille", "Nice"],
+          animation: "🇫🇷 → 🗼 Paris (Eiffel Tower city)"
         },
         {
           question: "What is the capital of Japan?",
@@ -63,7 +73,26 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "Formerly called Edo, home to the Emperor",
           concept: "Tokyo became Japan's capital in 1868, replacing Kyoto.",
           isMultiple: true,
-          options: ["Tokyo", "Osaka", "Kyoto", "Yokohama"]
+          options: ["Tokyo", "Osaka", "Kyoto", "Yokohama"],
+          animation: "🇯🇵 → 🏯 Tokyo (Former Edo)"
+        },
+        {
+          question: "What is the capital of Brazil?",
+          answer: "Brasília",
+          hint: "Planned city built in the 1950s, not Rio or São Paulo",
+          concept: "Brasília was built as a planned capital to promote development in Brazil's interior.",
+          isMultiple: true,
+          options: ["Brasília", "Rio de Janeiro", "São Paulo", "Salvador"],
+          animation: "🇧🇷 → 🏗️ Brasília (Planned capital)"
+        },
+        {
+          question: "What is the capital of Egypt?",
+          answer: "Cairo",
+          hint: "Ancient city near the pyramids",
+          concept: "Cairo is one of the largest cities in Africa and the Arab world.",
+          isMultiple: true,
+          options: ["Cairo", "Alexandria", "Luxor", "Aswan"],
+          animation: "🇪🇬 → 🏺 Cairo (City of pyramids)"
         }
       ],
       medium: [
@@ -73,7 +102,17 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "Not Sydney or Melbourne, but a planned city",
           concept: "Canberra was specifically designed as Australia's capital in 1913 to resolve rivalry between Sydney and Melbourne.",
           isMultiple: true,
-          options: ["Canberra", "Sydney", "Melbourne", "Brisbane"]
+          options: ["Canberra", "Sydney", "Melbourne", "Brisbane"],
+          animation: "🇦🇺 → 🏛️ Canberra (Compromise capital)"
+        },
+        {
+          question: "What is the capital of Switzerland?",
+          answer: "Bern",
+          hint: "Not Zurich or Geneva, but the de facto capital",
+          concept: "Bern is the de facto capital of Switzerland, though the country has no official capital.",
+          isMultiple: true,
+          options: ["Bern", "Zurich", "Geneva", "Basel"],
+          animation: "🇨🇭 → 🐻 Bern (Bear city)"
         }
       ],
       hard: [
@@ -82,7 +121,16 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           answer: "Nur-Sultan",
           hint: "Formerly known as Astana, renamed in 2019",
           concept: "The capital was moved from Almaty to this planned city in 1997.",
-          isMultiple: false
+          isMultiple: false,
+          animation: "🇰🇿 → 🏗️ Nur-Sultan (New planned capital)"
+        },
+        {
+          question: "What is the capital of Myanmar?",
+          answer: "Naypyidaw",
+          hint: "New capital city built in the 2000s, not Yangon",
+          concept: "Myanmar moved its capital from Yangon to Naypyidaw in 2006.",
+          isMultiple: false,
+          animation: "🇲🇲 → 🏛️ Naypyidaw (New capital)"
         }
       ]
     },
@@ -94,7 +142,17 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "Famous for pizza and pasta",
           concept: "Italy's distinctive boot shape is formed by the Italian Peninsula extending into the Mediterranean Sea.",
           isMultiple: true,
-          options: ["Italy", "Spain", "Greece", "Portugal"]
+          options: ["Italy", "Spain", "Greece", "Portugal"],
+          animation: "🇮🇹 → 👢 Italy (Boot-shaped peninsula)"
+        },
+        {
+          question: "Which country has the maple leaf on its flag?",
+          answer: "Canada",
+          hint: "North American country known for maple syrup",
+          concept: "The maple leaf is a symbol of Canada and appears prominently on their flag.",
+          isMultiple: true,
+          options: ["Canada", "USA", "Mexico", "Greenland"],
+          animation: "🇨🇦 → 🍁 Canada (Maple leaf country)"
         }
       ],
       medium: [
@@ -104,7 +162,17 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "The largest country by land area",
           concept: "Russia spans 11 time zones due to its vast territory stretching from Eastern Europe to the Pacific Ocean.",
           isMultiple: true,
-          options: ["Russia", "USA", "China", "Canada"]
+          options: ["Russia", "USA", "China", "Canada"],
+          animation: "🇷🇺 → 🌍🕐🕑🕒... Russia (11 time zones)"
+        },
+        {
+          question: "Which country is known as the Land of the Rising Sun?",
+          answer: "Japan",
+          hint: "Island nation in East Asia",
+          concept: "Japan is called the Land of the Rising Sun because of its position east of Asia.",
+          isMultiple: true,
+          options: ["Japan", "China", "South Korea", "Philippines"],
+          animation: "🇯🇵 → 🌅 Japan (Rising sun)"
         }
       ],
       hard: [
@@ -113,7 +181,8 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           answer: "Lesotho",
           hint: "A mountainous kingdom in southern Africa",
           concept: "Lesotho is one of only three countries completely surrounded by another country (enclaves).",
-          isMultiple: false
+          isMultiple: false,
+          animation: "🇿🇦 → ⭕ → 🇱🇸 Lesotho (Enclave in South Africa)"
         }
       ]
     },
@@ -125,7 +194,17 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "Ancient Incan city high in the Andes",
           concept: "Machu Picchu is a 15th-century Inca citadel located in the Eastern Cordillera of southern Peru.",
           isMultiple: true,
-          options: ["Peru", "Bolivia", "Ecuador", "Colombia"]
+          options: ["Peru", "Bolivia", "Ecuador", "Colombia"],
+          animation: "🇵🇪 → ⛰️ Machu Picchu (Inca ruins)"
+        },
+        {
+          question: "Where is the Statue of Liberty located?",
+          answer: "New York",
+          hint: "Harbor of America's largest city",
+          concept: "The Statue of Liberty stands on Liberty Island in New York Harbor as a symbol of freedom.",
+          isMultiple: true,
+          options: ["New York", "Boston", "Philadelphia", "Washington DC"],
+          animation: "🇺🇸 → 🗽 New York (Liberty Island)"
         }
       ],
       medium: [
@@ -135,7 +214,8 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           hint: "One of the world's largest waterfall systems",
           concept: "Iguazu Falls consists of 275 individual waterfalls along the Iguazu River.",
           isMultiple: true,
-          options: ["Iguazu Falls", "Angel Falls", "Victoria Falls", "Niagara Falls"]
+          options: ["Iguazu Falls", "Angel Falls", "Victoria Falls", "Niagara Falls"],
+          animation: "🇧🇷🇦🇷 → 💦 Iguazu Falls (Border falls)"
         }
       ],
       hard: [
@@ -144,7 +224,94 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
           answer: "Petra",
           hint: "Also known as the Rose City",
           concept: "Petra was the capital of the Nabataean Kingdom and is famous for its rock-cut architecture.",
-          isMultiple: false
+          isMultiple: false,
+          animation: "🇯🇴 → 🏛️ Petra (Rose city in stone)"
+        }
+      ]
+    },
+    rivers: {
+      easy: [
+        {
+          question: "What is the longest river in the world?",
+          answer: "Nile",
+          hint: "Flows through Egypt",
+          concept: "The Nile River is about 6,650 kilometers long and flows through 11 countries in northeastern Africa.",
+          isMultiple: true,
+          options: ["Nile", "Amazon", "Mississippi", "Yangtze"],
+          animation: "🇪🇬🇸🇩 → 🌊 Nile (Egypt's lifeline)"
+        },
+        {
+          question: "Which river flows through London?",
+          answer: "Thames",
+          hint: "Famous river with many bridges",
+          concept: "The River Thames is 346 kilometers long and has been central to London's development.",
+          isMultiple: true,
+          options: ["Thames", "Seine", "Danube", "Rhine"],
+          animation: "🇬🇧 → 🌉 Thames (London's river)"
+        }
+      ],
+      medium: [
+        {
+          question: "Which river forms part of the border between the US and Mexico?",
+          answer: "Rio Grande",
+          hint: "Spanish name meaning 'Big River'",
+          concept: "The Rio Grande forms a natural boundary between the US and Mexico for 1,885 kilometers.",
+          isMultiple: true,
+          options: ["Rio Grande", "Colorado", "Mississippi", "St. Lawrence"],
+          animation: "🇺🇸🇲🇽 → 🚣 Rio Grande (Border river)"
+        }
+      ],
+      hard: [
+        {
+          question: "Which river is considered sacred in Hinduism?",
+          answer: "Ganges",
+          hint: "Flows through India's populous northern plains",
+          concept: "The Ganges is worshipped as the goddess Ganga in Hinduism and is central to many religious practices.",
+          isMultiple: false,
+          animation: "🇮🇳 → 🙏 Ganges (Sacred river)"
+        }
+      ]
+    },
+    mountains: {
+      easy: [
+        {
+          question: "What is the tallest mountain in the world?",
+          answer: "Mount Everest",
+          hint: "Located in the Himalayas",
+          concept: "Mount Everest reaches 8,848.86 meters (29,031.7 ft) above sea level.",
+          isMultiple: true,
+          options: ["Mount Everest", "K2", "Kilimanjaro", "Mont Blanc"],
+          animation: "🇳🇵🇨🇳 → 🏔️ Everest (Tallest peak)"
+        },
+        {
+          question: "Which mountain range runs through the western United States?",
+          answer: "Rocky Mountains",
+          hint: "Extends from Canada to New Mexico",
+          concept: "The Rocky Mountains stretch more than 3,000 kilometers and form part of the North American Cordillera.",
+          isMultiple: true,
+          options: ["Rocky Mountains", "Appalachian", "Sierra Nevada", "Cascade Range"],
+          animation: "🇺🇸 → ⛰️⛰️⛰️ Rockies (Western mountains)"
+        }
+      ],
+      medium: [
+        {
+          question: "Which is the highest mountain in Africa?",
+          answer: "Mount Kilimanjaro",
+          hint: "Located in Tanzania, a dormant volcano",
+          concept: "Mount Kilimanjaro is a dormant volcano with three cones: Kibo, Mawenzi, and Shira.",
+          isMultiple: true,
+          options: ["Mount Kilimanjaro", "Mount Kenya", "Atlas Mountains", "Mount Meru"],
+          animation: "🇹🇿 → 🏔️ Kilimanjaro (Africa's peak)"
+        }
+      ],
+      hard: [
+        {
+          question: "Which mountain is known as the 'Savage Mountain' due to its difficulty?",
+          answer: "K2",
+          hint: "The second-highest mountain in the world",
+          concept: "K2 has one of the highest fatality rates among the world's highest mountains.",
+          isMultiple: false,
+          animation: "🇵🇰🇨🇳 → 🏔️☠️ K2 (Deadly mountain)"
         }
       ]
     }
@@ -167,6 +334,13 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
     };
   };
 
+  const generateNewQuestion = () => {
+    setCurrentQuestion(generateQuestion());
+    setUserAnswer('');
+    setSelectedAnswer(null);
+    setFeedback('');
+  };
+
   const startGame = () => {
     setGameStarted(true);
     setScore(0);
@@ -174,18 +348,54 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
     setQuestionsAnswered(0);
     setFeedback('');
     setHintsUsed(0);
+    setSkipsUsed(0);
     setUserAnswer('');
     setSelectedAnswer(null);
     setCurrentQuestion(generateQuestion());
   };
 
   const useHint = () => {
-    if (!currentQuestion || hintsUsed >= 3) return;
+    if (!currentQuestion) return;
     
-    setFeedback(`💡 Hint: ${currentQuestion.hint}`);
+    const hints = [
+      `💡 Hint: ${currentQuestion.hint}`,
+      `💡 Category: ${currentQuestion.category}`,
+      `💡 Visual: ${currentQuestion.animation || 'Think about the region or continent'}`
+    ];
+    
+    const hintIndex = hintsUsed % hints.length;
+    setFeedback(hints[hintIndex]);
     setHintsUsed(hintsUsed + 1);
     
     setTimeout(() => setFeedback(''), 4000);
+  };
+
+  const skipQuestion = () => {
+    if (skipsUsed >= 2) return;
+    
+    setSkipsUsed(skipsUsed + 1);
+    setStreak(0);
+    setQuestionsAnswered(questionsAnswered + 1);
+    
+    if (questionsAnswered < 9) {
+      generateNewQuestion();
+    } else {
+      setGameStarted(false);
+      setCurrentQuestion(null);
+    }
+  };
+
+  const resetGame = () => {
+    setGameStarted(false);
+    setCurrentQuestion(null);
+    setScore(0);
+    setStreak(0);
+    setQuestionsAnswered(0);
+    setFeedback('');
+    setUserAnswer('');
+    setSelectedAnswer(null);
+    setHintsUsed(0);
+    setSkipsUsed(0);
   };
 
   const checkAnswer = () => {
@@ -216,8 +426,7 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
     
     setTimeout(() => {
       if (questionsAnswered < 9) {
-        setCurrentQuestion(generateQuestion());
-        setFeedback('');
+        generateNewQuestion();
       } else {
         setGameStarted(false);
         setCurrentQuestion(null);
@@ -244,9 +453,11 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
               <div className="space-y-3 text-sm">
                 <p>1. Choose your geography topic and difficulty level</p>
                 <p>2. Answer questions about world geography</p>
-                <p>3. Use hints if you need help (max 3 per game)</p>
-                <p>4. Learn concepts to understand geographic principles</p>
-                <p>5. Build streaks for bonus points!</p>
+                <p>3. Use hints if you need help (unlimited hints available)</p>
+                <p>4. Skip difficult questions (max 2 per game)</p>
+                <p>5. Learn concepts to understand geographic principles</p>
+                <p>6. Build streaks for bonus points!</p>
+                <p>7. Settings update in real-time during gameplay</p>
               </div>
             </DialogContent>
           </Dialog>
@@ -349,7 +560,7 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
                   />
                 )}
                 
-                <div className="flex justify-center gap-4 flex-wrap">
+                <div className="flex justify-center gap-2 flex-wrap">
                   <Button 
                     onClick={checkAnswer} 
                     disabled={currentQuestion.isMultiple ? selectedAnswer === null : !userAnswer.trim()}
@@ -360,11 +571,27 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
                   
                   <Button 
                     onClick={useHint} 
-                    disabled={hintsUsed >= 3}
                     variant="outline"
                     className="bg-yellow-100 hover:bg-yellow-200"
                   >
-                    💡 Hint ({hintsUsed}/3)
+                    💡 Hint ({hintsUsed})
+                  </Button>
+                  
+                  <Button 
+                    onClick={skipQuestion} 
+                    disabled={skipsUsed >= 2}
+                    variant="outline"
+                    className="bg-orange-100 hover:bg-orange-200"
+                  >
+                    ⏭️ Skip ({skipsUsed}/2)
+                  </Button>
+                  
+                  <Button 
+                    onClick={resetGame}
+                    variant="outline"
+                    className="bg-red-100 hover:bg-red-200"
+                  >
+                    🔄 Reset
                   </Button>
                   
                   <Dialog open={showConcept} onOpenChange={setShowConcept}>
@@ -373,16 +600,21 @@ export const GeographyGame: React.FC<GeographyGameProps> = ({ onBack }) => {
                         📚 Concept
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-w-md">
                       <DialogHeader>
                         <DialogTitle>{currentQuestion.category} Concepts</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
-                        <p>{geographyConcepts[currentQuestion.type as keyof typeof geographyConcepts]}</p>
+                        <p className="text-sm">{geographyConcepts[currentQuestion.type as keyof typeof geographyConcepts]}</p>
                         <div className="p-4 bg-green-50 rounded-lg">
-                          <p className="text-sm text-green-800">
-                            <strong>About this question:</strong> {currentQuestion.concept}
-                          </p>
+                          <h4 className="font-semibold text-green-800 mb-2">About this question:</h4>
+                          <p className="text-sm text-green-700 mb-3">{currentQuestion.concept}</p>
+                          {currentQuestion.animation && (
+                            <div className="bg-white p-3 rounded border-2 border-green-200">
+                              <h5 className="font-medium text-green-800 mb-2">Visual Guide:</h5>
+                              <p className="text-lg font-mono text-center animate-pulse">{currentQuestion.animation}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </DialogContent>
