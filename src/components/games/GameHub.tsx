@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,9 @@ import { ScienceGame } from './ScienceGame/ScienceGame';
 import { GeographyGame } from './GeographyGame/GeographyGame';
 import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
 import { LadderSnake } from './LadderSnake/LadderSnake';
+import { WaffleGame } from './WaffleGame/WaffleGame';
+import { HistoryGame } from './HistoryGame/HistoryGame';
+import { LogicGame } from './LogicGame/LogicGame';
 
 export type GameType = 
   | 'hub' 
@@ -28,7 +30,10 @@ export type GameType =
   | 'science'
   | 'geography'
   | 'object-builder'
-  | 'ladder-snake';
+  | 'ladder-snake'
+  | 'waffle'
+  | 'history'
+  | 'logic';
 
 export const GameHub = () => {
   const [currentGame, setCurrentGame] = useState<GameType>('hub');
@@ -49,6 +54,7 @@ export const GameHub = () => {
         { id: 'sudoku', name: 'Sudoku', icon: '🔢', description: 'Number puzzle with different difficulty levels' },
         { id: 'memory', name: 'Memory Game', icon: '🧠', description: 'Test your memory with various challenges' },
         { id: 'ladder-snake', name: 'Snakes & Ladders', icon: '🐍', description: 'Classic board game with educational concepts' },
+        { id: 'logic', name: 'Logic Challenge', icon: '🧩', description: 'Sequences, patterns, riddles, and deduction puzzles' },
       ]
     },
     {
@@ -56,6 +62,7 @@ export const GameHub = () => {
       games: [
         { id: 'jigsaw', name: 'Jigsaw Puzzle', icon: '🧩', description: 'Interactive puzzles with custom images' },
         { id: 'word', name: 'Word Games', icon: '📝', description: 'Vocabulary and spelling challenges' },
+        { id: 'waffle', name: 'Waffle Game', icon: '🧇', description: 'Swap letters to form words in a waffle grid' },
         { id: 'object-builder', name: 'Object Builder', icon: '🎨', description: 'Create objects using shapes and colors' },
       ]
     },
@@ -66,6 +73,7 @@ export const GameHub = () => {
         { id: 'geometry', name: 'Geometry', icon: '📐', description: 'Shape and spatial reasoning games' },
         { id: 'science', name: 'Science Challenge', icon: '🔬', description: 'Physics, chemistry, biology, and more' },
         { id: 'geography', name: 'Geography Quest', icon: '🌍', description: 'Explore countries, capitals, and landmarks' },
+        { id: 'history', name: 'History Challenge', icon: '🏛️', description: 'Test your knowledge of historical events' },
       ]
     },
     {
@@ -102,6 +110,12 @@ export const GameHub = () => {
         return <ObjectBuilder onBack={() => setCurrentGame('hub')} />;
       case 'ladder-snake':
         return <LadderSnake onBack={() => setCurrentGame('hub')} />;
+      case 'waffle':
+        return <WaffleGame onBack={() => setCurrentGame('hub')} />;
+      case 'history':
+        return <HistoryGame onBack={() => setCurrentGame('hub')} />;
+      case 'logic':
+        return <LogicGame onBack={() => setCurrentGame('hub')} />;
       default:
         return renderHub();
     }

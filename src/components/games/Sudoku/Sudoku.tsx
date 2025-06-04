@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 
 interface SudokuProps {
   onBack: () => void;
@@ -25,6 +26,8 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const [showConcept, setShowConcept] = useState(false);
   const [timer, setTimer] = useState(0);
   const [gameActive, setGameActive] = useState(false);
+  const [mistakeCount, setMistakeCount] = useState(0);
+  const [maxMistakes] = useState(3);
 
   // Timer effect
   useEffect(() => {
@@ -47,9 +50,9 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     const actualDiff = diff === 'random' ? 
       (['easy', 'medium', 'hard', 'expert'] as const)[Math.floor(Math.random() * 4)] : 
       diff;
-      
-    // Enhanced sudoku generation with multiple patterns
-    const patterns = [
+
+    // Start with a valid completed Sudoku
+    const completedBoard = [
       [5, 3, 4, 6, 7, 8, 9, 1, 2],
       [6, 7, 2, 1, 9, 5, 3, 4, 8],
       [1, 9, 8, 3, 4, 2, 5, 6, 7],
@@ -65,9 +68,9 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                          actualDiff === 'medium' ? 45 : 
                          actualDiff === 'hard' ? 55 : 65;
     
-    const puzzle = patterns.map(row => [...row]);
+    const puzzle = completedBoard.map(row => [...row]);
     
-    // Shuffle and remove cells
+    // Remove cells
     const cellsRemoved = new Set<string>();
     while (cellsRemoved.size < cellsToRemove) {
       const row = Math.floor(Math.random() * 9);
@@ -117,10 +120,12 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     setNotes(Array(9).fill(null).map(() => Array(9).fill(null).map(() => [])));
     setHintsUsed(0);
     setTimer(0);
+    setMistakeCount(0);
   };
 
   const makeMove = (row: number, col: number, num: number | null) => {
     if (initialBoard[row][col] !== null) return;
+    if (mistakeCount >= maxMistakes) return;
 
     if (notesMode && num !== null) {
       const newNotes = [...notes];
@@ -128,6 +133,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
       const noteIndex = cellNotes.indexOf(num);
       if (noteIndex === -1) {
         cellNotes.push(num);
+        cellNotes.sort();
       } else {
         cellNotes.splice(noteIndex, 1);
       }
@@ -139,7 +145,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     newBoard[row][col] = num;
     setBoard(newBoard);
 
-    // Clear notes for this cell
+    // Clear notes for this cell when placing a number
     if (num !== null) {
       const newNotes = [...notes];
       newNotes[row][col] = [];
@@ -150,6 +156,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     const newErrors: {row: number, col: number}[] = [];
     if (num !== null && !isValidMove(newBoard, row, col, num)) {
       newErrors.push({row, col});
+      setMistakeCount(prev => prev + 1);
     }
     setErrors(newErrors);
 
@@ -175,7 +182,9 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
       for (let j = 0; j < 9; j++) {
         if (board[i][j] === null && initialBoard[i][j] === null) {
           for (let num = 1; num <= 9; num++) {
-            if (isValidMove(board, i, j, num)) {
+            const testBoard = board.map(r => [...r]);
+            testBoard[i][j] = num;
+            if (isValidMove(testBoard, i, j, num)) {
               makeMove(i, j, num);
               setHintsUsed(hintsUsed + 1);
               return;
@@ -190,6 +199,18 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     if (selectedCell && initialBoard[selectedCell.row][selectedCell.col] === null) {
       makeMove(selectedCell.row, selectedCell.col, null);
     }
+  };
+
+  const resetGame = () => {
+    setBoard(initialBoard.map(row => [...row]));
+    setErrors([]);
+    setNotes(Array(9).fill(null).map(() => Array(9).fill(null).map(() => [])));
+    setSelectedCell(null);
+    setTimer(0);
+    setMistakeCount(0);
+    setHintsUsed(0);
+    setGameActive(true);
+    setIsComplete(false);
   };
 
   const isErrorCell = (row: number, col: number) => {
@@ -210,6 +231,13 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     return '';
   };
 
+  // Real-time difficulty change
+  useEffect(() => {
+    if (gameStarted) {
+      startGame();
+    }
+  }, [difficulty]);
+
   return (
     <div className="container mx-auto p-6">
       <div className="max-w-4xl mx-auto">
@@ -227,8 +255,9 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Sudoku Concepts & Strategy</DialogTitle>
+                <DialogDescription>Learn the fundamentals and advanced techniques</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-4 max-h-96 overflow-y-auto">
                 <div className="animate-fade-in">
                   <h3 className="font-bold text-lg">🎯 Rules</h3>
                   <p>Fill a 9×9 grid so each row, column, and 3×3 box contains digits 1-9 exactly once.</p>
@@ -243,10 +272,16 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                   </ul>
                 </div>
                 <div className="animate-scale-in" style={{ animationDelay: '0.4s' }}>
-                  <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg">
-                    <h4 className="font-bold">💡 Pro Tips:</h4>
-                    <p>Start with rows/columns/boxes that have the most numbers filled in!</p>
-                  </div>
+                  <h3 className="font-bold text-lg">📝 Advanced Techniques</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Naked Pairs:</strong> Two cells with same two candidates</li>
+                    <li><strong>Pointing Pairs:</strong> Candidates aligned in box and row/column</li>
+                    <li><strong>Box/Line Reduction:</strong> Eliminate candidates from intersecting regions</li>
+                  </ul>
+                </div>
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg animate-pulse">
+                  <h4 className="font-bold">💡 Pro Tips:</h4>
+                  <p>Start with rows/columns/boxes that have the most numbers filled in!</p>
                 </div>
               </div>
             </DialogContent>
@@ -258,7 +293,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
             <CardTitle className="text-center">Game Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4 justify-center items-center">
+            <div className="flex gap-4 justify-center items-center flex-wrap">
               <div>
                 <label className="block text-sm font-medium mb-1">Difficulty</label>
                 <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
@@ -278,6 +313,17 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
               <Button onClick={startGame} className="bg-green-500 hover:bg-green-600 mt-6">
                 {gameStarted ? 'New Game' : 'Start Game'}
               </Button>
+
+              {gameStarted && (
+                <>
+                  <Button onClick={resetGame} variant="outline" className="mt-6">
+                    🔄 Reset
+                  </Button>
+                  <Button onClick={() => alert('Instructions: Fill the grid so each row, column, and 3x3 box contains digits 1-9 exactly once.')} variant="outline" className="mt-6">
+                    📋 Instructions
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -285,12 +331,14 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
         {gameStarted && (
           <Card className="bg-white/95">
             <CardHeader>
-              <CardTitle className="text-center flex justify-between items-center">
+              <CardTitle className="text-center flex justify-between items-center flex-wrap gap-2">
                 <div>Time: {formatTime(timer)}</div>
                 <div>
-                  {isComplete ? '🎉 Congratulations! Puzzle Solved! 🎉' : `Hints: ${hintsUsed}/3`}
+                  {isComplete ? '🎉 Congratulations! Puzzle Solved! 🎉' : 
+                   mistakeCount >= maxMistakes ? '❌ Game Over - Too many mistakes!' :
+                   `Hints: ${hintsUsed}/3 | Mistakes: ${mistakeCount}/${maxMistakes}`}
                 </div>
-                <div>Difficulty: {difficulty}</div>
+                <div>Difficulty: {difficulty === 'random' ? '🎲 Random' : difficulty}</div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -314,12 +362,13 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                           (j + 1) % 3 === 0 && j !== 8 ? 'border-r-2 border-r-gray-800' : ''
                         }`}
                         onClick={() => setSelectedCell({row: i, col: j})}
+                        disabled={mistakeCount >= maxMistakes && !isComplete}
                       >
                         {cell || ''}
                         {!cell && notes[i][j].length > 0 && (
-                          <div className="absolute inset-0 grid grid-cols-3 gap-0 text-xs text-gray-500">
+                          <div className="absolute inset-0 grid grid-cols-3 gap-0 text-xs text-gray-500 p-1">
                             {[1,2,3,4,5,6,7,8,9].map(num => (
-                              <div key={num} className="flex items-center justify-center">
+                              <div key={num} className="flex items-center justify-center text-xs">
                                 {notes[i][j].includes(num) ? num : ''}
                               </div>
                             ))}
@@ -332,17 +381,26 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
               </div>
 
               <div className="text-center space-y-4">
-                <div className="flex gap-2 justify-center">
+                <div className="flex gap-2 justify-center flex-wrap">
                   <Button 
                     onClick={() => setNotesMode(!notesMode)} 
                     variant={notesMode ? "default" : "outline"}
+                    disabled={mistakeCount >= maxMistakes && !isComplete}
                   >
-                    📝 Notes Mode
+                    📝 Notes {notesMode ? 'ON' : 'OFF'}
                   </Button>
-                  <Button onClick={useHint} disabled={hintsUsed >= 3} variant="outline">
+                  <Button 
+                    onClick={useHint} 
+                    disabled={hintsUsed >= 3 || mistakeCount >= maxMistakes} 
+                    variant="outline"
+                  >
                     💡 Hint ({hintsUsed}/3)
                   </Button>
-                  <Button onClick={clearCell} variant="outline">
+                  <Button 
+                    onClick={clearCell} 
+                    variant="outline"
+                    disabled={mistakeCount >= maxMistakes && !isComplete}
+                  >
                     🗑️ Clear
                   </Button>
                 </div>
@@ -353,7 +411,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                       key={num}
                       className="w-12 h-12 text-lg font-bold"
                       onClick={() => selectedCell && makeMove(selectedCell.row, selectedCell.col, num)}
-                      disabled={!selectedCell || initialBoard[selectedCell.row][selectedCell.col] !== null}
+                      disabled={!selectedCell || initialBoard[selectedCell.row][selectedCell.col] !== null || (mistakeCount >= maxMistakes && !isComplete)}
                     >
                       {num}
                     </Button>
@@ -361,10 +419,14 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              {isComplete && (
-                <div className="text-center bg-green-100 p-6 rounded-lg">
-                  <h2 className="text-2xl font-bold text-green-800 mb-2">Puzzle Complete!</h2>
-                  <p className="text-green-700 mb-4">Time: {formatTime(timer)} | Hints used: {hintsUsed}</p>
+              {(isComplete || mistakeCount >= maxMistakes) && (
+                <div className={`text-center p-6 rounded-lg ${isComplete ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <h2 className={`text-2xl font-bold mb-2 ${isComplete ? 'text-green-800' : 'text-red-800'}`}>
+                    {isComplete ? 'Puzzle Complete!' : 'Game Over!'}
+                  </h2>
+                  <p className={`mb-4 ${isComplete ? 'text-green-700' : 'text-red-700'}`}>
+                    {isComplete ? `Time: ${formatTime(timer)} | Hints used: ${hintsUsed}` : 'Too many mistakes made!'}
+                  </p>
                   <Button onClick={startGame} className="bg-green-500 hover:bg-green-600">
                     Play Again
                   </Button>
