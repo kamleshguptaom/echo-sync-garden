@@ -9,7 +9,8 @@ interface WaffleGameProps {
   onBack: () => void;
 }
 
-type Difficulty = 'easy' | 'medium' | 'hard' | 'random';
+type Difficulty = 'easy' | 'medium' | 'hard' | 'expert' | 'random';
+type WaffleVariant = 'daily' | 'deluxe' | 'mini' | 'mega' | 'random';
 type CellType = 'green' | 'yellow' | 'white';
 
 interface Cell {
@@ -23,6 +24,7 @@ interface Cell {
 export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
   const [grid, setGrid] = useState<Cell[][]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [variant, setVariant] = useState<WaffleVariant>('daily');
   const [gameStarted, setGameStarted] = useState(false);
   const [moves, setMoves] = useState(0);
   const [maxMoves, setMaxMoves] = useState(15);
@@ -32,19 +34,48 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
   const [firstSwapCell, setFirstSwapCell] = useState<{row: number, col: number} | null>(null);
   const [showConcept, setShowConcept] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [stars, setStars] = useState(0);
+  const [timer, setTimer] = useState(0);
+  const [gameActive, setGameActive] = useState(false);
 
-  const words = {
-    easy: ['CAT', 'DOG', 'SUN', 'RUN', 'FUN'],
-    medium: ['HOUSE', 'WATER', 'LIGHT', 'PHONE', 'MUSIC'],
-    hard: ['COMPUTER', 'RAINBOW', 'KITCHEN', 'JOURNEY', 'MYSTERY']
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (gameActive && gameStarted && !isComplete) {
+      interval = setInterval(() => {
+        setTimer(timer => timer + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [gameActive, gameStarted, isComplete]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const generateWaffleGrid = (diff: Difficulty) => {
+  const words = {
+    easy: ['CAT', 'DOG', 'SUN', 'RUN', 'FUN', 'HAT', 'BAT', 'RAT'],
+    medium: ['HOUSE', 'WATER', 'LIGHT', 'PHONE', 'MUSIC', 'DANCE', 'SPACE', 'BEACH'],
+    hard: ['COMPUTER', 'RAINBOW', 'KITCHEN', 'JOURNEY', 'MYSTERY', 'ELEGANT', 'PREMIUM'],
+    expert: ['ALGORITHM', 'BEAUTIFUL', 'WONDERFUL', 'QUESTIONS', 'SOLUTIONS', 'BRILLIANT']
+  };
+
+  const generateWaffleGrid = (diff: Difficulty, waffleVariant: WaffleVariant) => {
     const actualDiff = diff === 'random' ? 
-      (['easy', 'medium', 'hard'] as const)[Math.floor(Math.random() * 3)] : 
+      (['easy', 'medium', 'hard', 'expert'] as const)[Math.floor(Math.random() * 4)] : 
       diff;
 
-    const gridSize = 5;
+    const actualVariant = waffleVariant === 'random' ?
+      (['daily', 'deluxe', 'mini', 'mega'] as const)[Math.floor(Math.random() * 4)] :
+      waffleVariant;
+
+    let gridSize = 5;
+    if (actualVariant === 'mini') gridSize = 3;
+    else if (actualVariant === 'mega') gridSize = 7;
+    else if (actualVariant === 'deluxe') gridSize = 6;
+
     const newGrid: Cell[][] = Array(gridSize).fill(null).map((_, row) =>
       Array(gridSize).fill(null).map((_, col) => ({
         letter: '',
@@ -64,8 +95,8 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
       for (let j = 0; j < gridSize; j++) {
         newGrid[i][j].letter = letters[Math.floor(Math.random() * letters.length)];
         
-        // Set some cells as correct (green)
-        if (Math.random() < 0.3) {
+        // Set some cells as correct (green) - corners and intersections
+        if ((i === 0 || i === gridSize - 1) && (j === 0 || j === gridSize - 1)) {
           newGrid[i][j].type = 'green';
           newGrid[i][j].isFixed = true;
         }
@@ -76,20 +107,27 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
       }
     }
 
-    setMaxMoves(actualDiff === 'easy' ? 20 : actualDiff === 'medium' ? 15 : 10);
+    // Set max moves based on difficulty and variant
+    const baseMoves = actualDiff === 'easy' ? 20 : actualDiff === 'medium' ? 15 : actualDiff === 'hard' ? 12 : 10;
+    const variantMultiplier = actualVariant === 'mini' ? 0.6 : actualVariant === 'mega' ? 1.5 : actualVariant === 'deluxe' ? 1.3 : 1;
+    setMaxMoves(Math.round(baseMoves * variantMultiplier));
+    
     return newGrid;
   };
 
   const startGame = () => {
-    const newGrid = generateWaffleGrid(difficulty);
+    const newGrid = generateWaffleGrid(difficulty, variant);
     setGrid(newGrid);
     setGameStarted(true);
+    setGameActive(true);
     setMoves(0);
     setIsComplete(false);
     setSelectedCell(null);
     setSwapMode(false);
     setFirstSwapCell(null);
     setHintsUsed(0);
+    setStars(0);
+    setTimer(0);
   };
 
   const swapCells = (cell1: {row: number, col: number}, cell2: {row: number, col: number}) => {
@@ -103,7 +141,7 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
     setGrid(newGrid);
     setMoves(moves + 1);
     
-    // Check for completion
+    // Check for completion and calculate stars
     checkCompletion(newGrid);
   };
 
@@ -129,11 +167,22 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
   };
 
   const checkCompletion = (currentGrid: Cell[][]) => {
-    const allGreen = currentGrid.every(row => 
-      row.every(cell => cell.type === 'green')
-    );
-    if (allGreen) {
+    const greenCells = currentGrid.flat().filter(cell => cell.type === 'green').length;
+    const totalCells = currentGrid.flat().length;
+    const completionPercentage = greenCells / totalCells;
+
+    if (completionPercentage >= 0.8) {
       setIsComplete(true);
+      setGameActive(false);
+      
+      // Calculate stars based on performance
+      const efficiency = 1 - (moves / maxMoves);
+      const timeBonus = timer < 300 ? 1 : timer < 600 ? 0.5 : 0;
+      const hintPenalty = hintsUsed * 0.2;
+      
+      const finalScore = Math.max(0, efficiency + timeBonus - hintPenalty);
+      const starsEarned = finalScore > 0.8 ? 3 : finalScore > 0.5 ? 2 : 1;
+      setStars(starsEarned);
     }
   };
 
@@ -145,7 +194,12 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
       for (let j = 0; j < grid[i].length; j++) {
         if (!grid[i][j].isFixed && grid[i][j].type !== 'green') {
           const newGrid = [...grid];
-          newGrid[i][j].type = 'yellow';
+          if (Math.random() < 0.5) {
+            newGrid[i][j].type = 'yellow';
+          } else {
+            // Highlight a good swap possibility
+            newGrid[i][j].type = 'yellow';
+          }
           setGrid(newGrid);
           setHintsUsed(hintsUsed + 1);
           return;
@@ -158,12 +212,12 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
     startGame();
   };
 
-  // Real-time difficulty change
+  // Real-time difficulty and variant change
   useEffect(() => {
     if (gameStarted) {
       startGame();
     }
-  }, [difficulty]);
+  }, [difficulty, variant]);
 
   const getCellClass = (cell: Cell) => {
     let baseClass = "w-12 h-12 border-2 flex items-center justify-center font-bold text-lg transition-all duration-300 cursor-pointer ";
@@ -178,9 +232,9 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
 
     switch (cell.type) {
       case 'green':
-        return baseClass + "bg-green-500 text-white border-green-600";
+        return baseClass + "bg-green-500 text-white border-green-600 shadow-lg";
       case 'yellow':
-        return baseClass + "bg-yellow-400 text-black border-yellow-500";
+        return baseClass + "bg-yellow-400 text-black border-yellow-500 shadow-md";
       default:
         return baseClass + "bg-gray-200 text-black border-gray-300 hover:bg-gray-300";
     }
@@ -193,22 +247,25 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
           <Button onClick={onBack} variant="outline" className="bg-white/90">
             ← Back to Hub
           </Button>
-          <h1 className="text-4xl font-bold text-white">Waffle Game</h1>
+          <h1 className="text-4xl font-bold text-white">Waffle Master</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
               <Button variant="outline" className="bg-yellow-500 text-white hover:bg-yellow-600">
-                🧠 Concept
+                🧇 Concept
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Waffle Game Concepts</DialogTitle>
                 <DialogDescription>Learn how to master the waffle word puzzle</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="space-y-4">
                 <div className="animate-fade-in">
                   <h3 className="font-bold text-lg">🎯 How to Play</h3>
                   <p>Swap letters to form valid words in all rows and columns of the waffle grid.</p>
+                  <div className="bg-blue-50 p-3 rounded mt-2">
+                    <p className="text-sm">🎨 <strong>Visual:</strong> Imagine a crossword puzzle made of breakfast waffles - each square must be perfect to create delicious word combinations!</p>
+                  </div>
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
                   <h3 className="font-bold text-lg">🟢 Color Meanings</h3>
@@ -217,19 +274,41 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
                     <li><span className="bg-yellow-400 text-black px-2 py-1 rounded">Yellow</span> - Correct letter in wrong position</li>
                     <li><span className="bg-gray-200 text-black px-2 py-1 rounded">White</span> - Letter not in target word</li>
                   </ul>
+                  <div className="bg-yellow-50 p-3 rounded mt-2">
+                    <p className="text-sm">🎨 <strong>Visual:</strong> Think of traffic lights - green means go (perfect!), yellow means caution (close!), white means stop and think!</p>
+                  </div>
                 </div>
                 <div className="animate-scale-in" style={{ animationDelay: '0.4s' }}>
                   <h3 className="font-bold text-lg">🎮 Strategy Tips</h3>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Focus on green letters first - they're in correct positions</li>
                     <li>Move yellow letters to better positions</li>
-                    <li>Look for common word patterns</li>
-                    <li>Use limited moves wisely</li>
+                    <li>Look for common word patterns and letter combinations</li>
+                    <li>Use limited moves wisely - plan ahead!</li>
+                    <li>Start from corners and intersections</li>
+                  </ul>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                  <h3 className="font-bold text-lg">🧇 Waffle Variants</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Daily:</strong> Classic 5x5 grid for daily challenges</li>
+                    <li><strong>Mini:</strong> 3x3 grid for quick games</li>
+                    <li><strong>Deluxe:</strong> 6x6 grid with premium features</li>
+                    <li><strong>Mega:</strong> 7x7 grid for ultimate challenge</li>
                   </ul>
                 </div>
                 <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg animate-pulse">
                   <h4 className="font-bold">💡 Pro Tip:</h4>
-                  <p>Start with the corners and work your way inward!</p>
+                  <p>Start with the corners and work your way inward - they provide the most structure!</p>
+                  <p className="text-sm mt-1">🎨 <strong>Visual:</strong> Like building a house - start with the foundation (corners) then fill in the walls!</p>
+                </div>
+                <div className="bg-purple-50 p-3 rounded">
+                  <h4 className="font-bold text-purple-800">📚 Related Topics:</h4>
+                  <div className="space-y-1 mt-2">
+                    <a href="https://en.wikipedia.org/wiki/Word_game" target="_blank" rel="noopener noreferrer" className="block text-purple-600 hover:text-purple-800 underline">🔗 Word Games</a>
+                    <a href="https://en.wikipedia.org/wiki/Crossword" target="_blank" rel="noopener noreferrer" className="block text-purple-600 hover:text-purple-800 underline">🔗 Crossword Puzzles</a>
+                    <a href="https://en.wikipedia.org/wiki/Anagram" target="_blank" rel="noopener noreferrer" className="block text-purple-600 hover:text-purple-800 underline">🔗 Anagrams</a>
+                  </div>
                 </div>
               </div>
             </DialogContent>
@@ -252,6 +331,23 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
+                    <SelectItem value="expert">Expert</SelectItem>
+                    <SelectItem value="random">🎲 Random</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Variant</label>
+                <Select value={variant} onValueChange={(value) => setVariant(value as WaffleVariant)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="mini">Mini</SelectItem>
+                    <SelectItem value="deluxe">Deluxe</SelectItem>
+                    <SelectItem value="mega">Mega</SelectItem>
                     <SelectItem value="random">🎲 Random</SelectItem>
                   </SelectContent>
                 </Select>
@@ -280,8 +376,9 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
             <CardHeader>
               <CardTitle className="text-center flex justify-between items-center flex-wrap gap-2">
                 <div>Moves: {moves}/{maxMoves}</div>
+                <div>Time: {formatTime(timer)}</div>
                 <div>
-                  {isComplete ? '🎉 Waffle Complete!' : 
+                  {isComplete ? `🎉 Complete! ${'⭐'.repeat(stars)}` : 
                    moves >= maxMoves ? '❌ No more moves!' :
                    swapMode ? (firstSwapCell ? 'Select second cell' : 'Select first cell') : 'Click to swap letters'}
                 </div>
@@ -290,7 +387,9 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex justify-center">
-                <div className="grid grid-cols-5 gap-1 p-4 bg-yellow-100 rounded-lg">
+                <div className={`grid gap-1 p-4 bg-yellow-100 rounded-lg`} style={{
+                  gridTemplateColumns: `repeat(${grid.length}, minmax(0, 1fr))`
+                }}>
                   {grid.map((row, i) =>
                     row.map((cell, j) => (
                       <button
@@ -333,7 +432,9 @@ export const WaffleGame: React.FC<WaffleGameProps> = ({ onBack }) => {
                     {isComplete ? 'Waffle Complete!' : 'Game Over!'}
                   </h2>
                   <p className={`mb-4 ${isComplete ? 'text-green-700' : 'text-red-700'}`}>
-                    {isComplete ? `Completed in ${moves} moves!` : 'No more moves remaining!'}
+                    {isComplete ? 
+                      `Completed in ${moves} moves! Time: ${formatTime(timer)} | Stars: ${'⭐'.repeat(stars)}` : 
+                      'No more moves remaining!'}
                   </p>
                   <Button onClick={startGame} className="bg-yellow-500 hover:bg-yellow-600">
                     Play Again

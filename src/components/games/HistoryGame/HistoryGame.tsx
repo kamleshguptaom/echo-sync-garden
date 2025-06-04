@@ -19,6 +19,8 @@ interface Question {
   explanation: string;
   concept: string;
   animation: string;
+  visualExample: string;
+  relatedTopics: { title: string; url: string }[];
 }
 
 export const HistoryGame: React.FC<HistoryGameProps> = ({ onBack }) => {
@@ -38,65 +40,147 @@ export const HistoryGame: React.FC<HistoryGameProps> = ({ onBack }) => {
     ancient: {
       'multiple-choice': [
         {
-          question: "Which ancient wonder of the world was located in Alexandria?",
-          options: ["Hanging Gardens", "Lighthouse of Alexandria", "Colossus of Rhodes", "Temple of Artemis"],
-          correctAnswer: "Lighthouse of Alexandria",
-          explanation: "The Lighthouse of Alexandria was one of the Seven Wonders of the Ancient World and guided ships safely into the harbor.",
-          concept: "Ancient Wonders were remarkable constructions that showcased human engineering achievements.",
-          animation: "🏛️ Ancient structures were marvels of engineering and artistry! 🌟"
+          question: "Which civilization built the magnificent pyramids of Giza?",
+          options: ["Mesopotamians", "Egyptians", "Greeks", "Romans"],
+          correctAnswer: "Egyptians",
+          explanation: "The ancient Egyptians built the pyramids around 2580-2510 BCE as eternal resting places for their pharaohs.",
+          concept: "Ancient civilizations created monumental architecture that reflected their beliefs about afterlife and divine power.",
+          animation: "🏜️ The pyramids rise majestically from the desert sands! ⬆️🔺✨",
+          visualExample: "Imagine massive limestone blocks, each weighing 2.5 tons, being moved without modern machinery! Workers used ramps, levers, and pure human determination. 🏗️",
+          relatedTopics: [
+            { title: "Ancient Egyptian Religion", url: "https://en.wikipedia.org/wiki/Ancient_Egyptian_religion" },
+            { title: "Pyramid Construction", url: "https://en.wikipedia.org/wiki/Egyptian_pyramid_construction_techniques" }
+          ]
         },
         {
-          question: "Who was the first emperor of Rome?",
-          options: ["Julius Caesar", "Augustus", "Nero", "Marcus Aurelius"],
-          correctAnswer: "Augustus",
-          explanation: "Augustus (originally Octavian) became the first Roman Emperor in 27 BCE after the fall of the Roman Republic.",
-          concept: "The Roman Empire marked the transition from republic to imperial rule.",
-          animation: "👑 Augustus transformed Rome from republic to empire! ⚡"
+          question: "Who was the legendary king who created the first code of laws?",
+          options: ["Hammurabi", "Nebuchadnezzar", "Gilgamesh", "Sargon"],
+          correctAnswer: "Hammurabi",
+          explanation: "Hammurabi of Babylon created one of the world's first written legal codes around 1750 BCE, featuring 282 laws.",
+          concept: "Early legal systems established order and justice in growing civilizations through written laws.",
+          animation: "⚖️ Justice carved in stone for all to see! 📜⚡",
+          visualExample: "Picture a massive stone pillar with cuneiform writing, where citizens could read 'an eye for an eye' - the birth of written justice! ⚖️",
+          relatedTopics: [
+            { title: "Code of Hammurabi", url: "https://en.wikipedia.org/wiki/Code_of_Hammurabi" },
+            { title: "Ancient Mesopotamia", url: "https://en.wikipedia.org/wiki/Mesopotamia" }
+          ]
+        },
+        {
+          question: "Which ancient wonder was located in the harbor of Alexandria?",
+          options: ["Hanging Gardens", "Lighthouse of Alexandria", "Colossus of Rhodes", "Temple of Artemis"],
+          correctAnswer: "Lighthouse of Alexandria",
+          explanation: "The Lighthouse of Alexandria, built around 280 BCE, stood over 100 meters tall and guided ships safely into the busy harbor.",
+          concept: "Ancient engineering marvels served both practical and symbolic purposes in great cities.",
+          animation: "🏛️ A beacon of light cutting through the darkness! 💡🌊",
+          visualExample: "Envision a towering structure with mirrors reflecting fire at its peak, visible from 50 kilometers away, helping merchants navigate safely! 🔥",
+          relatedTopics: [
+            { title: "Lighthouse of Alexandria", url: "https://en.wikipedia.org/wiki/Lighthouse_of_Alexandria" },
+            { title: "Seven Wonders of the Ancient World", url: "https://en.wikipedia.org/wiki/Seven_Wonders_of_the_Ancient_World" }
+          ]
         }
       ],
       'true-false': [
         {
-          question: "The Great Wall of China was built in a single dynasty.",
+          question: "The Great Wall of China was built entirely during the Ming Dynasty.",
           correctAnswer: "False",
-          explanation: "The Great Wall was built over many dynasties, with major construction during the Ming Dynasty.",
-          concept: "Historical monuments often span multiple time periods and rulers.",
-          animation: "🏯 The Great Wall grew over centuries! 🔨"
+          explanation: "The Great Wall was built over many dynasties spanning over 2,000 years, with major construction during multiple periods including the Ming Dynasty.",
+          concept: "Historical monuments often span multiple time periods and represent the work of many generations.",
+          animation: "🏯 Walls growing across centuries like a dragon across mountains! 🐉⛰️",
+          visualExample: "Imagine thousands of workers across different eras, each adding their piece to this massive fortification stretching across mountains and deserts! 🧱",
+          relatedTopics: [
+            { title: "Great Wall of China", url: "https://en.wikipedia.org/wiki/Great_Wall_of_China" },
+            { title: "Chinese Dynasties", url: "https://en.wikipedia.org/wiki/Dynasties_in_Chinese_history" }
+          ]
         }
       ]
     },
     medieval: {
       'multiple-choice': [
         {
-          question: "Which event marked the beginning of the Middle Ages?",
-          options: ["Fall of Rome", "Black Death", "Crusades", "Norman Conquest"],
-          correctAnswer: "Fall of Rome",
-          explanation: "The fall of the Western Roman Empire in 476 CE is traditionally considered the start of the Middle Ages.",
-          concept: "Historical periods are defined by major political and social changes.",
-          animation: "🏰 Medieval times began with Rome's fall! ⚔️"
+          question: "Which plague devastated Europe in the 14th century?",
+          options: ["Black Death", "Spanish Flu", "Smallpox", "Cholera"],
+          correctAnswer: "Black Death",
+          explanation: "The Black Death (1347-1351) killed an estimated 75-200 million people, fundamentally changing European society.",
+          concept: "Pandemics have repeatedly shaped human history, affecting social structures, economics, and culture.",
+          animation: "💀 Dark clouds of disease spreading across medieval Europe! ⚡🏰",
+          visualExample: "Picture medieval towns with empty streets, abandoned fields, and profound social changes as one-third of Europe's population perished. 🏘️",
+          relatedTopics: [
+            { title: "Black Death", url: "https://en.wikipedia.org/wiki/Black_Death" },
+            { title: "Medieval Medicine", url: "https://en.wikipedia.org/wiki/Medieval_medicine_of_Western_Europe" }
+          ]
+        },
+        {
+          question: "What was the primary purpose of medieval castles?",
+          options: ["Entertainment", "Defense", "Agriculture", "Trade"],
+          correctAnswer: "Defense",
+          explanation: "Medieval castles were primarily built as fortified residences to protect nobles and control surrounding territories during times of conflict.",
+          concept: "Medieval architecture reflected the violent nature of the times and the need for protection.",
+          animation: "🏰 Mighty fortresses standing guard against enemy attacks! ⚔️🛡️",
+          visualExample: "Envision thick stone walls, arrow slits, moats, and drawbridges designed to withstand siege warfare and protect those inside! 🗡️",
+          relatedTopics: [
+            { title: "Medieval Castle", url: "https://en.wikipedia.org/wiki/Castle" },
+            { title: "Medieval Warfare", url: "https://en.wikipedia.org/wiki/Medieval_warfare" }
+          ]
         }
       ]
     },
     modern: {
       'multiple-choice': [
         {
-          question: "Which revolution began in 1789?",
+          question: "Which revolution sparked the phrase 'Let them eat cake'?",
           options: ["American Revolution", "French Revolution", "Industrial Revolution", "Russian Revolution"],
           correctAnswer: "French Revolution",
-          explanation: "The French Revolution began in 1789 and led to major changes in French society and government.",
-          concept: "Revolutions reshape societies and political systems.",
-          animation: "🇫🇷 The French Revolution changed the world! 💥"
+          explanation: "This phrase (though likely apocryphal) symbolized the disconnect between French nobility and common people during the French Revolution (1789-1799).",
+          concept: "Social inequality and economic hardship often trigger revolutionary movements that reshape entire societies.",
+          animation: "🇫🇷 The people rising up against oppression! ✊💥",
+          visualExample: "Picture starving peasants outside palace gates while nobles feast lavishly - the spark that ignited revolutionary fire! 🔥",
+          relatedTopics: [
+            { title: "French Revolution", url: "https://en.wikipedia.org/wiki/French_Revolution" },
+            { title: "Marie Antoinette", url: "https://en.wikipedia.org/wiki/Marie_Antoinette" }
+          ]
+        },
+        {
+          question: "What invention revolutionized manufacturing in the 18th century?",
+          options: ["Steam Engine", "Telegraph", "Printing Press", "Compass"],
+          correctAnswer: "Steam Engine",
+          explanation: "The steam engine, perfected by James Watt in 1769, powered the Industrial Revolution and transformed manufacturing, transportation, and society.",
+          concept: "Technological innovations can fundamentally transform how humans live, work, and organize society.",
+          animation: "⚙️ Steam and gears powering the age of industry! 🚂💨",
+          visualExample: "Imagine the first steam-powered factories with massive wheels turning, producing goods faster than ever before possible! 🏭",
+          relatedTopics: [
+            { title: "Industrial Revolution", url: "https://en.wikipedia.org/wiki/Industrial_Revolution" },
+            { title: "Steam Engine", url: "https://en.wikipedia.org/wiki/Steam_engine" }
+          ]
         }
       ]
     },
     contemporary: {
       'multiple-choice': [
         {
-          question: "Which war was known as 'The Great War'?",
-          options: ["World War I", "World War II", "Vietnam War", "Korean War"],
-          correctAnswer: "World War I",
-          explanation: "World War I (1914-1918) was originally called 'The Great War' due to its unprecedented scale.",
-          concept: "Global conflicts have shaped modern international relations.",
-          animation: "🌍 WWI changed the global landscape forever! 💔"
+          question: "Which event triggered World War I?",
+          options: ["Sinking of Lusitania", "Assassination of Archduke Franz Ferdinand", "German invasion of Belgium", "Russian Revolution"],
+          correctAnswer: "Assassination of Archduke Franz Ferdinand",
+          explanation: "The assassination of Archduke Franz Ferdinand in Sarajevo on June 28, 1914, triggered the alliance system that led to WWI.",
+          concept: "In interconnected political systems, single events can cascade into global conflicts through alliance networks.",
+          animation: "💥 One gunshot echoing across the world! 🌍⚡",
+          visualExample: "Picture a single moment in Sarajevo setting off a chain reaction of declarations of war across Europe like falling dominoes! 🃏",
+          relatedTopics: [
+            { title: "World War I", url: "https://en.wikipedia.org/wiki/World_War_I" },
+            { title: "Assassination of Archduke Franz Ferdinand", url: "https://en.wikipedia.org/wiki/Assassination_of_Archduke_Franz_Ferdinand" }
+          ]
+        },
+        {
+          question: "What was the main goal of the Marshall Plan?",
+          options: ["Rebuild Europe after WWII", "Colonize Africa", "Explore space", "Build nuclear weapons"],
+          correctAnswer: "Rebuild Europe after WWII",
+          explanation: "The Marshall Plan (1948-1951) provided over $12 billion to help rebuild Western European economies devastated by WWII.",
+          concept: "Post-war reconstruction efforts can shape international relations and prevent future conflicts through economic cooperation.",
+          animation: "🏗️ Rebuilding nations from ashes to prosperity! 💰🌟",
+          visualExample: "Envision American aid flowing into war-torn European cities, rebuilding factories, roads, and hope for the future! 🚛",
+          relatedTopics: [
+            { title: "Marshall Plan", url: "https://en.wikipedia.org/wiki/Marshall_Plan" },
+            { title: "Post-WWII Reconstruction", url: "https://en.wikipedia.org/wiki/Reconstruction_of_Germany" }
+          ]
         }
       ]
     }
@@ -153,12 +237,22 @@ export const HistoryGame: React.FC<HistoryGameProps> = ({ onBack }) => {
     if (!currentQuestion || hintsUsed >= 3) return;
     
     if (currentQuestion.options) {
-      // Remove one wrong answer
-      const wrongAnswers = currentQuestion.options.filter(opt => opt !== currentQuestion.correctAnswer);
-      const wrongToRemove = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)];
-      setCurrentHint(`Hint: "${wrongToRemove}" is not the correct answer.`);
+      if (hintsUsed === 0) {
+        const wrongAnswers = currentQuestion.options.filter(opt => opt !== currentQuestion.correctAnswer);
+        const wrongToRemove = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)];
+        setCurrentHint(`💡 Hint 1: "${wrongToRemove}" is not the correct answer.`);
+      } else if (hintsUsed === 1) {
+        setCurrentHint(`💡 Hint 2: Think about the historical context and timeline of events.`);
+      } else {
+        const correctAnswer = currentQuestion.correctAnswer as string;
+        setCurrentHint(`💡 Final Hint: The answer starts with "${correctAnswer.charAt(0)}" and has ${correctAnswer.length} letters.`);
+      }
     } else {
-      setCurrentHint("Hint: Think about the historical context and timeline.");
+      if (hintsUsed === 0) {
+        setCurrentHint("💡 Hint 1: Consider the historical accuracy and timeline.");
+      } else {
+        setCurrentHint("💡 Final Hint: Think about what historical evidence supports this statement.");
+      }
     }
     
     setHintsUsed(hintsUsed + 1);
@@ -168,9 +262,9 @@ export const HistoryGame: React.FC<HistoryGameProps> = ({ onBack }) => {
     startGame();
   };
 
-  // Real-time updates
+  // Real-time updates when era or question type changes
   useEffect(() => {
-    if (gameStarted && currentQuestion) {
+    if (gameStarted) {
       generateQuestion();
     }
   }, [era, questionType]);
@@ -189,12 +283,12 @@ export const HistoryGame: React.FC<HistoryGameProps> = ({ onBack }) => {
                 🏛️ Concept
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>History Learning Concepts</DialogTitle>
                 <DialogDescription>Understanding historical thinking and analysis</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="space-y-4">
                 <div className="animate-fade-in">
                   <h3 className="font-bold text-lg">📚 Historical Thinking</h3>
                   <p>History is about understanding cause and effect, change over time, and human experiences.</p>
@@ -367,10 +461,30 @@ export const HistoryGame: React.FC<HistoryGameProps> = ({ onBack }) => {
                     </p>
                     <p className="mb-4">{currentQuestion.explanation}</p>
                     
-                    <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                    <div className="bg-white p-4 rounded-lg border-l-4 border-blue-500 mb-4">
                       <h5 className="font-bold text-blue-800 mb-2">💡 Concept:</h5>
                       <p className="text-blue-700 mb-2">{currentQuestion.concept}</p>
-                      <div className="text-2xl animate-bounce">{currentQuestion.animation}</div>
+                      <div className="text-2xl animate-bounce mb-2">{currentQuestion.animation}</div>
+                      <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-400 mb-3">
+                        <h6 className="font-semibold text-yellow-800 mb-1">🎨 Visual Example:</h6>
+                        <p className="text-yellow-700">{currentQuestion.visualExample}</p>
+                      </div>
+                      <div className="bg-purple-50 p-3 rounded border-l-4 border-purple-400">
+                        <h6 className="font-semibold text-purple-800 mb-2">📚 Related Topics:</h6>
+                        <div className="space-y-1">
+                          {currentQuestion.relatedTopics.map((topic, index) => (
+                            <a 
+                              key={index} 
+                              href={topic.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="block text-purple-600 hover:text-purple-800 underline"
+                            >
+                              🔗 {topic.title}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     
                     <Button onClick={nextQuestion} className="mt-4 bg-blue-500 hover:bg-blue-600">

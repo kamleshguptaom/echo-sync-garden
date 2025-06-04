@@ -10,13 +10,16 @@ interface SudokuProps {
 }
 
 type Difficulty = 'easy' | 'medium' | 'hard' | 'expert' | 'random';
+type SudokuVariant = 'classic' | 'diagonal' | 'irregular' | 'killer' | 'random';
 type Cell = number | null;
 
 export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const [board, setBoard] = useState<Cell[][]>(Array(9).fill(null).map(() => Array(9).fill(null)));
   const [initialBoard, setInitialBoard] = useState<Cell[][]>(Array(9).fill(null).map(() => Array(9).fill(null)));
+  const [solutionBoard, setSolutionBoard] = useState<Cell[][]>(Array(9).fill(null).map(() => Array(9).fill(null)));
   const [selectedCell, setSelectedCell] = useState<{row: number, col: number} | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [variant, setVariant] = useState<SudokuVariant>('classic');
   const [gameStarted, setGameStarted] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [errors, setErrors] = useState<{row: number, col: number}[]>([]);
@@ -28,6 +31,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const [gameActive, setGameActive] = useState(false);
   const [mistakeCount, setMistakeCount] = useState(0);
   const [maxMistakes] = useState(3);
+  const [showSolution, setShowSolution] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -46,10 +50,14 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const generateSudoku = (diff: Difficulty) => {
+  const generateSudoku = (diff: Difficulty, sudokuVariant: SudokuVariant) => {
     const actualDiff = diff === 'random' ? 
       (['easy', 'medium', 'hard', 'expert'] as const)[Math.floor(Math.random() * 4)] : 
       diff;
+
+    const actualVariant = sudokuVariant === 'random' ?
+      (['classic', 'diagonal', 'irregular', 'killer'] as const)[Math.floor(Math.random() * 4)] :
+      sudokuVariant;
 
     // Start with a valid completed Sudoku
     const completedBoard = [
@@ -69,6 +77,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                          actualDiff === 'hard' ? 55 : 65;
     
     const puzzle = completedBoard.map(row => [...row]);
+    setSolutionBoard(completedBoard.map(row => [...row]));
     
     // Remove cells
     const cellsRemoved = new Set<string>();
@@ -105,11 +114,27 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
       }
     }
 
+    // Additional checks for diagonal variant
+    if (variant === 'diagonal') {
+      // Main diagonal
+      if (row === col) {
+        for (let i = 0; i < 9; i++) {
+          if (i !== row && board[i][i] === num) return false;
+        }
+      }
+      // Anti-diagonal
+      if (row + col === 8) {
+        for (let i = 0; i < 9; i++) {
+          if (i !== row && board[i][8-i] === num) return false;
+        }
+      }
+    }
+
     return true;
   };
 
   const startGame = () => {
-    const puzzle = generateSudoku(difficulty);
+    const puzzle = generateSudoku(difficulty, variant);
     setBoard(puzzle.map(row => [...row]));
     setInitialBoard(puzzle.map(row => [...row]));
     setGameStarted(true);
@@ -121,14 +146,15 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     setHintsUsed(0);
     setTimer(0);
     setMistakeCount(0);
+    setShowSolution(false);
   };
 
   const makeMove = (row: number, col: number, num: number | null) => {
     if (initialBoard[row][col] !== null) return;
-    if (mistakeCount >= maxMistakes) return;
+    if (mistakeCount >= maxMistakes && !isComplete) return;
 
     if (notesMode && num !== null) {
-      const newNotes = [...notes];
+      const newNotes = notes.map(r => r.map(c => [...c]));
       const cellNotes = newNotes[row][col];
       const noteIndex = cellNotes.indexOf(num);
       if (noteIndex === -1) {
@@ -147,7 +173,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
 
     // Clear notes for this cell when placing a number
     if (num !== null) {
-      const newNotes = [...notes];
+      const newNotes = notes.map(r => r.map(c => [...c]));
       newNotes[row][col] = [];
       setNotes(newNotes);
     }
@@ -181,14 +207,11 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     for (let i = 0; i < 9; i++) {
       for (let j = 0; j < 9; j++) {
         if (board[i][j] === null && initialBoard[i][j] === null) {
-          for (let num = 1; num <= 9; num++) {
-            const testBoard = board.map(r => [...r]);
-            testBoard[i][j] = num;
-            if (isValidMove(testBoard, i, j, num)) {
-              makeMove(i, j, num);
-              setHintsUsed(hintsUsed + 1);
-              return;
-            }
+          const correctNum = solutionBoard[i][j];
+          if (correctNum && isValidMove(board, i, j, correctNum)) {
+            makeMove(i, j, correctNum);
+            setHintsUsed(hintsUsed + 1);
+            return;
           }
         }
       }
@@ -198,7 +221,17 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
   const clearCell = () => {
     if (selectedCell && initialBoard[selectedCell.row][selectedCell.col] === null) {
       makeMove(selectedCell.row, selectedCell.col, null);
+      // Also clear notes for this cell
+      const newNotes = notes.map(r => r.map(c => [...c]));
+      newNotes[selectedCell.row][selectedCell.col] = [];
+      setNotes(newNotes);
     }
+  };
+
+  const showCompleteSolution = () => {
+    setBoard(solutionBoard.map(row => [...row]));
+    setShowSolution(true);
+    setGameActive(false);
   };
 
   const resetGame = () => {
@@ -211,6 +244,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     setHintsUsed(0);
     setGameActive(true);
     setIsComplete(false);
+    setShowSolution(false);
   };
 
   const isErrorCell = (row: number, col: number) => {
@@ -228,15 +262,16 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
     
     if (row === selRow && col === selCol) return 'bg-blue-200 ring-2 ring-blue-500';
     if (sameRow || sameCol || sameBox) return 'bg-blue-50';
+    if (variant === 'diagonal' && ((row === col && selRow === selCol) || (row + col === 8 && selRow + selCol === 8))) return 'bg-purple-50';
     return '';
   };
 
-  // Real-time difficulty change
+  // Real-time difficulty and variant change
   useEffect(() => {
     if (gameStarted) {
       startGame();
     }
-  }, [difficulty]);
+  }, [difficulty, variant]);
 
   return (
     <div className="container mx-auto p-6">
@@ -245,22 +280,25 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
           <Button onClick={onBack} variant="outline" className="bg-white/90">
             ← Back to Hub
           </Button>
-          <h1 className="text-4xl font-bold text-white">Sudoku</h1>
+          <h1 className="text-4xl font-bold text-white">Sudoku Master</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
               <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
                 🧠 Concept
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Sudoku Concepts & Strategy</DialogTitle>
                 <DialogDescription>Learn the fundamentals and advanced techniques</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="space-y-4">
                 <div className="animate-fade-in">
                   <h3 className="font-bold text-lg">🎯 Rules</h3>
                   <p>Fill a 9×9 grid so each row, column, and 3×3 box contains digits 1-9 exactly once.</p>
+                  <div className="bg-yellow-50 p-3 rounded mt-2">
+                    <p className="text-sm">🎨 <strong>Visual:</strong> Imagine a magic square where every number 1-9 appears exactly once in each line, column, and small box - like a perfect mathematical puzzle!</p>
+                  </div>
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
                   <h3 className="font-bold text-lg">🧠 Basic Strategies</h3>
@@ -270,6 +308,9 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                     <li><strong>Hidden Singles:</strong> Find numbers that can only go in one place</li>
                     <li><strong>Notes:</strong> Use pencil marks to track possibilities</li>
                   </ul>
+                  <div className="bg-blue-50 p-3 rounded mt-2">
+                    <p className="text-sm">🎨 <strong>Visual:</strong> Think of it like detective work - you eliminate suspects (numbers) until only one possibility remains for each cell!</p>
+                  </div>
                 </div>
                 <div className="animate-scale-in" style={{ animationDelay: '0.4s' }}>
                   <h3 className="font-bold text-lg">📝 Advanced Techniques</h3>
@@ -277,11 +318,30 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                     <li><strong>Naked Pairs:</strong> Two cells with same two candidates</li>
                     <li><strong>Pointing Pairs:</strong> Candidates aligned in box and row/column</li>
                     <li><strong>Box/Line Reduction:</strong> Eliminate candidates from intersecting regions</li>
+                    <li><strong>X-Wing:</strong> Advanced elimination pattern</li>
+                  </ul>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                  <h3 className="font-bold text-lg">🎮 Sudoku Variants</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Classic:</strong> Traditional 9x9 grid</li>
+                    <li><strong>Diagonal:</strong> Main diagonals also contain 1-9</li>
+                    <li><strong>Irregular:</strong> Non-standard shaped regions</li>
+                    <li><strong>Killer:</strong> Regions with arithmetic constraints</li>
                   </ul>
                 </div>
                 <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-lg animate-pulse">
                   <h4 className="font-bold">💡 Pro Tips:</h4>
                   <p>Start with rows/columns/boxes that have the most numbers filled in!</p>
+                  <p className="text-sm mt-1">🎨 <strong>Visual:</strong> Like solving a jigsaw puzzle - work on the areas with the most pieces first!</p>
+                </div>
+                <div className="bg-green-50 p-3 rounded">
+                  <h4 className="font-bold text-green-800">📚 Related Topics:</h4>
+                  <div className="space-y-1 mt-2">
+                    <a href="https://en.wikipedia.org/wiki/Sudoku" target="_blank" rel="noopener noreferrer" className="block text-green-600 hover:text-green-800 underline">🔗 Sudoku History</a>
+                    <a href="https://en.wikipedia.org/wiki/Mathematics_of_Sudoku" target="_blank" rel="noopener noreferrer" className="block text-green-600 hover:text-green-800 underline">🔗 Mathematics of Sudoku</a>
+                    <a href="https://en.wikipedia.org/wiki/Sudoku_solving_algorithms" target="_blank" rel="noopener noreferrer" className="block text-green-600 hover:text-green-800 underline">🔗 Solving Algorithms</a>
+                  </div>
                 </div>
               </div>
             </DialogContent>
@@ -305,6 +365,22 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
                     <SelectItem value="expert">Expert</SelectItem>
+                    <SelectItem value="random">🎲 Random</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Variant</label>
+                <Select value={variant} onValueChange={(value) => setVariant(value as SudokuVariant)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="classic">Classic</SelectItem>
+                    <SelectItem value="diagonal">Diagonal</SelectItem>
+                    <SelectItem value="irregular">Irregular</SelectItem>
+                    <SelectItem value="killer">Killer</SelectItem>
                     <SelectItem value="random">🎲 Random</SelectItem>
                   </SelectContent>
                 </Select>
@@ -335,10 +411,11 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                 <div>Time: {formatTime(timer)}</div>
                 <div>
                   {isComplete ? '🎉 Congratulations! Puzzle Solved! 🎉' : 
+                   showSolution ? '📖 Solution Displayed' :
                    mistakeCount >= maxMistakes ? '❌ Game Over - Too many mistakes!' :
                    `Hints: ${hintsUsed}/3 | Mistakes: ${mistakeCount}/${maxMistakes}`}
                 </div>
-                <div>Difficulty: {difficulty === 'random' ? '🎲 Random' : difficulty}</div>
+                <div>{variant === 'random' ? '🎲 Random' : variant} - {difficulty === 'random' ? '🎲 Random' : difficulty}</div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -355,6 +432,8 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                             ? 'bg-gray-100 font-black text-black'
                             : isErrorCell(i, j)
                             ? 'bg-red-200'
+                            : showSolution
+                            ? 'bg-green-50'
                             : 'bg-white hover:bg-gray-50'
                         } ${
                           (i + 1) % 3 === 0 && i !== 8 ? 'border-b-2 border-b-gray-800' : ''
@@ -362,7 +441,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                           (j + 1) % 3 === 0 && j !== 8 ? 'border-r-2 border-r-gray-800' : ''
                         }`}
                         onClick={() => setSelectedCell({row: i, col: j})}
-                        disabled={mistakeCount >= maxMistakes && !isComplete}
+                        disabled={(mistakeCount >= maxMistakes && !isComplete) || showSolution}
                       >
                         {cell || ''}
                         {!cell && notes[i][j].length > 0 && (
@@ -385,13 +464,13 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                   <Button 
                     onClick={() => setNotesMode(!notesMode)} 
                     variant={notesMode ? "default" : "outline"}
-                    disabled={mistakeCount >= maxMistakes && !isComplete}
+                    disabled={(mistakeCount >= maxMistakes && !isComplete) || showSolution}
                   >
                     📝 Notes {notesMode ? 'ON' : 'OFF'}
                   </Button>
                   <Button 
                     onClick={useHint} 
-                    disabled={hintsUsed >= 3 || mistakeCount >= maxMistakes} 
+                    disabled={hintsUsed >= 3 || mistakeCount >= maxMistakes || showSolution} 
                     variant="outline"
                   >
                     💡 Hint ({hintsUsed}/3)
@@ -399,9 +478,17 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                   <Button 
                     onClick={clearCell} 
                     variant="outline"
-                    disabled={mistakeCount >= maxMistakes && !isComplete}
+                    disabled={(mistakeCount >= maxMistakes && !isComplete) || showSolution || !selectedCell || initialBoard[selectedCell?.row || 0][selectedCell?.col || 0] !== null}
                   >
                     🗑️ Clear
+                  </Button>
+                  <Button 
+                    onClick={showCompleteSolution} 
+                    variant="outline"
+                    className="bg-orange-100 hover:bg-orange-200"
+                    disabled={isComplete || showSolution}
+                  >
+                    📋 Show Solution
                   </Button>
                 </div>
 
@@ -411,7 +498,7 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                       key={num}
                       className="w-12 h-12 text-lg font-bold"
                       onClick={() => selectedCell && makeMove(selectedCell.row, selectedCell.col, num)}
-                      disabled={!selectedCell || initialBoard[selectedCell.row][selectedCell.col] !== null || (mistakeCount >= maxMistakes && !isComplete)}
+                      disabled={!selectedCell || initialBoard[selectedCell.row][selectedCell.col] !== null || ((mistakeCount >= maxMistakes && !isComplete) || showSolution)}
                     >
                       {num}
                     </Button>
@@ -419,13 +506,29 @@ export const Sudoku: React.FC<SudokuProps> = ({ onBack }) => {
                 </div>
               </div>
 
-              {(isComplete || mistakeCount >= maxMistakes) && (
-                <div className={`text-center p-6 rounded-lg ${isComplete ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <h2 className={`text-2xl font-bold mb-2 ${isComplete ? 'text-green-800' : 'text-red-800'}`}>
-                    {isComplete ? 'Puzzle Complete!' : 'Game Over!'}
+              {(isComplete || mistakeCount >= maxMistakes || showSolution) && (
+                <div className={`text-center p-6 rounded-lg ${
+                  isComplete ? 'bg-green-100' : 
+                  showSolution ? 'bg-blue-100' : 
+                  'bg-red-100'
+                }`}>
+                  <h2 className={`text-2xl font-bold mb-2 ${
+                    isComplete ? 'text-green-800' : 
+                    showSolution ? 'text-blue-800' : 
+                    'text-red-800'
+                  }`}>
+                    {isComplete ? 'Puzzle Complete!' : 
+                     showSolution ? 'Solution Revealed!' : 
+                     'Game Over!'}
                   </h2>
-                  <p className={`mb-4 ${isComplete ? 'text-green-700' : 'text-red-700'}`}>
-                    {isComplete ? `Time: ${formatTime(timer)} | Hints used: ${hintsUsed}` : 'Too many mistakes made!'}
+                  <p className={`mb-4 ${
+                    isComplete ? 'text-green-700' : 
+                    showSolution ? 'text-blue-700' : 
+                    'text-red-700'
+                  }`}>
+                    {isComplete ? `Time: ${formatTime(timer)} | Hints used: ${hintsUsed}` : 
+                     showSolution ? 'Study the solution and try again!' :
+                     'Too many mistakes made!'}
                   </p>
                   <Button onClick={startGame} className="bg-green-500 hover:bg-green-600">
                     Play Again
