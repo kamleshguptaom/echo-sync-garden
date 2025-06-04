@@ -53,6 +53,15 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
     return () => clearInterval(interval);
   }, [gameActive]);
 
+  // Reset game when settings change
+  useEffect(() => {
+    if (gameStarted) {
+      setGameStarted(false);
+      setGameActive(false);
+      setCurrentTest(null);
+    }
+  }, [difficulty, gameMode]);
+
   const generateStroopTest = useCallback((): StroopTest => {
     const words = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE'];
     const word = words[Math.floor(Math.random() * words.length)];

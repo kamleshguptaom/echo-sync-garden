@@ -22,11 +22,14 @@ import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
 import { PatternGame } from './PatternGame/PatternGame';
 import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
 import { SpeedReading } from './SpeedReading/SpeedReading';
+import { TypingGame } from './TypingGame/TypingGame';
+import { DrawingGame } from './DrawingGame/DrawingGame';
+import { StoryBook } from './StoryBook/StoryBook';
 
 type GameType = 
   | 'memory' | 'math' | 'word' | 'logic' | 'geometry' | 'science' | 'geography' | 'history'
   | 'tictactoe' | 'sudoku' | 'jigsaw' | 'waffle' | 'laddersnake' | 'aiming' | 'builder'
-  | 'pattern' | 'concentration' | 'speedreading' | null;
+  | 'pattern' | 'concentration' | 'speedreading' | 'typing' | 'drawing' | 'storybook' | null;
 
 export const GameHub = () => {
   const [selectedGame, setSelectedGame] = useState<GameType>(null);
@@ -53,6 +56,9 @@ export const GameHub = () => {
       case 'pattern': return <PatternGame {...gameProps} />;
       case 'concentration': return <ConcentrationGame {...gameProps} />;
       case 'speedreading': return <SpeedReading {...gameProps} />;
+      case 'typing': return <TypingGame {...gameProps} />;
+      case 'drawing': return <DrawingGame {...gameProps} />;
+      case 'storybook': return <StoryBook {...gameProps} />;
       default: return null;
     }
   }
@@ -68,10 +74,16 @@ export const GameHub = () => {
     { id: 'math', title: 'Math Challenge', emoji: '🔢', description: 'Practice arithmetic and algebra', category: 'Learning' },
     { id: 'word', title: 'Word Games', emoji: '📝', description: 'Spelling and vocabulary', category: 'Learning' },
     { id: 'speedreading', title: 'Speed Reading', emoji: '📖', description: 'Improve reading speed & comprehension', category: 'Learning' },
+    { id: 'typing', title: 'Typing Challenge', emoji: '⌨️', description: 'Improve typing speed & accuracy', category: 'Learning' },
     { id: 'science', title: 'Science Quest', emoji: '🔬', description: 'Explore scientific concepts', category: 'Learning' },
     { id: 'history', title: 'History Challenge', emoji: '🏛️', description: 'Learn world history', category: 'Learning' },
     { id: 'geography', title: 'Geography Quest', emoji: '🌍', description: 'Explore the world', category: 'Learning' },
     { id: 'geometry', title: 'Geometry Game', emoji: '📐', description: 'Learn shapes and angles', category: 'Learning' },
+    
+    // Creative & Expression
+    { id: 'drawing', title: 'Creative Drawing', emoji: '🎨', description: 'Digital art and creativity', category: 'Creative' },
+    { id: 'storybook', title: 'Story Book', emoji: '📚', description: 'Animated stories and poems', category: 'Creative' },
+    { id: 'builder', title: 'Object Builder', emoji: '🏗️', description: 'Create and build objects', category: 'Creative' },
     
     // Puzzle Games
     { id: 'sudoku', title: 'Sudoku', emoji: '🔢', description: 'Number placement puzzle', category: 'Puzzles' },
@@ -83,8 +95,7 @@ export const GameHub = () => {
     { id: 'laddersnake', title: 'Ladder & Snake', emoji: '🐍', description: 'Board game adventure', category: 'Classic' },
     
     // Action & Skill
-    { id: 'aiming', title: 'Aiming Game', emoji: '🎯', description: 'Test your precision', category: 'Action' },
-    { id: 'builder', title: 'Object Builder', emoji: '🏗️', description: 'Create and build objects', category: 'Creative' }
+    { id: 'aiming', title: 'Aiming Game', emoji: '🎯', description: 'Test your precision', category: 'Action' }
   ];
 
   const categories = [...new Set(games.map(game => game.category))];

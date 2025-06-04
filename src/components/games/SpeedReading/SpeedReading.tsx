@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -47,6 +46,14 @@ export const SpeedReading: React.FC<SpeedReadingProps> = ({ onBack }) => {
     return () => clearInterval(interval);
   }, [readingPhase, gameStarted]);
 
+  // Reset game when settings change
+  useEffect(() => {
+    if (gameStarted) {
+      setGameStarted(false);
+      setCurrentTest(null);
+    }
+  }, [difficulty, readingMode]);
+
   const readingTexts = {
     easy: {
       text: "The sun is a star at the center of our solar system. It provides light and heat that makes life possible on Earth. The sun is made mostly of hydrogen and helium gases. Every second, the sun converts millions of tons of hydrogen into helium through nuclear fusion. This process releases enormous amounts of energy. The sun is about 93 million miles away from Earth. It takes about 8 minutes for sunlight to travel from the sun to Earth. The sun is so large that about 1.3 million Earths could fit inside it.",
@@ -63,6 +70,12 @@ export const SpeedReading: React.FC<SpeedReadingProps> = ({ onBack }) => {
           correct: "8 minutes",
           explanation: "Light travels at approximately 300,000 km/s, covering the 93 million mile distance in about 8 minutes."
         }
+      ],
+      concept: "Reading Comprehension",
+      visualExample: "☀️ Sun → 8 minutes → 🌍 Earth",
+      relatedLinks: [
+        { title: "NASA - About the Sun", url: "https://www.nasa.gov/sun" },
+        { title: "Education.com - Solar System", url: "https://www.education.com/worksheets/solar-system/" }
       ]
     },
     medium: {
@@ -80,6 +93,12 @@ export const SpeedReading: React.FC<SpeedReadingProps> = ({ onBack }) => {
           correct: "Light reactions and Calvin cycle",
           explanation: "Photosynthesis consists of light-dependent reactions and the Calvin cycle (light-independent reactions)."
         }
+      ],
+      concept: "Biological Processes",
+      visualExample: "☀️ + CO₂ + H₂O → 🌱 → O₂ + Glucose",
+      relatedLinks: [
+        { title: "Khan Academy - Photosynthesis", url: "https://www.khanacademy.org/science/biology/photosynthesis-in-plants" },
+        { title: "Education.com - Plant Biology", url: "https://www.education.com/worksheets/plants/" }
       ]
     },
     hard: {
@@ -97,6 +116,12 @@ export const SpeedReading: React.FC<SpeedReadingProps> = ({ onBack }) => {
           correct: "Principle of locality",
           explanation: "Einstein believed quantum entanglement violated locality - the idea that objects are only influenced by their immediate surroundings."
         }
+      ],
+      concept: "Quantum Physics",
+      visualExample: "🔴↔️🔵 (Instant correlation regardless of distance)",
+      relatedLinks: [
+        { title: "Quantum Physics for Kids", url: "https://www.ducksters.com/science/physics/quantum_physics.php" },
+        { title: "Education.com - Physics", url: "https://www.education.com/worksheets/physics/" }
       ]
     }
   };
@@ -318,6 +343,31 @@ export const SpeedReading: React.FC<SpeedReadingProps> = ({ onBack }) => {
                       {selectedAnswer === currentTest.questions[currentQuestionIndex].correct ? '✅ Correct!' : '❌ Incorrect'}
                     </h4>
                     <p className="mb-4">{currentTest.questions[currentQuestionIndex].explanation}</p>
+                    
+                    <div className="bg-white p-4 rounded-lg border-l-4 border-green-500 mb-4">
+                      <h5 className="font-bold text-green-800 mb-2">🧠 Concept:</h5>
+                      <p className="text-green-700 mb-2">{currentTest.concept}</p>
+                      <div className="bg-green-50 p-3 rounded mt-2">
+                        <p className="text-green-600 font-mono text-sm">{currentTest.visualExample}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                      <h5 className="font-bold text-blue-800 mb-2">🔗 Learn More:</h5>
+                      <div className="space-y-1">
+                        {currentTest.relatedLinks.map((link, index) => (
+                          <a
+                            key={index}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-blue-600 hover:text-blue-800 text-sm underline"
+                          >
+                            {link.title}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
                     
                     <Button onClick={nextQuestion} className="bg-blue-500 hover:bg-blue-600">
                       {currentQuestionIndex < currentTest.questions.length - 1 ? 'Next Question' : 'View Results'}

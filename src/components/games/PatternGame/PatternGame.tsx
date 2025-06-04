@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -44,6 +43,15 @@ export const PatternGame: React.FC<PatternGameProps> = ({ onBack }) => {
     }
     return () => clearInterval(interval);
   }, [gameActive]);
+
+  // Reset game when settings change
+  useEffect(() => {
+    if (gameStarted) {
+      setGameStarted(false);
+      setGameActive(false);
+      setCurrentPattern(null);
+    }
+  }, [difficulty, patternType]);
 
   const colorPatterns = {
     easy: ['🔴', '🟡', '🔵', '🟢'],
