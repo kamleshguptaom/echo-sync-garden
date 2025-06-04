@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +25,7 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
   const [isComplete, setIsComplete] = useState(false);
   const [moves, setMoves] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [showConcept, setShowConcept] = useState(false);
 
   const puzzleImages = [
     { id: 'nature1', name: '🏞️ Mountain Lake', image: 'photo-1506744038136-46273834b3fb' },
@@ -40,10 +40,27 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
     { id: 'city1', name: '🏢 Architecture', image: 'photo-1449824913935-59a10b8d2000' },
     { id: 'city2', name: '🌆 Cityscape', image: 'photo-1477959858617-67f85cf4f1df' },
     { id: 'flowers1', name: '🌸 Cherry Blossoms', image: 'photo-1522383225653-ed111181a951' },
-    { id: 'flowers2', name: '🌻 Sunflowers', image: 'photo-1470509037663-253afd7f0f51' }
+    { id: 'flowers2', name: '🌻 Sunflowers', image: 'photo-1470509037663-253afd7f0f51' },
+    { id: 'random', name: '🎲 Random', image: 'random' }
   ];
 
   const [currentImage, setCurrentImage] = useState(puzzleImages[0].image);
+
+  // Update pieces when image changes
+  useEffect(() => {
+    if (gameStarted && pieces.length > 0) {
+      const newPieces = pieces.map(piece => ({
+        ...piece,
+        image: currentImage === 'random' ? getRandomImage() : currentImage
+      }));
+      setPieces(newPieces);
+    }
+  }, [currentImage]);
+
+  const getRandomImage = () => {
+    const nonRandomImages = puzzleImages.filter(img => img.id !== 'random');
+    return nonRandomImages[Math.floor(Math.random() * nonRandomImages.length)].image;
+  };
 
   const getSizeNumber = (size: PuzzleSize) => {
     return parseInt(size.split('x')[0]);
@@ -52,6 +69,7 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
   const createPuzzle = () => {
     const size = getSizeNumber(puzzleSize);
     const totalPieces = size * size;
+    const imageToUse = currentImage === 'random' ? getRandomImage() : currentImage;
     
     const newPieces: PuzzlePiece[] = [];
     for (let i = 0; i < totalPieces; i++) {
@@ -59,7 +77,7 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
         id: i,
         currentPosition: i,
         correctPosition: i,
-        image: currentImage
+        image: imageToUse
       });
     }
     
@@ -137,6 +155,7 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
   };
 
   const size = getSizeNumber(puzzleSize);
+  const displayImage = currentImage === 'random' ? getRandomImage() : currentImage;
 
   return (
     <div className="container mx-auto p-6">
@@ -146,23 +165,61 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
             ← Back to Hub
           </Button>
           <h1 className="text-4xl font-bold text-white">Jigsaw Puzzle</h1>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="bg-white/90">How to Play</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>How to Play Jigsaw Puzzle</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 text-sm">
-                <p>1. Choose your puzzle size and image</p>
-                <p>2. Click on two pieces to swap their positions</p>
-                <p>3. Try to arrange all pieces in the correct order</p>
-                <p>4. Use hints if you get stuck (max 3 per game)</p>
-                <p>5. Complete the puzzle with minimum moves!</p>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Dialog open={showConcept} onOpenChange={setShowConcept}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
+                  🧠 Concept
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Jigsaw Puzzle Concepts</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="animate-fade-in">
+                    <h3 className="font-bold text-lg">🧩 What is a Jigsaw Puzzle?</h3>
+                    <p>A jigsaw puzzle is a tiling puzzle that requires the assembly of often oddly shaped interlocking pieces.</p>
+                  </div>
+                  <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                    <h3 className="font-bold text-lg">🎯 Strategy Tips</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Start with corner and edge pieces</li>
+                      <li>Look for distinctive colors and patterns</li>
+                      <li>Work on small sections at a time</li>
+                      <li>Use the reference image frequently</li>
+                    </ul>
+                  </div>
+                  <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                    <h3 className="font-bold text-lg">🧠 Benefits</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Improves visual-spatial reasoning</li>
+                      <li>Enhances memory and concentration</li>
+                      <li>Develops problem-solving skills</li>
+                      <li>Reduces stress and improves mood</li>
+                    </ul>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="bg-white/90">How to Play</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>How to Play Jigsaw Puzzle</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 text-sm">
+                  <p>1. Choose your puzzle size and image</p>
+                  <p>2. Click on two pieces to swap their positions</p>
+                  <p>3. Try to arrange all pieces in the correct order</p>
+                  <p>4. Use hints if you get stuck (max 3 per game)</p>
+                  <p>5. Complete the puzzle with minimum moves!</p>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card className="mb-6 bg-white/95">
@@ -274,7 +331,7 @@ export const JigsawPuzzle: React.FC<JigsawPuzzleProps> = ({ onBack }) => {
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold mb-2">Reference Image:</h3>
                   <img 
-                    src={`https://images.unsplash.com/${currentImage}?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200`}
+                    src={`https://images.unsplash.com/${displayImage}?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200`}
                     alt="Reference"
                     className="mx-auto rounded-lg shadow-md"
                     style={{ width: '150px', height: '150px' }}
