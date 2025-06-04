@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -19,6 +18,8 @@ interface LogicPuzzle {
   explanation: string;
   concept: string;
   type: string;
+  visualExample?: string;
+  relatedLinks?: { title: string; url: string }[];
 }
 
 export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
@@ -35,6 +36,7 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
   const [currentHint, setCurrentHint] = useState('');
   const [timer, setTimer] = useState(0);
   const [gameActive, setGameActive] = useState(false);
+  const [showDetailedConcept, setShowDetailedConcept] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -56,7 +58,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "10",
           explanation: "This is a sequence of even numbers increasing by 2 each time.",
           concept: "Number sequences follow predictable patterns based on mathematical operations.",
-          type: "Arithmetic Sequence"
+          type: "Arithmetic Sequence",
+          visualExample: "Visual: 2 → (+2) → 4 → (+2) → 6 → (+2) → 8 → (+2) → 10",
+          relatedLinks: [
+            { title: "Khan Academy - Arithmetic Sequences", url: "https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:sequences" },
+            { title: "Math is Fun - Number Patterns", url: "https://www.mathsisfun.com/algebra/sequences-sums-arithmetic.html" }
+          ]
         },
         {
           question: "Complete the pattern: A, C, E, G, ?",
@@ -64,7 +71,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "I",
           explanation: "This sequence skips one letter each time in the alphabet.",
           concept: "Letter patterns can follow arithmetic progressions through the alphabet.",
-          type: "Letter Sequence"
+          type: "Letter Sequence",
+          visualExample: "Visual: A(1) → skip B → C(3) → skip D → E(5) → skip F → G(7) → skip H → I(9)",
+          relatedLinks: [
+            { title: "Math Playground - Letter Patterns", url: "https://www.mathplayground.com/letter_patterns.html" },
+            { title: "Education.com - Alphabet Sequences", url: "https://www.education.com/worksheets/alphabet/" }
+          ]
         }
       ],
       medium: [
@@ -74,7 +86,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "13",
           explanation: "This is the Fibonacci sequence where each number is the sum of the two preceding ones.",
           concept: "The Fibonacci sequence appears frequently in nature and mathematics.",
-          type: "Fibonacci Sequence"
+          type: "Fibonacci Sequence",
+          visualExample: "Visual: 1+1=2, 1+2=3, 2+3=5, 3+5=8, 5+8=13",
+          relatedLinks: [
+            { title: "Khan Academy - Fibonacci Sequence", url: "https://www.khanacademy.org/computing/computer-science/algorithms/recursive-algorithms/a/the-fibonacci-sequence" },
+            { title: "Math is Fun - Fibonacci", url: "https://www.mathsisfun.com/numbers/fibonacci-sequence.html" }
+          ]
         }
       ],
       hard: [
@@ -84,7 +101,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "42",
           explanation: "Each number follows the pattern n(n+1) where n increases by 1 each time.",
           concept: "Complex sequences may involve polynomial patterns.",
-          type: "Polynomial Sequence"
+          type: "Polynomial Sequence",
+          visualExample: "Visual: 1×2=2, 2×3=6, 3×4=12, 4×5=20, 5×6=30, 6×7=42",
+          relatedLinks: [
+            { title: "Khan Academy - Polynomial Sequences", url: "https://www.khanacademy.org/math/algebra2/x2ec2f6f830c9fb89:poly-arithmetic" },
+            { title: "Wolfram MathWorld - Sequences", url: "https://mathworld.wolfram.com/Sequence.html" }
+          ]
         }
       ]
     },
@@ -96,7 +118,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "○",
           explanation: "The pattern alternates between circle and square.",
           concept: "Visual patterns often involve alternating elements.",
-          type: "Alternating Pattern"
+          type: "Alternating Pattern",
+          visualExample: "Visual: Circle → Square → Circle → Square → Circle",
+          relatedLinks: [
+            { title: "Education.com - Pattern Recognition", url: "https://www.education.com/worksheets/patterns/" },
+            { title: "Math Playground - Visual Patterns", url: "https://www.mathplayground.com/visual_patterns.html" }
+          ]
         }
       ],
       medium: [
@@ -106,7 +133,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "Red",
           explanation: "The pattern shows increasing groups: 1 Red, 1 Blue, 1 Red, 2 Blues, 1 Red, 3 Blues, so next is Red.",
           concept: "Complex patterns may involve increasing or decreasing groupings.",
-          type: "Grouping Pattern"
+          type: "Grouping Pattern",
+          visualExample: "Visual: R|B|R|BB|R|BBB|R (next)",
+          relatedLinks: [
+            { title: "BrainGymmer - Pattern Games", url: "https://www.braingymmer.com/en/brain-games/pattern-memory/" },
+            { title: "Education.com - Advanced Patterns", url: "https://www.education.com/worksheets/fifth-grade/patterns/" }
+          ]
         }
       ]
     },
@@ -118,7 +150,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "Fire",
           explanation: "Fire grows when it spreads, needs oxygen (air) to survive, and water extinguishes it.",
           concept: "Riddles use metaphorical language to describe objects through their properties.",
-          type: "Object Riddle"
+          type: "Object Riddle",
+          visualExample: "Visual: 🔥 grows larger → needs O₂ → H₂O extinguishes it",
+          relatedLinks: [
+            { title: "Education.com - Brain Teasers", url: "https://www.education.com/worksheets/brain-teasers/" },
+            { title: "Math Playground - Logic Puzzles", url: "https://www.mathplayground.com/logic_puzzles.html" }
+          ]
         }
       ],
       medium: [
@@ -128,7 +165,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "He's short and can't reach the button",
           explanation: "The man is too short to reach the 20th floor button, but can reach the 10th. On rainy days, he has an umbrella to help him reach higher buttons.",
           concept: "Logic puzzles often have surprising solutions that require thinking outside conventional assumptions.",
-          type: "Situation Puzzle"
+          type: "Situation Puzzle",
+          visualExample: "Visual: Short person + elevator buttons at different heights + umbrella as tool",
+          relatedLinks: [
+            { title: "BrainGymmer - Logic Puzzles", url: "https://www.braingymmer.com/en/brain-games/" },
+            { title: "Math Playground - Thinking Blocks", url: "https://www.mathplayground.com/thinking_blocks.html" }
+          ]
         }
       ]
     },
@@ -140,7 +182,12 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
           correctAnswer: "Some roses might be red",
           explanation: "We can't definitively conclude about rose colors from the given information, only that it's possible some roses are red.",
           concept: "Logical deduction requires careful analysis of what can and cannot be concluded from given premises.",
-          type: "Syllogistic Reasoning"
+          type: "Syllogistic Reasoning",
+          visualExample: "Visual: Roses ⊆ Flowers, Some Flowers = Red, Therefore: Roses ∩ Red = Possible",
+          relatedLinks: [
+            { title: "Khan Academy - Logic", url: "https://www.khanacademy.org/math/geometry/hs-geo-reasoning" },
+            { title: "Education.com - Logic Games", url: "https://www.education.com/worksheets/logic/" }
+          ]
         }
       ]
     }
@@ -434,6 +481,49 @@ export const LogicGame: React.FC<LogicGameProps> = ({ onBack }) => {
             </CardContent>
           </Card>
         )}
+
+        {/* Detailed Concept Dialog */}
+        <Dialog open={showDetailedConcept} onOpenChange={setShowDetailedConcept}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detailed Concept Explanation</DialogTitle>
+              <DialogDescription>In-depth understanding with visual examples</DialogDescription>
+            </DialogHeader>
+            {currentPuzzle && (
+              <div className="space-y-6">
+                <div className="animate-fade-in">
+                  <h3 className="text-lg font-bold mb-2">{currentPuzzle.type}</h3>
+                  <p className="text-gray-700 mb-4">{currentPuzzle.concept}</p>
+                  {currentPuzzle.visualExample && (
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <h4 className="font-semibold mb-2">Visual Example:</h4>
+                      <p className="font-mono text-sm">{currentPuzzle.visualExample}</p>
+                    </div>
+                  )}
+                </div>
+                {currentPuzzle.relatedLinks && (
+                  <div className="animate-scale-in">
+                    <h4 className="font-bold mb-3">🔗 Related Learning Resources:</h4>
+                    <div className="grid gap-2">
+                      {currentPuzzle.relatedLinks.map((link, index) => (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block p-3 border rounded-lg hover:bg-gray-50 text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                          <span className="font-medium">{link.title}</span>
+                          <span className="text-sm text-gray-500 ml-2">↗</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
