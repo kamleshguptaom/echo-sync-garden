@@ -735,7 +735,8 @@ export const AimingGame: React.FC<AimingGameProps> = ({ onBack }) => {
         )}
       </div>
       
-      <style jsx>{`
+      <style>
+        {`
         .raindrop {
           position: absolute;
           width: 2px;
@@ -767,7 +768,8 @@ export const AimingGame: React.FC<AimingGameProps> = ({ onBack }) => {
             transform: translateX(100px) rotate(360deg);
           }
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
