@@ -24,18 +24,19 @@ import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
 import { SpeedReading } from './SpeedReading/SpeedReading';
 import { TypingGame } from './TypingGame/TypingGame';
 import { DrawingGame } from './DrawingGame/DrawingGame';
-import { GolfGame } from './GolfGame/GolfGame';
-import { CarromGame } from './CarromGame/CarromGame';
-import { RoadSafetyGame } from './RoadSafetyGame/RoadSafetyGame';
-import { NumberSequence } from './NumberSequence/NumberSequence';
-import { ColorMemory } from './ColorMemory/ColorMemory';
-import { MathRacing } from './MathRacing/MathRacing';
+import { VisualPerception } from './VisualPerception/VisualPerception';
+import { WorkingMemory } from './WorkingMemory/WorkingMemory';
+import { AttentionTraining } from './AttentionTraining/AttentionTraining';
+import { FractionGame } from './FractionGame/FractionGame';
+import { AlgebraGame } from './AlgebraGame/AlgebraGame';
+import { CodingGame } from './CodingGame/CodingGame';
+import { CriticalThinking } from './CriticalThinking/CriticalThinking';
 
 type GameType = 
   | 'memory' | 'math' | 'word' | 'logic' | 'geometry' | 'science' | 'geography' | 'history'
   | 'tictactoe' | 'sudoku' | 'jigsaw' | 'waffle' | 'laddersnake' | 'aiming' | 'builder'
-  | 'pattern' | 'concentration' | 'speedreading' | 'typing' | 'drawing' | 'golf' | 'carrom'
-  | 'roadsafety' | 'numbersequence' | 'colormemory' | 'mathracing' | null;
+  | 'pattern' | 'concentration' | 'speedreading' | 'typing' | 'drawing' 
+  | 'visualperception' | 'workingmemory' | 'attention' | 'fractions' | 'algebra' | 'coding' | 'criticalthinking' | null;
 
 export const GameHub = () => {
   const [selectedGame, setSelectedGame] = useState<GameType>(null);
@@ -64,54 +65,62 @@ export const GameHub = () => {
       case 'speedreading': return <SpeedReading {...gameProps} />;
       case 'typing': return <TypingGame {...gameProps} />;
       case 'drawing': return <DrawingGame {...gameProps} />;
-      case 'golf': return <GolfGame {...gameProps} />;
-      case 'carrom': return <CarromGame {...gameProps} />;
-      case 'roadsafety': return <RoadSafetyGame {...gameProps} />;
-      case 'numbersequence': return <NumberSequence {...gameProps} />;
-      case 'colormemory': return <ColorMemory {...gameProps} />;
-      case 'mathracing': return <MathRacing {...gameProps} />;
+      case 'visualperception': return <VisualPerception {...gameProps} />;
+      case 'workingmemory': return <WorkingMemory {...gameProps} />;
+      case 'attention': return <AttentionTraining {...gameProps} />;
+      case 'fractions': return <FractionGame {...gameProps} />;
+      case 'algebra': return <AlgebraGame {...gameProps} />;
+      case 'coding': return <CodingGame {...gameProps} />;
+      case 'criticalthinking': return <CriticalThinking {...gameProps} />;
       default: return null;
     }
   }
 
   const games = [
-    // Mind & Memory Games
-    { id: 'memory', title: 'Memory Challenge', emoji: '🧠', description: 'Test and improve your memory skills', category: 'Mind Games' },
-    { id: 'logic', title: 'Logic Puzzles', emoji: '🧩', description: 'Solve challenging logical problems', category: 'Mind Games' },
-    { id: 'pattern', title: 'Pattern Recognition', emoji: '🎯', description: 'Identify and predict visual patterns', category: 'Mind Games' },
-    { id: 'concentration', title: 'Concentration Test', emoji: '🎨', description: 'Stroop test & focus training exercises', category: 'Mind Games' },
-    { id: 'colormemory', title: 'Color Memory', emoji: '🌈', description: 'Remember complex color sequences', category: 'Mind Games' },
-    { id: 'numbersequence', title: 'Number Sequences', emoji: '🔢', description: 'Mathematical pattern recognition', category: 'Mind Games' },
+    // Core Cognitive Skills
+    { id: 'memory', title: 'Memory Training', emoji: '🧠', description: 'Enhance memory capacity and recall', category: 'Cognitive Skills' },
+    { id: 'workingmemory', title: 'Working Memory', emoji: '🔄', description: 'Strengthen working memory abilities', category: 'Cognitive Skills' },
+    { id: 'attention', title: 'Attention Training', emoji: '🎯', description: 'Improve focus and concentration', category: 'Cognitive Skills' },
+    { id: 'visualperception', title: 'Visual Perception', emoji: '👁️', description: 'Enhance visual processing skills', category: 'Cognitive Skills' },
+    { id: 'pattern', title: 'Pattern Recognition', emoji: '🔍', description: 'Identify and predict patterns', category: 'Cognitive Skills' },
+    { id: 'concentration', title: 'Concentration Test', emoji: '🎨', description: 'Stroop test & focus training', category: 'Cognitive Skills' },
+    { id: 'logic', title: 'Logic Puzzles', emoji: '🧩', description: 'Develop logical reasoning', category: 'Cognitive Skills' },
+    { id: 'criticalthinking', title: 'Critical Thinking', emoji: '🤔', description: 'Analyze and evaluate information', category: 'Cognitive Skills' },
     
-    // Learning & Education Games
-    { id: 'math', title: 'Math Academy', emoji: '🔢', description: 'Comprehensive mathematical training', category: 'Learning' },
-    { id: 'mathracing', title: 'Math Racing', emoji: '🏎️', description: 'Speed mathematics with racing action', category: 'Learning' },
-    { id: 'word', title: 'Word Master', emoji: '📝', description: 'Advanced spelling and vocabulary', category: 'Learning' },
-    { id: 'speedreading', title: 'Speed Reading', emoji: '📖', description: 'Enhance reading speed & comprehension', category: 'Learning' },
-    { id: 'typing', title: 'Typing Master', emoji: '⌨️', description: 'Professional typing skill development', category: 'Learning' },
-    { id: 'science', title: 'Science Explorer', emoji: '🔬', description: 'Interactive scientific discovery', category: 'Learning' },
-    { id: 'history', title: 'History Quest', emoji: '🏛️', description: 'Journey through world history', category: 'Learning' },
-    { id: 'geography', title: 'Geography Adventure', emoji: '🌍', description: 'Explore our amazing planet', category: 'Learning' },
-    { id: 'geometry', title: 'Geometry Studio', emoji: '📐', description: 'Interactive shapes and angles', category: 'Learning' },
-    { id: 'roadsafety', title: 'Road Safety Training', emoji: '🚦', description: 'Learn traffic rules and safety', category: 'Learning' },
+    // Mathematics & Numbers
+    { id: 'math', title: 'Math Challenge', emoji: '🔢', description: 'Comprehensive math training', category: 'Mathematics' },
+    { id: 'fractions', title: 'Fraction Master', emoji: '½', description: 'Learn fractions visually', category: 'Mathematics' },
+    { id: 'algebra', title: 'Algebra Quest', emoji: '📊', description: 'Solve algebraic equations', category: 'Mathematics' },
+    { id: 'geometry', title: 'Geometry Studio', emoji: '📐', description: 'Explore shapes and angles', category: 'Mathematics' },
     
-    // Creative & Art Games
-    { id: 'drawing', title: 'Art Studio Pro', emoji: '🎨', description: 'Professional digital art creation', category: 'Creative' },
-    { id: 'builder', title: 'Object Builder', emoji: '🏗️', description: 'Create and construct 3D objects', category: 'Creative' },
+    // Language & Communication
+    { id: 'word', title: 'Word Games', emoji: '📝', description: 'Vocabulary and spelling', category: 'Language' },
+    { id: 'speedreading', title: 'Speed Reading', emoji: '📖', description: 'Improve reading speed', category: 'Language' },
+    { id: 'typing', title: 'Typing Master', emoji: '⌨️', description: 'Professional typing skills', category: 'Language' },
     
-    // Puzzle & Strategy Games
-    { id: 'sudoku', title: 'Sudoku Master', emoji: '🔢', description: 'Classic number placement puzzles', category: 'Puzzles' },
-    { id: 'jigsaw', title: 'Jigsaw Puzzles', emoji: '🧩', description: 'Beautiful picture puzzles', category: 'Puzzles' },
-    { id: 'waffle', title: 'Waffle Word Game', emoji: '🧇', description: 'Unique word puzzle challenge', category: 'Puzzles' },
+    // STEM & Technology
+    { id: 'science', title: 'Science Explorer', emoji: '🔬', description: 'Interactive science learning', category: 'STEM' },
+    { id: 'coding', title: 'Coding Adventure', emoji: '💻', description: 'Learn programming basics', category: 'STEM' },
     
-    // Sports & Action Games
-    { id: 'golf', title: 'Mini Golf Pro', emoji: '⛳', description: 'Physics-based golf challenges', category: 'Sports' },
-    { id: 'carrom', title: 'Carrom Championship', emoji: '🎯', description: 'Traditional board game mastery', category: 'Sports' },
-    { id: 'aiming', title: 'Archery & Shooting', emoji: '🏹', description: 'Professional marksmanship training', category: 'Sports' },
+    // World Knowledge
+    { id: 'geography', title: 'Geography Quest', emoji: '🌍', description: 'Explore world geography', category: 'World Knowledge' },
+    { id: 'history', title: 'History Journey', emoji: '🏛️', description: 'Travel through time', category: 'World Knowledge' },
     
-    // Classic Board Games
-    { id: 'tictactoe', title: 'Tic Tac Toe Pro', emoji: '⭕', description: 'Advanced strategy with customization', category: 'Classic' },
-    { id: 'laddersnake', title: 'Snakes & Ladders', emoji: '🐍', description: 'Classic board game adventure', category: 'Classic' }
+    // Creative & Arts
+    { id: 'drawing', title: 'Art Studio Pro', emoji: '🎨', description: 'Professional digital art', category: 'Creative' },
+    { id: 'builder', title: 'Object Builder', emoji: '🏗️', description: 'Create 3D objects', category: 'Creative' },
+    
+    // Puzzle Games
+    { id: 'sudoku', title: 'Sudoku Master', emoji: '🔢', description: 'Number placement puzzles', category: 'Puzzles' },
+    { id: 'jigsaw', title: 'Jigsaw Puzzles', emoji: '🧩', description: 'Picture piece puzzles', category: 'Puzzles' },
+    { id: 'waffle', title: 'Waffle Game', emoji: '🧇', description: 'Word puzzle challenge', category: 'Puzzles' },
+    
+    // Action & Sports
+    { id: 'aiming', title: 'Archery Challenge', emoji: '🏹', description: 'Precision archery training', category: 'Action' },
+    
+    // Classic Games
+    { id: 'tictactoe', title: 'Tic Tac Toe Pro', emoji: '⭕', description: 'Advanced strategy game', category: 'Classic' },
+    { id: 'laddersnake', title: 'Snakes & Ladders', emoji: '🐍', description: 'Classic board game', category: 'Classic' }
   ];
 
   const categories = [...new Set(games.map(game => game.category))];
@@ -120,10 +129,10 @@ export const GameHub = () => {
     <div className="container mx-auto p-6">
       <div className="text-center mb-8">
         <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
-          🎮 Ultimate Learning Game Hub
+          🎮 Ultimate Learning Hub
         </h1>
         <p className="text-xl text-white/90 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          Professional educational games to enhance your mind and skills
+          Comprehensive brain training and educational games
         </p>
       </div>
 
@@ -168,22 +177,27 @@ export const GameHub = () => {
       ))}
 
       <div className="text-center mt-12 p-8 bg-gradient-to-r from-white/10 to-white/20 rounded-xl backdrop-blur animate-fade-in">
-        <h3 className="text-2xl font-bold text-white mb-4">🧠 Benefits of Educational Gaming</h3>
-        <div className="grid md:grid-cols-3 gap-6 text-white/90">
+        <h3 className="text-2xl font-bold text-white mb-4">🧠 Comprehensive Brain Training</h3>
+        <div className="grid md:grid-cols-4 gap-6 text-white/90">
           <div>
             <div className="text-4xl mb-2">🎯</div>
-            <h4 className="font-bold mb-2">Enhanced Focus</h4>
-            <p className="text-sm">Improve concentration and attention span through engaging gameplay</p>
+            <h4 className="font-bold mb-2">Cognitive Skills</h4>
+            <p className="text-sm">Memory, attention, and processing speed</p>
+          </div>
+          <div>
+            <div className="text-4xl mb-2">📚</div>
+            <h4 className="font-bold mb-2">Academic Skills</h4>
+            <p className="text-sm">Math, language, science, and more</p>
           </div>
           <div>
             <div className="text-4xl mb-2">🧩</div>
             <h4 className="font-bold mb-2">Problem Solving</h4>
-            <p className="text-sm">Develop critical thinking and analytical reasoning skills</p>
+            <p className="text-sm">Logic, critical thinking, and creativity</p>
           </div>
           <div>
-            <div className="text-4xl mb-2">🚀</div>
-            <h4 className="font-bold mb-2">Skill Building</h4>
-            <p className="text-sm">Build practical skills while having fun and staying motivated</p>
+            <div className="text-4xl mb-2">🏆</div>
+            <h4 className="font-bold mb-2">Achievement</h4>
+            <p className="text-sm">Track progress and celebrate success</p>
           </div>
         </div>
       </div>

@@ -106,6 +106,11 @@ export const AimingGame: React.FC<AimingGameProps> = ({ onBack }) => {
     showDistanceMarkers: true
   });
 
+  // Add missing refs
+  const animationRef = useRef<number>();
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+  const chargeStartRef = useRef<number>();
+
   const weaponStats: Record<WeaponType, WeaponStats> = {
     recurve_bow: { power: 70, accuracy: 85, reload_time: 2, wind_resistance: 60, projectile_drop: 80 },
     compound_bow: { power: 90, accuracy: 95, reload_time: 3, wind_resistance: 75, projectile_drop: 70 },
@@ -867,16 +872,16 @@ export const AimingGame: React.FC<AimingGameProps> = ({ onBack }) => {
               <CardHeader>
                 <CardTitle className="flex justify-between items-center text-sm">
                   <span>Score: {score}</span>
-                  <span>Time: {formatTime(timeLeft)}</span>
+                  <span>Time: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
                   <span>Shots: {shotsLeft}/{gameSettings.allowedShots}</span>
-                  <span>Accuracy: {getAccuracyPercent()}%</span>
+                  <span>Accuracy: {accuracy.shots > 0 ? Math.round((accuracy.hits / accuracy.shots) * 100) : 0}%</span>
                   <span>Wind: {Math.round(gameSettings.windStrength * 10)}mph {windDirection > 0 ? '→' : '←'}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div 
                   ref={gameAreaRef}
-                  className={`relative w-full h-96 border-2 border-gray-300 rounded-lg overflow-hidden cursor-crosshair ${renderEnvironment()}`}
+                  className="relative w-full h-96 border-2 border-gray-300 rounded-lg overflow-hidden cursor-crosshair bg-gradient-to-br from-green-100 via-blue-100 to-purple-100"
                   onMouseMove={handleMouseMove}
                   onMouseDown={handleMouseDown}
                   onMouseUp={handleMouseUp}
@@ -1046,7 +1051,6 @@ export const AimingGame: React.FC<AimingGameProps> = ({ onBack }) => {
                 
                 <div className="mt-4 text-center text-sm text-gray-600">
                   Aim with mouse • Hold click to charge power • Release to shoot
-                  {gameSettings.weather !== 'calm' && ` • Account for ${gameSettings.weather} conditions`}
                 </div>
                 
                 <div className="mt-4 flex justify-center gap-4">
