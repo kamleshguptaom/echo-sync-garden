@@ -9,229 +9,151 @@ interface VisualPerceptionProps {
   onBack: () => void;
 }
 
-type TaskType = 'visual_search' | 'figure_ground' | 'visual_closure' | 'spatial_relations' | 'visual_memory';
-type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
+type Difficulty = 'easy' | 'medium' | 'hard';
+type GameMode = 'pattern-match' | 'shape-rotate' | 'hidden-object' | 'visual-scan';
 
-interface Task {
+interface Pattern {
   id: number;
-  type: TaskType;
-  target: string;
-  items: string[];
-  correct: number[];
-  timeLimit: number;
+  shape: string;
+  color: string;
+  rotation: number;
+  size: number;
 }
 
 export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) => {
-  const [taskType, setTaskType] = useState<TaskType>('visual_search');
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-  const [currentTask, setCurrentTask] = useState<Task | null>(null);
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [gameMode, setGameMode] = useState<GameMode>('pattern-match');
   const [gameStarted, setGameStarted] = useState(false);
+  const [targetPattern, setTargetPattern] = useState<Pattern | null>(null);
+  const [options, setOptions] = useState<Pattern[]>([]);
+  const [score, setScore] = useState(0);
+  const [round, setRound] = useState(1);
+  const [feedback, setFeedback] = useState('');
   const [showConcept, setShowConcept] = useState(false);
-  const [level, setLevel] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(10);
 
-  useEffect(() => {
-    if (timeLeft > 0 && gameStarted) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && currentTask) {
-      checkAnswer();
-    }
-  }, [timeLeft, gameStarted]);
+  const shapes = ['●', '■', '▲', '♦', '★', '◆', '▼', '♠', '♥', '♣'];
+  const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff', '#ff8844', '#8844ff'];
 
-  const generateTask = (): Task => {
-    const shapes = ['🔴', '🔵', '🟡', '🟢', '🟣', '🟠', '⭐', '🔺', '🔶', '💎'];
-    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    
-    switch (taskType) {
-      case 'visual_search':
-        return generateVisualSearchTask(shapes);
-      case 'figure_ground':
-        return generateFigureGroundTask(shapes);
-      case 'visual_closure':
-        return generateVisualClosureTask(letters);
-      case 'spatial_relations':
-        return generateSpatialRelationsTask();
-      case 'visual_memory':
-        return generateVisualMemoryTask(shapes);
-      default:
-        return generateVisualSearchTask(shapes);
-    }
+  const generatePattern = (): Pattern => {
+    return {
+      id: Math.random(),
+      shape: shapes[Math.floor(Math.random() * shapes.length)],
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.floor(Math.random() * 4) * 90,
+      size: 20 + Math.floor(Math.random() * 20)
+    };
   };
 
-  const generateVisualSearchTask = (shapes: string[]): Task => {
-    const target = shapes[Math.floor(Math.random() * shapes.length)];
-    const itemCount = difficulty === 'easy' ? 12 : difficulty === 'medium' ? 20 : difficulty === 'hard' ? 30 : 40;
-    const targetCount = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : 5;
+  const generateQuestion = () => {
+    const target = generatePattern();
+    setTargetPattern(target);
     
-    const items: string[] = [];
-    const correct: number[] = [];
+    const correctOption = { ...target };
+    const wrongOptions: Pattern[] = [];
     
-    // Add target items at random positions
-    for (let i = 0; i < targetCount; i++) {
-      const position = Math.floor(Math.random() * itemCount);
-      if (!correct.includes(position)) {
-        correct.push(position);
+    // Generate 3 wrong options
+    for (let i = 0; i < 3; i++) {
+      let wrongOption = generatePattern();
+      // Make sure it's different from target
+      while (wrongOption.shape === target.shape && 
+             wrongOption.color === target.color && 
+             wrongOption.rotation === target.rotation) {
+        wrongOption = generatePattern();
       }
+      wrongOptions.push(wrongOption);
     }
     
-    // Fill all positions
-    for (let i = 0; i < itemCount; i++) {
-      if (correct.includes(i)) {
-        items[i] = target;
-      } else {
-        let randomShape;
-        do {
-          randomShape = shapes[Math.floor(Math.random() * shapes.length)];
-        } while (randomShape === target);
-        items[i] = randomShape;
-      }
-    }
+    // Shuffle all options
+    const allOptions = [correctOption, ...wrongOptions].sort(() => Math.random() - 0.5);
+    setOptions(allOptions);
     
-    return {
-      id: Date.now(),
-      type: 'visual_search',
-      target,
-      items,
-      correct,
-      timeLimit: difficulty === 'easy' ? 30 : difficulty === 'medium' ? 25 : 20
-    };
-  };
-
-  const generateFigureGroundTask = (shapes: string[]): Task => {
-    const target = shapes[Math.floor(Math.random() * shapes.length)];
-    const itemCount = 16;
-    const items: string[] = [];
-    const correct: number[] = [];
-    
-    // Create overlapping pattern simulation
-    for (let i = 0; i < itemCount; i++) {
-      if (Math.random() < 0.3) {
-        items[i] = target;
-        correct.push(i);
-      } else {
-        items[i] = shapes[Math.floor(Math.random() * shapes.length)];
-      }
-    }
-    
-    return {
-      id: Date.now(),
-      type: 'figure_ground',
-      target,
-      items,
-      correct,
-      timeLimit: 25
-    };
-  };
-
-  const generateVisualClosureTask = (letters: string[]): Task => {
-    const target = letters[Math.floor(Math.random() * letters.length)];
-    const items = Array(9).fill('').map(() => {
-      return Math.random() < 0.3 ? target + '?' : letters[Math.floor(Math.random() * letters.length)];
-    });
-    
-    const correct = items.map((item, index) => item.includes(target) ? index : -1).filter(i => i !== -1);
-    
-    return {
-      id: Date.now(),
-      type: 'visual_closure',
-      target,
-      items,
-      correct,
-      timeLimit: 20
-    };
-  };
-
-  const generateSpatialRelationsTask = (): Task => {
-    const positions = ['↑', '↓', '←', '→', '↖', '↗', '↙', '↘'];
-    const target = positions[Math.floor(Math.random() * positions.length)];
-    const items = Array(12).fill('').map(() => positions[Math.floor(Math.random() * positions.length)]);
-    const correct = items.map((item, index) => item === target ? index : -1).filter(i => i !== -1);
-    
-    return {
-      id: Date.now(),
-      type: 'spatial_relations',
-      target,
-      items,
-      correct,
-      timeLimit: 15
-    };
-  };
-
-  const generateVisualMemoryTask = (shapes: string[]): Task => {
-    const itemCount = difficulty === 'easy' ? 6 : difficulty === 'medium' ? 9 : 12;
-    const items = Array(itemCount).fill('').map(() => shapes[Math.floor(Math.random() * shapes.length)]);
-    
-    return {
-      id: Date.now(),
-      type: 'visual_memory',
-      target: 'Remember the pattern',
-      items,
-      correct: [],
-      timeLimit: difficulty === 'easy' ? 8 : difficulty === 'medium' ? 6 : 4
-    };
+    // Reset timer
+    setTimeLeft(difficulty === 'easy' ? 15 : difficulty === 'medium' ? 10 : 8);
   };
 
   const startGame = () => {
     setGameStarted(true);
     setScore(0);
-    setLevel(1);
-    nextTask();
+    setRound(1);
+    setFeedback('');
+    generateQuestion();
   };
 
-  const nextTask = () => {
-    const task = generateTask();
-    setCurrentTask(task);
-    setSelectedItems([]);
-    setFeedback(null);
-    setTimeLeft(task.timeLimit);
-  };
-
-  const handleItemClick = (index: number) => {
-    if (!currentTask || timeLeft === 0) return;
+  const handleAnswer = (selectedPattern: Pattern) => {
+    if (!targetPattern) return;
     
-    setSelectedItems(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
-  };
-
-  const checkAnswer = () => {
-    if (!currentTask) return;
-    
-    const isCorrect = currentTask.correct.length === selectedItems.length &&
-                      currentTask.correct.every(item => selectedItems.includes(item));
-    
-    setFeedback(isCorrect ? 'correct' : 'incorrect');
+    const isCorrect = selectedPattern.shape === targetPattern.shape &&
+                      selectedPattern.color === targetPattern.color &&
+                      selectedPattern.rotation === targetPattern.rotation;
     
     if (isCorrect) {
-      setScore(prev => prev + (10 * level));
+      setScore(score + (timeLeft * 2));
+      setFeedback('✅ Correct! Great visual perception!');
+    } else {
+      setFeedback('❌ Incorrect. Look more carefully at the details.');
     }
     
     setTimeout(() => {
-      setLevel(prev => prev + 1);
-      nextTask();
+      setRound(round + 1);
+      if (round < 15) {
+        generateQuestion();
+        setFeedback('');
+      } else {
+        setGameStarted(false);
+        setFeedback(`Game Complete! Final Score: ${score}`);
+      }
     }, 2000);
   };
 
-  const getTaskInstructions = () => {
-    switch (taskType) {
-      case 'visual_search':
-        return `Find all instances of the target shape: ${currentTask?.target}`;
-      case 'figure_ground':
-        return `Identify the target shape in the complex pattern: ${currentTask?.target}`;
-      case 'visual_closure':
-        return `Find incomplete letters that match: ${currentTask?.target}`;
-      case 'spatial_relations':
-        return `Find all arrows pointing in direction: ${currentTask?.target}`;
-      case 'visual_memory':
-        return 'Study the pattern, then recreate it from memory';
-      default:
-        return 'Complete the visual task';
+  // Timer countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (gameStarted && timeLeft > 0 && !feedback) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setFeedback('⏰ Time up! Try to be faster next time.');
+            setTimeout(() => {
+              setRound(round + 1);
+              if (round < 15) {
+                generateQuestion();
+                setFeedback('');
+              } else {
+                setGameStarted(false);
+                setFeedback(`Game Complete! Final Score: ${score}`);
+              }
+            }, 2000);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [gameStarted, timeLeft, feedback, round, score]);
+
+  const renderPattern = (pattern: Pattern, size: 'small' | 'large' = 'small') => {
+    const fontSize = size === 'small' ? 'text-4xl' : 'text-6xl';
+    return (
+      <div 
+        className={`inline-block ${fontSize} transition-transform hover:scale-110`}
+        style={{ 
+          color: pattern.color,
+          transform: `rotate(${pattern.rotation}deg)`,
+          fontSize: size === 'large' ? pattern.size * 2 : pattern.size
+        }}
+      >
+        {pattern.shape}
+      </div>
+    );
+  };
+
+  const goBack = () => {
+    if (gameStarted) {
+      setGameStarted(false);
+    } else {
+      onBack();
     }
   };
 
@@ -239,8 +161,8 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
     <div className="container mx-auto p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <Button onClick={onBack} variant="outline" className="bg-white/90">
-            ← Back to Hub
+          <Button onClick={goBack} variant="outline" className="bg-white/90">
+            ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
           </Button>
           <h1 className="text-4xl font-bold text-white">👁️ Visual Perception Training</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
@@ -249,28 +171,28 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
                 🧠 Concept
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Visual Processing & Perception</DialogTitle>
-                <DialogDescription>Strengthen how your brain interprets visual information</DialogDescription>
+                <DialogTitle>Visual Perception Training</DialogTitle>
+                <DialogDescription>Enhance your visual processing and pattern recognition skills</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="animate-fade-in">
-                  <h3 className="font-bold text-lg mb-3">👁️ Visual Perception Skills</h3>
+                  <h3 className="font-bold text-lg">👁️ What is Visual Perception?</h3>
+                  <p>Visual perception is your brain's ability to interpret and make sense of what you see. It involves recognizing shapes, colors, patterns, spatial relationships, and details in visual information.</p>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <h3 className="font-bold text-lg">🎯 Skills Trained</h3>
                   <ul className="list-disc list-inside space-y-1">
-                    <li><strong>Visual Search:</strong> Quickly locate specific targets among distractors</li>
-                    <li><strong>Figure-Ground:</strong> Distinguish objects from their background</li>
-                    <li><strong>Visual Closure:</strong> Recognize incomplete or partially hidden objects</li>
-                    <li><strong>Spatial Relations:</strong> Understand position and orientation in space</li>
-                    <li><strong>Visual Memory:</strong> Remember and reproduce visual patterns</li>
+                    <li><strong>Pattern Recognition:</strong> Identifying similar patterns</li>
+                    <li><strong>Visual Discrimination:</strong> Spotting differences and similarities</li>
+                    <li><strong>Spatial Awareness:</strong> Understanding position and rotation</li>
+                    <li><strong>Processing Speed:</strong> Quick visual analysis</li>
                   </ul>
                 </div>
-                <div className="bg-blue-100 p-4 rounded-lg">
-                  <h4 className="font-bold mb-2">🔗 Related Topics:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    <a href="https://en.wikipedia.org/wiki/Visual_perception" target="_blank" className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Visual Perception</a>
-                    <a href="https://en.wikipedia.org/wiki/Visual_processing" target="_blank" className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">Visual Processing</a>
-                  </div>
+                <div className="bg-purple-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
+                  <h4 className="font-bold">💡 Benefits:</h4>
+                  <p>Improves reading comprehension, mathematical skills, attention to detail, and overall cognitive processing speed.</p>
                 </div>
               </div>
             </DialogContent>
@@ -280,25 +202,10 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
         {!gameStarted ? (
           <Card className="bg-white/95">
             <CardHeader>
-              <CardTitle className="text-center">Visual Perception Training</CardTitle>
+              <CardTitle className="text-center">Visual Perception Training Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Task Type</label>
-                  <Select value={taskType} onValueChange={(value) => setTaskType(value as TaskType)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="visual_search">Visual Search</SelectItem>
-                      <SelectItem value="figure_ground">Figure-Ground</SelectItem>
-                      <SelectItem value="visual_closure">Visual Closure</SelectItem>
-                      <SelectItem value="spatial_relations">Spatial Relations</SelectItem>
-                      <SelectItem value="visual_memory">Visual Memory</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Difficulty</label>
                   <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
@@ -306,10 +213,23 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                      <SelectItem value="expert">Expert</SelectItem>
+                      <SelectItem value="easy">Easy (15s per question)</SelectItem>
+                      <SelectItem value="medium">Medium (10s per question)</SelectItem>
+                      <SelectItem value="hard">Hard (8s per question)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Training Mode</label>
+                  <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pattern-match">Pattern Matching</SelectItem>
+                      <SelectItem value="shape-rotate">Shape Rotation</SelectItem>
+                      <SelectItem value="hidden-object">Hidden Objects</SelectItem>
+                      <SelectItem value="visual-scan">Visual Scanning</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -322,57 +242,54 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
             </CardContent>
           </Card>
         ) : (
-          <>
-            <Card className="mb-6 bg-white/95">
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>Level: {level}</span>
-                  <span>Score: {score}</span>
-                  <span>Time: {timeLeft}s</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                {currentTask && (
-                  <>
-                    <p className="text-lg mb-4">{getTaskInstructions()}</p>
-                    <div className={`grid gap-2 ${
-                      currentTask.items.length <= 12 ? 'grid-cols-4' : 
-                      currentTask.items.length <= 20 ? 'grid-cols-5' : 'grid-cols-6'
-                    } max-w-2xl mx-auto`}>
-                      {currentTask.items.map((item, index) => (
-                        <Button
-                          key={index}
-                          className={`h-16 text-2xl ${
-                            selectedItems.includes(index) ? 'bg-blue-500' : 'bg-gray-200'
-                          }`}
-                          onClick={() => handleItemClick(index)}
-                          disabled={timeLeft === 0}
-                        >
-                          {item}
-                        </Button>
-                      ))}
-                    </div>
-                    
-                    {feedback && (
-                      <div className={`mt-4 p-4 rounded-lg ${
-                        feedback === 'correct' ? 'bg-green-100' : 'bg-red-100'
-                      }`}>
-                        <p className="text-lg font-bold">
-                          {feedback === 'correct' ? '✅ Correct!' : '❌ Try again next time!'}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div className="mt-4">
-                      <Button onClick={checkAnswer} disabled={timeLeft === 0 || !!feedback}>
-                        Submit Answer
+          <Card className="bg-white/95">
+            <CardHeader>
+              <CardTitle className="text-center flex justify-between items-center">
+                <span>Round {round}/15</span>
+                <span>Score: {score}</span>
+                <span className={`${timeLeft <= 3 ? 'text-red-500 animate-pulse' : ''}`}>
+                  Time: {timeLeft}s
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {targetPattern && (
+                <div className="text-center">
+                  <p className="text-lg mb-4">Find the pattern that matches this one exactly:</p>
+                  <div className="bg-gray-100 p-8 rounded-lg mb-6 inline-block">
+                    {renderPattern(targetPattern, 'large')}
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-4">
+                    Look carefully at shape, color, and rotation!
+                  </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                    {options.map((option, index) => (
+                      <Button
+                        key={index}
+                        className="h-24 w-24 mx-auto bg-gray-50 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 transition-all"
+                        onClick={() => handleAnswer(option)}
+                        disabled={!!feedback}
+                      >
+                        {renderPattern(option)}
                       </Button>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {feedback && (
+                <div className={`text-center p-4 rounded-lg animate-bounce ${
+                  feedback.includes('Correct') ? 'bg-green-100 text-green-800' : 
+                  feedback.includes('Incorrect') ? 'bg-red-100 text-red-800' : 
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {feedback}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

@@ -34,15 +34,18 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
   const [startTime, setStartTime] = useState(0);
   const [showConcept, setShowConcept] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [colorBoxes, setColorBoxes] = useState<Array<{color: string, position: number}>>([]);
 
-  const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+  const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
   const colorMap = {
     red: '#ef4444',
     blue: '#3b82f6',
     green: '#10b981',
     yellow: '#f59e0b',
     purple: '#8b5cf6',
-    orange: '#f97316'
+    orange: '#f97316',
+    pink: '#ec4899',
+    cyan: '#06b6d4'
   };
 
   useEffect(() => {
@@ -62,8 +65,20 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
     }
   }, [difficulty, gameMode]);
 
+  const generateRandomColorBoxes = () => {
+    const numBoxes = 6 + Math.floor(Math.random() * 6); // 6-12 boxes
+    const boxes = [];
+    for (let i = 0; i < numBoxes; i++) {
+      boxes.push({
+        color: colors[Math.floor(Math.random() * colors.length)],
+        position: Math.floor(Math.random() * 16) // 4x4 grid positions
+      });
+    }
+    setColorBoxes(boxes);
+  };
+
   const generateStroopTest = useCallback((): StroopTest => {
-    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE'];
+    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE', 'PINK', 'CYAN'];
     const word = words[Math.floor(Math.random() * words.length)];
     const color = colors[Math.floor(Math.random() * colors.length)];
     const isCongruent = word.toLowerCase() === color;
@@ -89,6 +104,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
 
   const generateNewTest = () => {
     setCurrentTest(generateStroopTest());
+    generateRandomColorBoxes();
     setStartTime(Date.now());
     setShowResult(false);
     setFeedback('');
@@ -142,12 +158,20 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
     }
   };
 
+  const goBack = () => {
+    if (gameStarted) {
+      setGameStarted(false);
+    } else {
+      onBack();
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <Button onClick={onBack} variant="outline" className="bg-white/90">
-            ← Back to Hub
+          <Button onClick={goBack} variant="outline" className="bg-white/90">
+            ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
           </Button>
           <h1 className="text-4xl font-bold text-white">Concentration Challenge</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
@@ -187,53 +211,53 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
           </Dialog>
         </div>
 
-        <Card className="mb-6 bg-white/95">
-          <CardHeader>
-            <CardTitle className="text-center">Game Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4 justify-center">
-              <div>
-                <label className="block text-sm font-medium mb-1">Difficulty</label>
-                <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                    <SelectItem value="random">🎲 Random</SelectItem>
-                  </SelectContent>
-                </Select>
+        {!gameStarted ? (
+          <Card className="mb-6 bg-white/95">
+            <CardHeader>
+              <CardTitle className="text-center">Game Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-4 justify-center">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Difficulty</label>
+                  <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                      <SelectItem value="random">🎲 Random</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Mode</label>
+                  <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="stroop">🎨 Stroop Test</SelectItem>
+                      <SelectItem value="nback">🧠 N-Back</SelectItem>
+                      <SelectItem value="attention">👁️ Attention</SelectItem>
+                      <SelectItem value="focus">🎯 Focus</SelectItem>
+                      <SelectItem value="random">🎲 Random</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1">Mode</label>
-                <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stroop">🎨 Stroop Test</SelectItem>
-                    <SelectItem value="nback">🧠 N-Back</SelectItem>
-                    <SelectItem value="attention">👁️ Attention</SelectItem>
-                    <SelectItem value="focus">🎯 Focus</SelectItem>
-                    <SelectItem value="random">🎲 Random</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="text-center">
+                <Button onClick={startGame} className="bg-yellow-500 hover:bg-yellow-600">
+                  {gameStarted ? 'New Game' : 'Start Training'}
+                </Button>
               </div>
-            </div>
-            
-            <div className="text-center">
-              <Button onClick={startGame} className="bg-yellow-500 hover:bg-yellow-600">
-                {gameStarted ? 'New Game' : 'Start Training'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {gameStarted && currentTest && (
+            </CardContent>
+          </Card>
+        ) : (
           <Card className="bg-white/95">
             <CardHeader>
               <CardTitle className="text-center">
@@ -242,20 +266,39 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <div className="mb-6">
-                  <p className="text-lg mb-4">Click the color of the text (not what the word says):</p>
-                  <div 
-                    className="text-8xl font-bold mb-6 animate-pulse"
-                    style={{ color: colorMap[currentTest.color as keyof typeof colorMap] }}
-                  >
-                    {currentTest.word}
-                  </div>
-                  <div className="text-sm text-gray-600 mb-4">
-                    {currentTest.isCongruent ? '(Congruent - word and color match)' : '(Incongruent - word and color differ)'}
-                  </div>
+                {/* Random color boxes display */}
+                <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto mb-6">
+                  {Array.from({ length: 16 }, (_, i) => {
+                    const box = colorBoxes.find(b => b.position === i);
+                    return (
+                      <div
+                        key={i}
+                        className="w-8 h-8 rounded border animate-pulse"
+                        style={{ 
+                          backgroundColor: box ? colorMap[box.color as keyof typeof colorMap] : '#f3f4f6',
+                          animationDelay: `${i * 0.1}s`
+                        }}
+                      />
+                    );
+                  })}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 max-w-md mx-auto mb-6">
+                {currentTest && (
+                  <div className="mb-6">
+                    <p className="text-lg mb-4">Click the color of the text (not what the word says):</p>
+                    <div 
+                      className="text-8xl font-bold mb-6 animate-pulse"
+                      style={{ color: colorMap[currentTest.color as keyof typeof colorMap] }}
+                    >
+                      {currentTest.word}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-4">
+                      {currentTest.isCongruent ? '(Congruent - word and color match)' : '(Incongruent - word and color differ)'}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-4 gap-3 max-w-2xl mx-auto mb-6">
                   {colors.map((color, index) => (
                     <Button
                       key={color}
@@ -288,7 +331,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
                     <div className="bg-blue-50 p-4 rounded-lg mt-4">
                       <h5 className="font-bold text-blue-800 mb-2">🧠 Cognitive Insight:</h5>
                       <p className="text-blue-700 text-sm">
-                        {currentTest.isCongruent 
+                        {currentTest?.isCongruent 
                           ? "Congruent trials are easier because word meaning and color align."
                           : "Incongruent trials require cognitive control to override automatic word reading."
                         }
