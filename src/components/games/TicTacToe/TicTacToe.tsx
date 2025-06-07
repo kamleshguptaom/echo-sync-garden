@@ -4,767 +4,417 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
 
 interface TicTacToeProps {
   onBack: () => void;
 }
 
-type CellValue = 'X' | 'O' | '';
-type BoardTheme = 'classic' | 'neon' | 'wood' | 'space' | 'ocean' | 'custom';
-type GameMode = 'player-vs-player' | 'player-vs-ai';
-type Difficulty = 'easy' | 'medium' | 'hard';
-type SymbolType = 'classic' | 'emoji' | 'shapes' | 'custom';
+type GameMode = 'human-vs-human' | 'human-vs-ai';
+type Difficulty = 'easy' | 'medium' | 'hard' | 'impossible';
+type Player = 'X' | 'O' | null;
 
-interface GameStats {
-  xWins: number;
-  oWins: number;
-  draws: number;
-  totalGames: number;
-}
-
-interface CustomSymbols {
-  x: string;
-  o: string;
+interface GameState {
+  board: Player[];
+  currentPlayer: Player;
+  winner: Player | 'tie' | null;
+  gameOver: boolean;
 }
 
 export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
-  const [gridSize, setGridSize] = useState(3);
-  const [board, setBoard] = useState<CellValue[][]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<'X' | 'O'>('X');
-  const [winner, setWinner] = useState<'X' | 'O' | 'Draw' | null>(null);
-  const [boardTheme, setBoardTheme] = useState<BoardTheme>('classic');
-  const [gameMode, setGameMode] = useState<GameMode>('player-vs-player');
+  const [gameMode, setGameMode] = useState<GameMode>('human-vs-ai');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [symbolType, setSymbolType] = useState<SymbolType>('classic');
-  const [customSymbols, setCustomSymbols] = useState<CustomSymbols>({ x: '🔥', o: '💧' });
-  const [customColors, setCustomColors] = useState({ background: '#ffffff', grid: '#000000', x: '#ff0000', o: '#0000ff' });
-  const [animationsEnabled, setAnimationsEnabled] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [gameStats, setGameStats] = useState<GameStats>({ xWins: 0, oWins: 0, draws: 0, totalGames: 0 });
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [gameState, setGameState] = useState<GameState>({
+    board: Array(9).fill(null),
+    currentPlayer: 'X',
+    winner: null,
+    gameOver: false
+  });
+  const [gameStarted, setGameStarted] = useState(false);
+  const [score, setScore] = useState({ X: 0, O: 0, ties: 0 });
   const [showConcept, setShowConcept] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
-  const [winningLine, setWinningLine] = useState<[number, number, number][] | null>(null);
-  const [showWinCelebration, setShowWinCelebration] = useState(false);
 
-  useEffect(() => {
-    if (gameMode === 'player-vs-ai' && currentPlayer === 'O' && !winner) {
-      makeAIMove();
-    }
-  }, [currentPlayer, gameMode, winner]);
+  const checkWinner = (board: Player[]): Player | 'tie' | null => {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+      [0, 4, 8], [2, 4, 6] // diagonals
+    ];
 
-  const initializeBoard = () => {
-    const newBoard: CellValue[][] = Array(gridSize).fill(null).map(() => Array(gridSize).fill(''));
-    setBoard(newBoard);
-    setWinner(null);
-    setCurrentPlayer('X');
-    setWinningLine(null);
-    setShowWinCelebration(false);
-  };
-
-  useEffect(() => {
-    initializeBoard();
-  }, [gridSize]);
-
-  const checkWinner = (board: CellValue[][]): 'X' | 'O' | 'Draw' | null => {
-    // Check rows
-    for (let i = 0; i < gridSize; i++) {
-      if (board[i][0] && board[i].every(cell => cell === board[i][0])) {
-        setWinningLine([...Array(gridSize).keys()].map(j => [i, j, i * gridSize + j]));
-        return board[i][0] as 'X' | 'O';
+    for (const [a, b, c] of lines) {
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return board[a];
       }
     }
 
-    // Check columns
-    for (let j = 0; j < gridSize; j++) {
-      if (board[0][j] && board.every(row => row[j] === board[0][j])) {
-        setWinningLine([...Array(gridSize).keys()].map(i => [i, j, i * gridSize + j]));
-        return board[0][j] as 'X' | 'O';
-      }
-    }
-
-    // Check main diagonal
-    if (board[0][0] && board.every((row, i) => row[i] === board[0][0])) {
-      setWinningLine([...Array(gridSize).keys()].map(i => [i, i, i * gridSize + i]));
-      return board[0][0] as 'X' | 'O';
-    }
-
-    // Check anti-diagonal
-    if (board[0][gridSize - 1] && board.every((row, i) => row[gridSize - 1 - i] === board[0][gridSize - 1])) {
-      setWinningLine([...Array(gridSize).keys()].map(i => [i, gridSize - 1 - i, i * gridSize + (gridSize - 1 - i)]));
-      return board[0][gridSize - 1] as 'X' | 'O';
-    }
-
-    // Check for draw
-    if (board.every(row => row.every(cell => cell !== ''))) {
-      return 'Draw';
+    if (board.every(cell => cell !== null)) {
+      return 'tie';
     }
 
     return null;
   };
 
-  const makeMove = (row: number, col: number) => {
-    if (board[row][col] !== '' || winner || aiThinking) return;
-
-    const newBoard = board.map(r => [...r]);
-    newBoard[row][col] = currentPlayer;
-    setBoard(newBoard);
-
-    const gameWinner = checkWinner(newBoard);
-    if (gameWinner) {
-      setWinner(gameWinner);
-      updateStats(gameWinner);
-      if (gameWinner !== 'Draw') {
-        setShowWinCelebration(true);
-        setTimeout(() => setShowWinCelebration(false), 3000);
-      }
-    } else {
-      setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
-    }
-  };
-
-  const updateStats = (gameWinner: 'X' | 'O' | 'Draw') => {
-    setGameStats(prev => ({
-      ...prev,
-      xWins: gameWinner === 'X' ? prev.xWins + 1 : prev.xWins,
-      oWins: gameWinner === 'O' ? prev.oWins + 1 : prev.oWins,
-      draws: gameWinner === 'Draw' ? prev.draws + 1 : prev.draws,
-      totalGames: prev.totalGames + 1
-    }));
-  };
-
-  // Improved AI logic
-  const makeAIMove = async () => {
-    if (winner || currentPlayer === 'X') return;
-
-    setAiThinking(true);
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
-
-    // Get best move based on difficulty
-    const [row, col] = getBestMove();
-
-    const newBoard = board.map(r => [...r]);
-    newBoard[row][col] = 'O';
-    setBoard(newBoard);
-
-    const gameWinner = checkWinner(newBoard);
-    if (gameWinner) {
-      setWinner(gameWinner);
-      updateStats(gameWinner);
-      if (gameWinner !== 'Draw') {
-        setShowWinCelebration(true);
-        setTimeout(() => setShowWinCelebration(false), 3000);
-      }
-    } else {
-      setCurrentPlayer('X');
-    }
-
-    setAiThinking(false);
-  };
-
-  const getBestMove = (): [number, number] => {
-    // Copy the board
-    const boardCopy = board.map(row => [...row]);
+  const minimax = (board: Player[], depth: number, isMaximizing: boolean, alpha: number = -Infinity, beta: number = Infinity): number => {
+    const winner = checkWinner(board);
     
-    if (difficulty === 'easy') {
-      // Random move
-      const emptyCells: [number, number][] = [];
-      boardCopy.forEach((row, rowIndex) => {
-        row.forEach((cell, colIndex) => {
-          if (cell === '') {
-            emptyCells.push([rowIndex, colIndex]);
-          }
-        });
-      });
-      return emptyCells[Math.floor(Math.random() * emptyCells.length)];
-    } else {
-      // Medium or Hard, use minimax with limited depth for Medium
-      const maxDepth = difficulty === 'medium' ? 2 : Infinity;
-      return findBestMove(boardCopy, maxDepth);
-    }
-  };
-
-  // Minimax algorithm for AI
-  const findBestMove = (boardState: CellValue[][], maxDepth: number): [number, number] => {
-    let bestMove: [number, number] = [-1, -1];
-    let bestScore = -Infinity;
-
-    // Try each empty cell
-    for (let i = 0; i < gridSize; i++) {
-      for (let j = 0; j < gridSize; j++) {
-        if (boardState[i][j] === '') {
-          boardState[i][j] = 'O';
-          const score = minimax(boardState, 0, false, -Infinity, Infinity, maxDepth);
-          boardState[i][j] = '';
-
-          if (score > bestScore) {
-            bestScore = score;
-            bestMove = [i, j];
-          }
-        }
-      }
-    }
-
-    return bestMove;
-  };
-
-  const minimax = (
-    boardState: CellValue[][], 
-    depth: number, 
-    isMaximizing: boolean, 
-    alpha: number, 
-    beta: number, 
-    maxDepth: number
-  ): number => {
-    // Check terminal states or max depth
-    const winner = evaluateBoard(boardState);
     if (winner === 'O') return 10 - depth;
     if (winner === 'X') return depth - 10;
-    if (winner === 'Draw' || depth >= maxDepth) return 0;
+    if (winner === 'tie') return 0;
 
     if (isMaximizing) {
-      let bestScore = -Infinity;
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          if (boardState[i][j] === '') {
-            boardState[i][j] = 'O';
-            const score = minimax(boardState, depth + 1, false, alpha, beta, maxDepth);
-            boardState[i][j] = '';
-            bestScore = Math.max(score, bestScore);
-            alpha = Math.max(alpha, bestScore);
-            if (beta <= alpha) break;
-          }
+      let maxEval = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === null) {
+          board[i] = 'O';
+          const eval_ = minimax(board, depth + 1, false, alpha, beta);
+          board[i] = null;
+          maxEval = Math.max(maxEval, eval_);
+          alpha = Math.max(alpha, eval_);
+          if (beta <= alpha) break;
         }
       }
-      return bestScore;
+      return maxEval;
     } else {
-      let bestScore = Infinity;
-      for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-          if (boardState[i][j] === '') {
-            boardState[i][j] = 'X';
-            const score = minimax(boardState, depth + 1, true, alpha, beta, maxDepth);
-            boardState[i][j] = '';
-            bestScore = Math.min(score, bestScore);
-            beta = Math.min(beta, bestScore);
-            if (beta <= alpha) break;
-          }
+      let minEval = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (board[i] === null) {
+          board[i] = 'X';
+          const eval_ = minimax(board, depth + 1, true, alpha, beta);
+          board[i] = null;
+          minEval = Math.min(minEval, eval_);
+          beta = Math.min(beta, eval_);
+          if (beta <= alpha) break;
         }
       }
-      return bestScore;
+      return minEval;
     }
   };
 
-  const evaluateBoard = (boardState: CellValue[][]): 'X' | 'O' | 'Draw' | null => {
-    // Check rows
-    for (let i = 0; i < gridSize; i++) {
-      if (boardState[i][0] && boardState[i].every(cell => cell === boardState[i][0])) {
-        return boardState[i][0] as 'X' | 'O';
-      }
-    }
-
-    // Check columns
-    for (let j = 0; j < gridSize; j++) {
-      if (boardState[0][j] && boardState.every(row => row[j] === boardState[0][j])) {
-        return boardState[0][j] as 'X' | 'O';
-      }
-    }
-
-    // Check main diagonal
-    if (boardState[0][0] && boardState.every((row, i) => row[i] === boardState[0][0])) {
-      return boardState[0][0] as 'X' | 'O';
-    }
-
-    // Check anti-diagonal
-    if (boardState[0][gridSize - 1] && boardState.every((row, i) => row[gridSize - 1 - i] === boardState[0][gridSize - 1])) {
-      return boardState[0][gridSize - 1] as 'X' | 'O';
-    }
-
-    // Check for draw
-    if (boardState.every(row => row.every(cell => cell !== ''))) {
-      return 'Draw';
-    }
-
-    return null;
-  };
-
-  const getSymbol = (value: CellValue): string => {
-    if (!value) return '';
+  const getAIMove = (board: Player[]): number => {
+    const emptySpots = board.map((cell, index) => cell === null ? index : null).filter(val => val !== null) as number[];
     
-    switch (symbolType) {
-      case 'classic':
-        return value;
-      case 'emoji':
-        return value === 'X' ? '❌' : '⭕';
-      case 'shapes':
-        return value === 'X' ? '⬜' : '🔵';
-      case 'custom':
-        return value === 'X' ? customSymbols.x : customSymbols.o;
+    if (emptySpots.length === 0) return -1;
+
+    switch (difficulty) {
+      case 'easy':
+        return emptySpots[Math.floor(Math.random() * emptySpots.length)];
+      
+      case 'medium':
+        if (Math.random() < 0.7) {
+          let bestMove = -1;
+          let bestValue = -Infinity;
+          
+          for (const spot of emptySpots) {
+            board[spot] = 'O';
+            const moveValue = minimax(board, 0, false);
+            board[spot] = null;
+            
+            if (moveValue > bestValue) {
+              bestValue = moveValue;
+              bestMove = spot;
+            }
+          }
+          return bestMove;
+        } else {
+          return emptySpots[Math.floor(Math.random() * emptySpots.length)];
+        }
+      
+      case 'hard':
+      case 'impossible':
+        let bestMove = -1;
+        let bestValue = -Infinity;
+        
+        for (const spot of emptySpots) {
+          board[spot] = 'O';
+          const moveValue = minimax(board, 0, false);
+          board[spot] = null;
+          
+          if (moveValue > bestValue) {
+            bestValue = moveValue;
+            bestMove = spot;
+          }
+        }
+        return bestMove;
+      
       default:
-        return value;
+        return emptySpots[0];
     }
   };
 
-  const getThemeStyles = () => {
-    const themes = {
-      classic: {
-        background: 'bg-white',
-        grid: 'border-gray-800',
-        cell: 'bg-gray-50 hover:bg-gray-100'
-      },
-      neon: {
-        background: 'bg-black',
-        grid: 'border-cyan-400',
-        cell: 'bg-gray-900 hover:bg-gray-800 border-cyan-400'
-      },
-      wood: {
-        background: 'bg-amber-100',
-        grid: 'border-amber-800',
-        cell: 'bg-amber-50 hover:bg-amber-200'
-      },
-      space: {
-        background: 'bg-purple-900',
-        grid: 'border-purple-400',
-        cell: 'bg-purple-800 hover:bg-purple-700'
-      },
-      ocean: {
-        background: 'bg-blue-100',
-        grid: 'border-blue-800',
-        cell: 'bg-blue-50 hover:bg-blue-200'
-      },
-      custom: {
-        background: '',
-        grid: '',
-        cell: ''
-      }
+  const makeMove = (index: number) => {
+    if (gameState.board[index] || gameState.gameOver) return;
+
+    const newBoard = [...gameState.board];
+    newBoard[index] = gameState.currentPlayer;
+
+    const winner = checkWinner(newBoard);
+    const newGameState: GameState = {
+      board: newBoard,
+      currentPlayer: gameState.currentPlayer === 'X' ? 'O' : 'X',
+      winner,
+      gameOver: winner !== null
     };
-    
-    return boardTheme === 'custom' ? themes.custom : themes[boardTheme];
+
+    setGameState(newGameState);
+
+    if (winner) {
+      setScore(prev => ({
+        ...prev,
+        [winner === 'tie' ? 'ties' : winner]: prev[winner === 'tie' ? 'ties' : winner] + 1
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if (gameMode === 'human-vs-ai' && gameState.currentPlayer === 'O' && !gameState.gameOver && gameStarted) {
+      setAiThinking(true);
+      const timer = setTimeout(() => {
+        const aiMove = getAIMove([...gameState.board]);
+        if (aiMove !== -1) {
+          makeMove(aiMove);
+        }
+        setAiThinking(false);
+      }, difficulty === 'easy' ? 500 : difficulty === 'medium' ? 1000 : 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameState.currentPlayer, gameState.gameOver, gameStarted, gameMode, difficulty]);
+
+  const startGame = () => {
+    setGameStarted(true);
+    setGameState({
+      board: Array(9).fill(null),
+      currentPlayer: 'X',
+      winner: null,
+      gameOver: false
+    });
   };
 
   const resetGame = () => {
-    initializeBoard();
+    setGameState({
+      board: Array(9).fill(null),
+      currentPlayer: 'X',
+      winner: null,
+      gameOver: false
+    });
   };
 
-  const resetStats = () => {
-    setGameStats({ xWins: 0, oWins: 0, draws: 0, totalGames: 0 });
+  const resetScore = () => {
+    setScore({ X: 0, O: 0, ties: 0 });
   };
 
-  const themeStyles = getThemeStyles();
+  const goBack = () => {
+    if (gameStarted) {
+      setGameStarted(false);
+    } else {
+      onBack();
+    }
+  };
 
-  const isCellInWinningLine = (rowIndex: number, colIndex: number) => {
-    if (!winningLine) return false;
-    return winningLine.some(([row, col]) => row === rowIndex && col === colIndex);
+  const getDifficultyDescription = (diff: Difficulty) => {
+    switch (diff) {
+      case 'easy': return 'AI makes random moves';
+      case 'medium': return 'AI plays smart 70% of the time';
+      case 'hard': return 'AI always plays optimally';
+      case 'impossible': return 'Perfect AI - you cannot win';
+      default: return '';
+    }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Navigation */}
+    <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-600">
+      <style>{`
+        .board {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 4px;
+          background: #333;
+          padding: 4px;
+          border-radius: 8px;
+          max-width: 300px;
+          margin: 0 auto;
+        }
+        .cell {
+          aspect-ratio: 1;
+          background: white;
+          border: none;
+          font-size: 2rem;
+          font-weight: bold;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .cell:hover:not(:disabled) {
+          background: #f0f0f0;
+          transform: scale(1.05);
+        }
+        .cell:disabled {
+          cursor: not-allowed;
+        }
+        .cell.x {
+          color: #3B82F6;
+        }
+        .cell.o {
+          color: #EF4444;
+        }
+        .winner-animation {
+          animation: winner 0.5s ease-in-out;
+        }
+        @keyframes winner {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+        .ai-thinking {
+          animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
+
+      <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex gap-2">
-            <Button onClick={onBack} variant="outline" className="bg-white/90">
-              ← Back to Hub
-            </Button>
-            <Button onClick={() => window.history.back()} variant="outline" className="bg-gray-100">
-              ← Previous
+            <Button onClick={goBack} variant="outline" className="bg-white/90">
+              ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
             </Button>
           </div>
           <h1 className="text-4xl font-bold text-white">⭕ Tic Tac Toe Pro</h1>
-          <div className="flex gap-2">
-            <Dialog open={showHowToPlay} onOpenChange={setShowHowToPlay}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="bg-green-500 text-white hover:bg-green-600">
-                  📖 How to Play
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>How to Play Tic Tac Toe</DialogTitle>
-                  <DialogDescription>Master the classic strategy game</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-bold text-lg mb-2">🎯 Objective</h3>
-                    <p>Be the first to get {gridSize} of your symbols in a row (horizontally, vertically, or diagonally).</p>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-2">🎮 How to Play</h3>
-                    <ol className="list-decimal list-inside space-y-1">
-                      <li>Players take turns placing their symbol on the grid</li>
-                      <li>X always goes first</li>
-                      <li>Click on an empty cell to place your symbol</li>
-                      <li>The first player to get {gridSize} in a row wins!</li>
-                      <li>If all cells are filled with no winner, it's a draw</li>
-                    </ol>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-2">💡 Strategy Tips</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Control the center when possible</li>
-                      <li>Block your opponent's winning moves</li>
-                      <li>Create multiple winning opportunities</li>
-                      <li>Think two moves ahead</li>
-                    </ul>
-                  </div>
+          <Dialog open={showConcept} onOpenChange={setShowConcept}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="bg-purple-500 text-white hover:bg-purple-600">
+                🧠 Concept
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Strategic Thinking & Game Theory</DialogTitle>
+                <DialogDescription>Master logical reasoning and pattern recognition</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="animate-fade-in">
+                  <h3 className="font-bold text-lg">🎯 Game Strategy</h3>
+                  <p>Tic Tac Toe teaches strategic thinking, pattern recognition, and planning ahead. Learn to anticipate opponent moves and create winning opportunities.</p>
                 </div>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={showConcept} onOpenChange={setShowConcept}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
-                  🧠 Concept
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl">
-                <DialogHeader>
-                  <DialogTitle>Strategic Thinking & Pattern Recognition</DialogTitle>
-                  <DialogDescription>Develop cognitive skills through classic gameplay</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="animate-fade-in">
-                    <h3 className="font-bold text-lg mb-3">🧠 Cognitive Benefits</h3>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li><strong>Strategic Planning:</strong> Thinking multiple moves ahead</li>
-                      <li><strong>Pattern Recognition:</strong> Identifying winning combinations</li>
-                      <li><strong>Logical Reasoning:</strong> Making optimal decisions</li>
-                      <li><strong>Spatial Intelligence:</strong> Understanding grid relationships</li>
-                    </ul>
-                  </div>
-                  <div className="bg-blue-100 p-4 rounded-lg">
-                    <h4 className="font-bold mb-2">🔗 Related Topics:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      <a href="https://en.wikipedia.org/wiki/Tic-tac-toe" target="_blank" className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Tic-tac-toe</a>
-                      <a href="https://en.wikipedia.org/wiki/Game_theory" target="_blank" className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">Game Theory</a>
-                      <a href="https://en.wikipedia.org/wiki/Strategic_thinking" target="_blank" className="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600">Strategic Thinking</a>
-                    </div>
-                  </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <h3 className="font-bold text-lg">🧠 Skills Developed</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Strategic Planning:</strong> Think multiple moves ahead</li>
+                    <li><strong>Pattern Recognition:</strong> Identify winning/blocking patterns</li>
+                    <li><strong>Decision Making:</strong> Choose optimal moves under pressure</li>
+                    <li><strong>Game Theory:</strong> Understand minimax strategy</li>
+                  </ul>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                <div className="bg-purple-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
+                  <h4 className="font-bold">💡 Winning Tips:</h4>
+                  <p>• Control the center square<br/>
+                     • Create multiple winning threats<br/>
+                     • Block opponent's winning moves<br/>
+                     • Think defensively and offensively</p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Settings Panel */}
-          <div className="space-y-4">
-            <Card className="bg-white/95">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Game Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+        {!gameStarted ? (
+          <Card className="bg-white/95">
+            <CardHeader>
+              <CardTitle className="text-center">Tic Tac Toe Pro Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Grid Size: {gridSize}x{gridSize}</label>
-                  <Slider
-                    value={[gridSize]}
-                    onValueChange={(value) => setGridSize(value[0])}
-                    max={6}
-                    min={3}
-                    step={1}
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">Game Mode</label>
+                  <label className="block text-sm font-medium mb-1">Game Mode</label>
                   <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
-                    <SelectTrigger className="mt-1">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="player-vs-player">👥 Player vs Player</SelectItem>
-                      <SelectItem value="player-vs-ai">🤖 Player vs AI</SelectItem>
+                      <SelectItem value="human-vs-human">👥 Human vs Human</SelectItem>
+                      <SelectItem value="human-vs-ai">🤖 Human vs AI</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-
-                {gameMode.includes('ai') && (
+                {gameMode === 'human-vs-ai' && (
                   <div>
-                    <label className="text-sm font-medium">AI Difficulty</label>
+                    <label className="block text-sm font-medium mb-1">AI Difficulty</label>
                     <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
-                      <SelectTrigger className="mt-1">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="easy">😊 Easy</SelectItem>
                         <SelectItem value="medium">😐 Medium</SelectItem>
                         <SelectItem value="hard">😤 Hard</SelectItem>
+                        <SelectItem value="impossible">😈 Impossible</SelectItem>
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-gray-600 mt-1">{getDifficultyDescription(difficulty)}</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/95">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Appearance</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium">Theme</label>
-                  <Select value={boardTheme} onValueChange={(value) => setBoardTheme(value as BoardTheme)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="classic">📋 Classic</SelectItem>
-                      <SelectItem value="neon">💫 Neon</SelectItem>
-                      <SelectItem value="wood">🪵 Wood</SelectItem>
-                      <SelectItem value="space">🌌 Space</SelectItem>
-                      <SelectItem value="ocean">🌊 Ocean</SelectItem>
-                      <SelectItem value="custom">🎨 Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Symbols</label>
-                  <Select value={symbolType} onValueChange={(value) => setSymbolType(value as SymbolType)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="classic">XO Classic</SelectItem>
-                      <SelectItem value="emoji">😊 Emoji</SelectItem>
-                      <SelectItem value="shapes">🔷 Shapes</SelectItem>
-                      <SelectItem value="custom">✨ Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {symbolType === 'custom' && (
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-xs">X Symbol</label>
-                      <input
-                        type="text"
-                        value={customSymbols.x}
-                        onChange={(e) => setCustomSymbols(prev => ({ ...prev, x: e.target.value }))}
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        maxLength={2}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs">O Symbol</label>
-                      <input
-                        type="text"
-                        value={customSymbols.o}
-                        onChange={(e) => setCustomSymbols(prev => ({ ...prev, o: e.target.value }))}
-                        className="w-full px-2 py-1 border rounded text-sm"
-                        maxLength={2}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {boardTheme === 'custom' && (
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-xs">Background</label>
-                      <input
-                        type="color"
-                        value={customColors.background}
-                        onChange={(e) => setCustomColors(prev => ({ ...prev, background: e.target.value }))}
-                        className="w-full h-8 rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs">Grid Color</label>
-                      <input
-                        type="color"
-                        value={customColors.grid}
-                        onChange={(e) => setCustomColors(prev => ({ ...prev, grid: e.target.value }))}
-                        className="w-full h-8 rounded"
-                      />
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Game Board */}
-          <div className="lg:col-span-2">
-            <Card className={`${themeStyles.background} p-6 relative`} style={boardTheme === 'custom' ? { backgroundColor: customColors.background } : {}}>
-              <CardContent className="flex flex-col items-center space-y-4">
-                {showWinCelebration && (
-                  <div className="absolute inset-0 z-10 overflow-hidden">
-                    {Array.from({ length: 50 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute animate-confetti"
-                        style={{
-                          left: `${Math.random() * 100}%`,
-                          top: `${Math.random() * 100}%`,
-                          background: `${['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]}`,
-                          width: `${Math.random() * 10 + 5}px`,
-                          height: `${Math.random() * 10 + 5}px`,
-                          borderRadius: Math.random() > 0.5 ? '50%' : '0',
-                          animationDuration: `${Math.random() * 2 + 1}s`,
-                          animationDelay: `${Math.random() * 0.5}s`
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-                
-                <div className="text-center">
-                  <h2 className="text-xl font-bold mb-2">
-                    {winner ? 
-                      winner === 'Draw' ? "It's a Draw! 🤝" : 
-                      `${getSymbol(winner)} Wins! ${winner === 'X' ? '🎉' : '🎊'}` :
-                      `Current Player: ${getSymbol(currentPlayer)} ${aiThinking ? '(AI Thinking...)' : ''}`
-                    }
-                  </h2>
-                </div>
-
-                <div 
-                  className={`grid gap-2 ${themeStyles.grid}`}
-                  style={{ 
-                    gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
-                    borderColor: boardTheme === 'custom' ? customColors.grid : undefined
-                  }}
-                >
-                  {board.map((row, rowIndex) =>
-                    row.map((cell, colIndex) => (
-                      <button
-                        key={`${rowIndex}-${colIndex}`}
-                        className={`w-16 h-16 border-2 ${themeStyles.cell} flex items-center justify-center text-2xl font-bold transition-all duration-200 ${
-                          animationsEnabled ? 'transform hover:scale-105' : ''
-                        } ${isCellInWinningLine(rowIndex, colIndex) ? 'bg-yellow-200 animate-pulse' : ''}`}
-                        style={boardTheme === 'custom' ? { 
-                          borderColor: customColors.grid,
-                          color: cell === 'X' ? customColors.x : customColors.o 
-                        } : {}}
-                        onClick={() => makeMove(rowIndex, colIndex)}
-                        disabled={!!winner || aiThinking || (gameMode === 'player-vs-ai' && currentPlayer === 'O')}
-                      >
-                        <span className={animationsEnabled && cell ? 'animate-scale-in' : ''}>
-                          {getSymbol(cell)}
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-
-                <div className="flex gap-4">
-                  <Button onClick={resetGame} className="bg-blue-500 hover:bg-blue-600">
-                    🔄 New Game
-                  </Button>
-                  <Button onClick={resetStats} variant="outline">
-                    📊 Reset Stats
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Stats Panel */}
-          <div className="space-y-4">
-            <Card className="bg-white/95">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Game Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between">
-                  <span>X Wins:</span>
-                  <span className="font-bold">{gameStats.xWins}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>O Wins:</span>
-                  <span className="font-bold">{gameStats.oWins}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Draws:</span>
-                  <span className="font-bold">{gameStats.draws}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total Games:</span>
-                  <span className="font-bold">{gameStats.totalGames}</span>
-                </div>
-                {gameStats.totalGames > 0 && (
-                  <div className="pt-2 border-t">
-                    <div className="text-xs text-gray-600">Win Rate</div>
-                    <div className="text-sm">
-                      X: {((gameStats.xWins / gameStats.totalGames) * 100).toFixed(1)}%
-                    </div>
-                    <div className="text-sm">
-                      O: {((gameStats.oWins / gameStats.totalGames) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/95">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Strategy Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="animate-fade-in">
-                  <h4 className="font-bold">Take the Center</h4>
-                  <p className="text-gray-600">The center position provides the most winning opportunities</p>
-                </div>
-                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                  <h4 className="font-bold">Watch the Corners</h4>
-                  <p className="text-gray-600">Corner positions can create diagonal winning threats</p>
-                </div>
-                <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
-                  <h4 className="font-bold">Block Immediate Threats</h4>
-                  <p className="text-gray-600">Don't let your opponent create a line of two pieces without blocking</p>
-                </div>
-                <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
-                  <h4 className="font-bold">Create Forks</h4>
-                  <p className="text-gray-600">Set up multiple winning opportunities at once</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/95">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Animations</span>
-                  <Button
-                    size="sm"
-                    variant={animationsEnabled ? "default" : "outline"}
-                    onClick={() => setAnimationsEnabled(!animationsEnabled)}
+              </div>
+              <div className="text-center">
+                <Button onClick={startGame} className="bg-purple-500 hover:bg-purple-600">
+                  Start Game
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-white/95">
+            <CardHeader>
+              <CardTitle className="text-center flex justify-between items-center">
+                <span>X Wins: {score.X}</span>
+                <span className={aiThinking ? 'ai-thinking' : ''}>
+                  {gameState.gameOver 
+                    ? (gameState.winner === 'tie' ? '🤝 Tie Game!' : `🏆 ${gameState.winner} Wins!`)
+                    : aiThinking 
+                      ? '🤖 AI Thinking...'
+                      : `${gameState.currentPlayer}'s Turn`
+                  }
+                </span>
+                <span>O Wins: {score.O}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className={`board ${gameState.gameOver ? 'winner-animation' : ''}`}>
+                {gameState.board.map((cell, index) => (
+                  <button
+                    key={index}
+                    className={`cell ${cell?.toLowerCase() || ''}`}
+                    onClick={() => makeMove(index)}
+                    disabled={!!cell || gameState.gameOver || aiThinking}
                   >
-                    {animationsEnabled ? "✅" : "❌"}
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Sound</span>
-                  <Button
-                    size="sm"
-                    variant={soundEnabled ? "default" : "outline"}
-                    onClick={() => setSoundEnabled(!soundEnabled)}
-                  >
-                    {soundEnabled ? "🔊" : "🔇"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                    {cell}
+                  </button>
+                ))}
+              </div>
+
+              <div className="text-center space-x-4">
+                <Button onClick={resetGame} className="bg-blue-500 hover:bg-blue-600">
+                  New Round
+                </Button>
+                <Button onClick={resetScore} variant="outline">
+                  Reset Score
+                </Button>
+                <Button onClick={() => setGameStarted(false)} variant="outline">
+                  Change Settings
+                </Button>
+              </div>
+
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Ties: {score.ties} | Total Games: {score.X + score.O + score.ties}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      <style jsx global>{`
-        @keyframes confetti {
-          0% { transform: translate(0, 0) rotate(0deg); }
-          100% { transform: translate(var(--translate-x, -100px), var(--translate-y, 100px)) rotate(var(--rotate, 360deg)); }
-        }
-        .animate-confetti {
-          animation: confetti 3s ease-in-out forwards;
-          --translate-x: ${Math.random() * 200 - 100}px;
-          --translate-y: ${Math.random() * 200 - 100}px;
-          --rotate: ${Math.random() * 360}deg;
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,773 +1,506 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 
 interface CarromGameProps {
   onBack: () => void;
 }
 
-interface Coin {
+type GameMode = 'practice' | 'tournament' | 'challenge';
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+interface Piece {
+  id: string;
   x: number;
   y: number;
-  vx: number;
-  vy: number;
-  color: 'white' | 'black' | 'red';
-  pocketed: boolean;
-  radius: number;
+  color: 'white' | 'black' | 'red' | 'striker';
+  inPocket: boolean;
+  velocity: { x: number; y: number };
+}
+
+interface HandGesture {
+  type: 'aim' | 'power' | 'spin';
+  intensity: number;
 }
 
 export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [striker, setStriker] = useState({ x: 200, y: 350, vx: 0, vy: 0, radius: 15 });
+  const [gameMode, setGameMode] = useState<GameMode>('practice');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [gameStarted, setGameStarted] = useState(false);
-  const [showConcept, setShowConcept] = useState(false);
+  const [pieces, setPieces] = useState<Piece[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState<'player1' | 'player2'>('player1');
   const [score, setScore] = useState({ player1: 0, player2: 0 });
-  const [currentPlayer, setCurrentPlayer] = useState(1);
+  const [strikerPosition, setStrikerPosition] = useState({ x: 200, y: 350 });
+  const [aimAngle, setAimAngle] = useState(0);
   const [power, setPower] = useState(0);
-  const [angle, setAngle] = useState(0);
-  const [isCharging, setIsCharging] = useState(false);
-  const [gamePhase, setGamePhase] = useState<'aiming' | 'dragging' | 'moving' | 'finished'>('aiming');
-  const [showWinCelebration, setShowWinCelebration] = useState(false);
-  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
-  const [cursorStyle, setCursorStyle] = useState('crosshair');
-  
-  // For positioning striker along the board edge
-  const [strikerPosition, setStrikerPosition] = useState(200);
-  
-  const BOARD_SIZE = 400;
-  const FRICTION = 0.98;
-  const MIN_VELOCITY = 0.5;
-  const MAX_POWER = 30;
+  const [isAiming, setIsAiming] = useState(false);
+  const [gameFinished, setGameFinished] = useState(false);
+  const [showConcept, setShowConcept] = useState(false);
+  const [handGesture, setHandGesture] = useState<HandGesture>({ type: 'aim', intensity: 0 });
+  const [draggedPiece, setDraggedPiece] = useState<string | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
-  const initializeGame = () => {
-    const newCoins: Coin[] = [];
-    const centerX = BOARD_SIZE / 2;
-    const centerY = BOARD_SIZE / 2;
+  const boardSize = 400;
+  const pieceSize = 20;
+
+  const initializeBoard = () => {
+    const newPieces: Piece[] = [];
     
-    // Create diamond formation
-    const positions = [
-      [0, 0], // Center (red queen)
-      [-15, 0], [15, 0], [0, -15], [0, 15], // Inner ring
-      [-30, 0], [30, 0], [0, -30], [0, 30], // Outer ring
-      [-15, -15], [15, -15], [-15, 15], [15, 15] // Corners
-    ];
+    // Create pieces in formation
+    const centerX = boardSize / 2;
+    const centerY = boardSize / 2;
     
-    positions.forEach((pos, index) => {
-      newCoins.push({
-        x: centerX + pos[0],
-        y: centerY + pos[1],
-        vx: 0,
-        vy: 0,
-        color: index === 0 ? 'red' : (index % 2 === 1 ? 'black' : 'white'),
-        pocketed: false,
-        radius: 8
+    // White pieces
+    for (let i = 0; i < 9; i++) {
+      const angle = (i * 40) * (Math.PI / 180);
+      newPieces.push({
+        id: `white_${i}`,
+        x: centerX + Math.cos(angle) * 60,
+        y: centerY + Math.sin(angle) * 60,
+        color: 'white',
+        inPocket: false,
+        velocity: { x: 0, y: 0 }
       });
+    }
+    
+    // Black pieces
+    for (let i = 0; i < 9; i++) {
+      const angle = (i * 40 + 20) * (Math.PI / 180);
+      newPieces.push({
+        id: `black_${i}`,
+        x: centerX + Math.cos(angle) * 80,
+        y: centerY + Math.sin(angle) * 80,
+        color: 'black',
+        inPocket: false,
+        velocity: { x: 0, y: 0 }
+      });
+    }
+    
+    // Red queen
+    newPieces.push({
+      id: 'queen',
+      x: centerX,
+      y: centerY,
+      color: 'red',
+      inPocket: false,
+      velocity: { x: 0, y: 0 }
     });
     
-    setCoins(newCoins);
-    setStriker({ x: centerX, y: 350, vx: 0, vy: 0, radius: 15 });
-    setStrikerPosition(centerX);
+    setPieces(newPieces);
+  };
+
+  const startGame = () => {
     setGameStarted(true);
-    setGamePhase('aiming');
+    setGameFinished(false);
     setScore({ player1: 0, player2: 0 });
-    setCurrentPlayer(1);
+    setCurrentPlayer('player1');
+    initializeBoard();
   };
 
-  const checkCollisions = useCallback((coins: Coin[], striker: any) => {
-    const newCoins = [...coins];
-    let newStriker = { ...striker };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isAiming || !boardRef.current) return;
     
-    // Check coin-coin collisions
-    for (let i = 0; i < newCoins.length; i++) {
-      for (let j = i + 1; j < newCoins.length; j++) {
-        const coin1 = newCoins[i];
-        const coin2 = newCoins[j];
-        
-        if (coin1.pocketed || coin2.pocketed) continue;
-        
-        const dx = coin2.x - coin1.x;
-        const dy = coin2.y - coin1.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < coin1.radius + coin2.radius) {
-          // Simple collision response
-          const angle = Math.atan2(dy, dx);
-          const speed1 = Math.sqrt(coin1.vx * coin1.vx + coin1.vy * coin1.vy);
-          const speed2 = Math.sqrt(coin2.vx * coin2.vx + coin2.vy * coin2.vy);
-          
-          coin1.vx = -Math.cos(angle) * speed2 * 0.5;
-          coin1.vy = -Math.sin(angle) * speed2 * 0.5;
-          coin2.vx = Math.cos(angle) * speed1 * 0.5;
-          coin2.vy = Math.sin(angle) * speed1 * 0.5;
-          
-          // Separate overlapping coins
-          const overlap = coin1.radius + coin2.radius - distance;
-          coin1.x -= Math.cos(angle) * overlap * 0.5;
-          coin1.y -= Math.sin(angle) * overlap * 0.5;
-          coin2.x += Math.cos(angle) * overlap * 0.5;
-          coin2.y += Math.sin(angle) * overlap * 0.5;
-        }
-      }
-    }
-    
-    // Check striker-coin collisions
-    for (let coin of newCoins) {
-      if (coin.pocketed) continue;
-      
-      const dx = coin.x - newStriker.x;
-      const dy = coin.y - newStriker.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < coin.radius + newStriker.radius) {
-        const angle = Math.atan2(dy, dx);
-        const strikerSpeed = Math.sqrt(newStriker.vx * newStriker.vx + newStriker.vy * newStriker.vy);
-        
-        coin.vx = Math.cos(angle) * strikerSpeed * 0.8;
-        coin.vy = Math.sin(angle) * strikerSpeed * 0.8;
-        
-        newStriker.vx *= 0.3;
-        newStriker.vy *= 0.3;
-      }
-    }
-    
-    return { coins: newCoins, striker: newStriker };
-  }, []);
-
-  const checkPockets = useCallback((coins: Coin[], striker: any) => {
-    const pockets = [
-      { x: 20, y: 20 }, { x: 380, y: 20 },
-      { x: 20, y: 380 }, { x: 380, y: 380 }
-    ];
-    
-    const newCoins = [...coins];
-    let newStriker = { ...striker };
-    let scoreChange = { player1: 0, player2: 0 };
-    let pocketed = false;
-    
-    // Check coins in pockets
-    newCoins.forEach(coin => {
-      if (!coin.pocketed) {
-        pockets.forEach(pocket => {
-          const dx = coin.x - pocket.x;
-          const dy = coin.y - pocket.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 20) {
-            coin.pocketed = true;
-            pocketed = true;
-            if (coin.color === 'black' && currentPlayer === 1) scoreChange.player1++;
-            if (coin.color === 'white' && currentPlayer === 1) scoreChange.player1++;
-            if (coin.color === 'black' && currentPlayer === 2) scoreChange.player2++;
-            if (coin.color === 'white' && currentPlayer === 2) scoreChange.player2++;
-            if (coin.color === 'red') {
-              if (currentPlayer === 1) scoreChange.player1 += 3;
-              if (currentPlayer === 2) scoreChange.player2 += 3;
-            }
-          }
-        });
-      }
-    });
-    
-    // Check striker in pocket (foul)
-    let strikerPocketed = false;
-    pockets.forEach(pocket => {
-      const dx = newStriker.x - pocket.x;
-      const dy = newStriker.y - pocket.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < 20) {
-        strikerPocketed = true;
-        
-        // Penalty for pocketing striker
-        if (currentPlayer === 1) {
-          scoreChange.player1 -= 2;
-        } else {
-          scoreChange.player2 -= 2;
-        }
-      }
-    });
-    
-    if (strikerPocketed) {
-      newStriker = {
-        ...newStriker,
-        x: BOARD_SIZE / 2,
-        y: 350,
-        vx: 0,
-        vy: 0
-      };
-    }
-    
-    return { coins: newCoins, striker: newStriker, scoreChange, pocketed };
-  }, [currentPlayer]);
-
-  const updatePhysics = useCallback(() => {
-    if (gamePhase !== 'moving') return;
-    
-    setCoins(prevCoins => {
-      setStriker(prevStriker => {
-        const { coins: collidedCoins, striker: collidedStriker } = checkCollisions(prevCoins, prevStriker);
-        const { coins: finalCoins, striker: finalStriker, scoreChange, pocketed } = checkPockets(collidedCoins, collidedStriker);
-        
-        // Update score
-        if (scoreChange.player1 !== 0 || scoreChange.player2 !== 0) {
-          setScore(prev => ({
-            player1: Math.max(0, prev.player1 + scoreChange.player1),
-            player2: Math.max(0, prev.player2 + scoreChange.player2)
-          }));
-          
-          // Check for win condition (first to 15 points)
-          if (prev.player1 + scoreChange.player1 >= 15 || prev.player2 + scoreChange.player2 >= 15) {
-            setGamePhase('finished');
-            setShowWinCelebration(true);
-            setTimeout(() => {
-              setShowWinCelebration(false);
-            }, 3000);
-            return finalStriker;
-          }
-        }
-        
-        // Apply physics
-        const updatedCoins = finalCoins.map(coin => {
-          if (coin.pocketed) return coin;
-          
-          // Apply friction
-          coin.vx *= FRICTION;
-          coin.vy *= FRICTION;
-          
-          // Stop very slow movement
-          if (Math.abs(coin.vx) < MIN_VELOCITY) coin.vx = 0;
-          if (Math.abs(coin.vy) < MIN_VELOCITY) coin.vy = 0;
-          
-          // Update position
-          coin.x += coin.vx;
-          coin.y += coin.vy;
-          
-          // Boundary collision
-          if (coin.x - coin.radius < 10 || coin.x + coin.radius > BOARD_SIZE - 10) {
-            coin.vx = -coin.vx * 0.7;
-            coin.x = Math.max(coin.radius + 10, Math.min(BOARD_SIZE - coin.radius - 10, coin.x));
-          }
-          if (coin.y - coin.radius < 10 || coin.y + coin.radius > BOARD_SIZE - 10) {
-            coin.vy = -coin.vy * 0.7;
-            coin.y = Math.max(coin.radius + 10, Math.min(BOARD_SIZE - coin.radius - 10, coin.y));
-          }
-          
-          return coin;
-        });
-        
-        // Update striker
-        finalStriker.vx *= FRICTION;
-        finalStriker.vy *= FRICTION;
-        
-        if (Math.abs(finalStriker.vx) < MIN_VELOCITY) finalStriker.vx = 0;
-        if (Math.abs(finalStriker.vy) < MIN_VELOCITY) finalStriker.vy = 0;
-        
-        finalStriker.x += finalStriker.vx;
-        finalStriker.y += finalStriker.vy;
-        
-        // Striker boundary collision
-        if (finalStriker.x - finalStriker.radius < 10 || finalStriker.x + finalStriker.radius > BOARD_SIZE - 10) {
-          finalStriker.vx = -finalStriker.vx * 0.7;
-          finalStriker.x = Math.max(finalStriker.radius + 10, Math.min(BOARD_SIZE - finalStriker.radius - 10, finalStriker.x));
-        }
-        if (finalStriker.y - finalStriker.radius < 10 || finalStriker.y + finalStriker.radius > BOARD_SIZE - 10) {
-          finalStriker.vy = -finalStriker.vy * 0.7;
-          finalStriker.y = Math.max(finalStriker.radius + 10, Math.min(BOARD_SIZE - finalStriker.radius - 10, finalStriker.y));
-        }
-        
-        // Check if everything stopped
-        const allStopped = updatedCoins.every(coin => !coin.pocketed && coin.vx === 0 && coin.vy === 0) && 
-                          finalStriker.vx === 0 && finalStriker.vy === 0;
-        
-        if (allStopped) {
-          setGamePhase('aiming');
-          // Switch player if no coins were pocketed
-          if (!pocketed) {
-            setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
-          }
-          // Reset striker position
-          setStrikerPosition(BOARD_SIZE / 2);
-          return {
-            ...finalStriker,
-            x: BOARD_SIZE / 2,
-            y: 350
-          };
-        }
-        
-        return finalStriker;
-      });
-      
-      return prevCoins;
-    });
-  }, [gamePhase, currentPlayer, checkCollisions, checkPockets]);
-
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Clear canvas
-    ctx.fillStyle = '#deb887';
-    ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-    
-    // Draw border
-    ctx.strokeStyle = '#8b4513';
-    ctx.lineWidth = 20;
-    ctx.strokeRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-    
-    // Draw center circle
-    ctx.strokeStyle = '#654321';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(BOARD_SIZE/2, BOARD_SIZE/2, 50, 0, 2 * Math.PI);
-    ctx.stroke();
-    
-    // Draw pockets
-    const pockets = [
-      { x: 20, y: 20 }, { x: 380, y: 20 },
-      { x: 20, y: 380 }, { x: 380, y: 380 }
-    ];
-    
-    ctx.fillStyle = '#000000';
-    pockets.forEach(pocket => {
-      ctx.beginPath();
-      ctx.arc(pocket.x, pocket.y, 20, 0, 2 * Math.PI);
-      ctx.fill();
-    });
-    
-    // Draw coins
-    coins.forEach(coin => {
-      if (!coin.pocketed) {
-        ctx.fillStyle = coin.color === 'white' ? '#ffffff' : 
-                       coin.color === 'black' ? '#000000' : '#ff0000';
-        ctx.beginPath();
-        ctx.arc(coin.x, coin.y, coin.radius, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#333333';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    });
-    
-    // Draw striker
-    ctx.fillStyle = '#ffd700';
-    ctx.beginPath();
-    ctx.arc(striker.x, striker.y, striker.radius, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.strokeStyle = '#333333';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    // Draw aiming line during aiming phase
-    if (gamePhase === 'aiming' && power > 0) {
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(striker.x, striker.y);
-      ctx.lineTo(
-        striker.x + Math.cos(angle) * power * 2,
-        striker.y + Math.sin(angle) * power * 2
-      );
-      ctx.stroke();
-    }
-    
-    // Draw dragging line for drag-shoot
-    if (gamePhase === 'dragging' && dragStartPos.x !== 0) {
-      const canvas = canvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(striker.x, striker.y);
-      ctx.lineTo(striker.x, striker.y - (dragStartPos.y - striker.y) * 2);
-      ctx.stroke();
-      
-      // Draw power indicator
-      const dragPower = Math.min(
-        Math.sqrt(
-          Math.pow(dragStartPos.x - striker.x, 2) + 
-          Math.pow(dragStartPos.y - striker.y, 2)
-        ) / 5,
-        MAX_POWER
-      );
-      
-      ctx.fillStyle = dragPower < 10 ? '#00ff00' : 
-                      dragPower < 20 ? '#ffff00' : 
-                      '#ff0000';
-      ctx.fillRect(10, 10, dragPower * 5, 10);
-      ctx.strokeStyle = '#000000';
-      ctx.strokeRect(10, 10, MAX_POWER * 5, 10);
-    }
-    
-    // Draw striker position indicator along the bottom edge
-    if (gamePhase === 'aiming') {
-      ctx.fillStyle = '#ffff00';
-      ctx.beginPath();
-      ctx.moveTo(strikerPosition, BOARD_SIZE - 5);
-      ctx.lineTo(strikerPosition - 10, BOARD_SIZE - 15);
-      ctx.lineTo(strikerPosition + 10, BOARD_SIZE - 15);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Draw arrow for dragging hint
-      if (gamePhase === 'aiming') {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '12px Arial';
-        ctx.fillText('← Drag to position, Click & drag up to shoot →', BOARD_SIZE/2 - 120, BOARD_SIZE - 30);
-      }
-    }
-    
-    // Draw current player indicator
-    ctx.fillStyle = currentPlayer === 1 ? '#ff0000' : '#0000ff';
-    ctx.font = '16px Arial';
-    ctx.fillText(`Player ${currentPlayer}'s Turn`, 10, 30);
-    
-    // Game finished overlay
-    if (gamePhase === 'finished') {
-      const winner = score.player1 >= 15 ? 1 : 2;
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-      
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '30px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`Player ${winner} Wins!`, BOARD_SIZE/2, BOARD_SIZE/2 - 20);
-      
-      ctx.font = '20px Arial';
-      ctx.fillText(`Score: ${score.player1} - ${score.player2}`, BOARD_SIZE/2, BOARD_SIZE/2 + 20);
-    }
-    
-  }, [coins, striker, gamePhase, power, angle, dragStartPos, strikerPosition, currentPlayer, score]);
-
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (gamePhase !== 'aiming') return;
-    
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
+    const rect = boardRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // Check if click is near striker
-    const dx = mouseX - striker.x;
-    const dy = mouseY - striker.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(mouseY - strikerPosition.y, mouseX - strikerPosition.x);
+    setAimAngle(angle);
     
-    if (distance < striker.radius * 2) {
-      // Start dragging
-      setGamePhase('dragging');
-      setDragStartPos({ x: mouseX, y: mouseY });
-    } else {
-      // Just update aiming angle
-      setAngle(Math.atan2(mouseY - striker.y, mouseX - striker.x));
-    }
+    // Update hand gesture for aiming
+    setHandGesture({ type: 'aim', intensity: 50 });
   };
 
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handlePowerAdjust = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isAiming) return;
     
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    const powerLevel = Math.min(100, Math.max(0, power + 10));
+    setPower(powerLevel);
+    setHandGesture({ type: 'power', intensity: powerLevel });
+  };
+
+  const handleShot = () => {
+    if (!isAiming || power === 0) return;
     
-    if (gamePhase === 'aiming') {
-      // Update striker position if dragging along the bottom edge
-      if (mouseY > BOARD_SIZE - 40 && mouseX > 20 && mouseX < BOARD_SIZE - 20) {
-        setStrikerPosition(mouseX);
-        setStriker(prev => ({ ...prev, x: mouseX }));
-        setCursorStyle('ew-resize'); // Horizontal resize cursor
-      } else {
-        setCursorStyle('crosshair');
-      }
-    } else if (gamePhase === 'dragging') {
-      // Update angle based on drag direction
-      const dx = mouseX - striker.x;
-      const dy = mouseY - striker.y;
-      setAngle(Math.atan2(dy, dx));
+    setHandGesture({ type: 'spin', intensity: power });
+    
+    // Simulate shot physics
+    const shotVelocity = {
+      x: Math.cos(aimAngle) * (power / 10),
+      y: Math.sin(aimAngle) * (power / 10)
+    };
+    
+    // Update pieces with collision simulation
+    setPieces(prevPieces => prevPieces.map(piece => {
+      const distance = Math.sqrt(
+        Math.pow(piece.x - strikerPosition.x, 2) + 
+        Math.pow(piece.y - strikerPosition.y, 2)
+      );
       
-      // Update power based on drag distance
-      const dragDistance = Math.sqrt(dx * dx + dy * dy);
-      setPower(Math.min(dragDistance / 5, MAX_POWER));
-    }
-  };
-
-  const handleCanvasMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (gamePhase === 'dragging') {
-      shoot();
-      setDragStartPos({ x: 0, y: 0 });
-    }
-  };
-
-  const handleCanvasMouseLeave = () => {
-    if (gamePhase === 'dragging') {
-      setGamePhase('aiming');
-      setDragStartPos({ x: 0, y: 0 });
-    }
-  };
-
-  const shoot = () => {
-    if (gamePhase !== 'aiming' && gamePhase !== 'dragging') return;
-    
-    const shootPower = power / 10;
-    setStriker(prev => ({
-      ...prev,
-      vx: Math.cos(angle) * shootPower,
-      vy: Math.sin(angle) * shootPower
+      if (distance < 50) {
+        return {
+          ...piece,
+          velocity: {
+            x: shotVelocity.x * 0.8,
+            y: shotVelocity.y * 0.8
+          }
+        };
+      }
+      return piece;
     }));
     
-    setGamePhase('moving');
+    setIsAiming(false);
     setPower(0);
+    
+    // Switch player after shot
+    setTimeout(() => {
+      setCurrentPlayer(prev => prev === 'player1' ? 'player2' : 'player1');
+    }, 2000);
   };
 
-  // Animation loop
-  useEffect(() => {
-    const animate = () => {
-      updatePhysics();
-      draw();
-      animationRef.current = requestAnimationFrame(animate);
-    };
+  const handleDragStart = (e: React.DragEvent, pieceId: string) => {
+    setDraggedPiece(pieceId);
+    setHandGesture({ type: 'aim', intensity: 30 });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!draggedPiece || !boardRef.current) return;
     
-    if (gameStarted) {
-      animate();
-    }
+    const rect = boardRef.current.getBoundingClientRect();
+    const dropX = e.clientX - rect.left;
+    const dropY = e.clientY - rect.top;
     
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+    setPieces(prevPieces => prevPieces.map(piece => {
+      if (piece.id === draggedPiece) {
+        return { ...piece, x: dropX, y: dropY };
       }
+      return piece;
+    }));
+    
+    setDraggedPiece(null);
+    setHandGesture({ type: 'power', intensity: 0 });
+  };
+
+  const renderHandGesture = () => {
+    const gestureEmoji = {
+      aim: '👉',
+      power: '✊',
+      spin: '🌀'
     };
-  }, [gameStarted, updatePhysics, draw]);
+    
+    return (
+      <div className="absolute top-4 right-4 text-4xl animate-pulse">
+        {gestureEmoji[handGesture.type]}
+        <div className="text-sm text-center mt-1">
+          {handGesture.type.toUpperCase()}
+        </div>
+      </div>
+    );
+  };
 
   const goBack = () => {
     if (gameStarted) {
       setGameStarted(false);
+      setGameFinished(false);
     } else {
       onBack();
     }
   };
 
   return (
-    <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-amber-400 via-orange-500 to-red-600">
+    <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-amber-600 via-yellow-500 to-orange-400">
+      <style>{`
+        .carrom-board {
+          background: #8B4513;
+          border: 8px solid #654321;
+          position: relative;
+        }
+        .carrom-piece {
+          border-radius: 50%;
+          border: 2px solid #333;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: absolute;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          user-select: none;
+        }
+        .carrom-piece:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .carrom-piece.white {
+          background: #FFFFFF;
+          color: #333;
+        }
+        .carrom-piece.black {
+          background: #2C2C2C;
+          color: #FFF;
+        }
+        .carrom-piece.red {
+          background: #DC2626;
+          color: #FFF;
+        }
+        .carrom-piece.striker {
+          background: #FBBF24;
+          border: 3px solid #F59E0B;
+        }
+        .pocket {
+          position: absolute;
+          width: 40px;
+          height: 40px;
+          background: #000;
+          border-radius: 50%;
+          border: 3px solid #333;
+        }
+        .aim-line {
+          position: absolute;
+          background: red;
+          height: 2px;
+          transform-origin: left center;
+          opacity: 0.7;
+          z-index: 10;
+        }
+        .power-meter {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          width: 200px;
+          height: 20px;
+          background: #333;
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .power-fill {
+          height: 100%;
+          background: linear-gradient(to right, #10B981, #F59E0B, #DC2626);
+          transition: width 0.3s ease;
+        }
+        @keyframes handGesture {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+        }
+        .hand-gesture {
+          animation: handGesture 1s infinite;
+        }
+      `}</style>
+
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex gap-2">
             <Button onClick={goBack} variant="outline" className="bg-white/90">
               ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
             </Button>
-            <Button onClick={() => window.history.back()} variant="outline" className="bg-white/90">
-              ← Previous
-            </Button>
           </div>
           <h1 className="text-4xl font-bold text-white">🎯 Carrom Master</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
+              <Button variant="outline" className="bg-amber-500 text-white hover:bg-amber-600">
                 🧠 Concept
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Strategy & Physics in Carrom</DialogTitle>
-                <DialogDescription>Learn angles, force, and strategic thinking</DialogDescription>
+                <DialogTitle>Carrom Game Strategy</DialogTitle>
+                <DialogDescription>Master precision and strategy in this classic board game</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="animate-fade-in">
-                  <h3 className="font-bold text-lg">🎯 How to Play Carrom</h3>
-                  <p className="mb-2">Use the striker to hit coins into the corner pockets. Plan your shots carefully considering angles and force!</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Position the striker by dragging it along the bottom edge</li>
-                    <li>Click on the striker and drag upward to aim and set power</li>
-                    <li>Release to shoot the striker</li>
-                    <li>Pocket coins of your color to score points</li>
-                    <li>The red coin (queen) is worth 3 points</li>
-                    <li>First to 15 points wins the game</li>
-                  </ul>
+                  <h3 className="font-bold text-lg">🎯 Game Objective</h3>
+                  <p>Use the striker to pocket your assigned pieces (white or black) and the red queen to score points. First to pocket all pieces wins!</p>
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                  <h3 className="font-bold text-lg">🧠 Skills Developed</h3>
+                  <h3 className="font-bold text-lg">🎮 Controls</h3>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Angle calculation and geometry</li>
-                    <li>Force and momentum understanding</li>
-                    <li>Strategic planning and foresight</li>
-                    <li>Hand-eye coordination</li>
-                    <li>Physics concepts (friction, collision)</li>
+                    <li><strong>Mouse:</strong> Aim and adjust power</li>
+                    <li><strong>Drag & Drop:</strong> Fine positioning</li>
+                    <li><strong>Hand Gestures:</strong> Visual feedback for actions</li>
                   </ul>
                 </div>
                 <div className="bg-amber-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
-                  <h4 className="font-bold">💡 Pro Tips:</h4>
-                  <p>• Aim for optimal angles to pocket multiple coins<br/>
-                     • Control power - too much force can be counterproductive<br/>
-                     • Use the center circle for strategic positioning<br/>
-                     • Plan 2-3 moves ahead like chess!</p>
-                </div>
-                <div className="bg-blue-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.6s' }}>
-                  <h4 className="font-bold">👋 Hand Gestures:</h4>
-                  <p>• <strong>Drag horizontally</strong>: Position striker along the bottom edge<br/>
-                     • <strong>Click & drag upward</strong>: Aim and set power for your shot<br/>
-                     • <strong>Short drag</strong>: Gentle shot with precision<br/>
-                     • <strong>Long drag</strong>: Powerful shot for breaking or long distances</p>
+                  <h4 className="font-bold">🏆 Strategy Tips:</h4>
+                  <p>• Plan your shots carefully<br/>
+                     • Use angles and rebounds<br/>
+                     • Control the striker power<br/>
+                     • Watch opponent's pieces</p>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <Card className="bg-white/95">
-              <CardContent className="p-4">
-                <canvas
-                  ref={canvasRef}
-                  width={BOARD_SIZE}
-                  height={BOARD_SIZE}
-                  className="border-4 border-brown-600 rounded-lg"
-                  style={{ cursor: cursorStyle }}
-                  onClick={handleCanvasClick}
-                  onMouseMove={handleCanvasMouseMove}
-                  onMouseUp={handleCanvasMouseUp}
-                  onMouseLeave={handleCanvasMouseLeave}
-                />
-              </CardContent>
-            </Card>
-            
-            {showWinCelebration && (
-              <div className="absolute inset-0 pointer-events-none">
-                {Array.from({ length: 50 }).map((_, i) => (
+        {!gameStarted ? (
+          <Card className="bg-white/95">
+            <CardHeader>
+              <CardTitle className="text-center">Carrom Game Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Game Mode</label>
+                  <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="practice">Practice Mode</SelectItem>
+                      <SelectItem value="tournament">Tournament</SelectItem>
+                      <SelectItem value="challenge">Challenge Mode</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Difficulty</label>
+                  <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="text-center">
+                <Button onClick={startGame} className="bg-amber-500 hover:bg-amber-600">
+                  Start Game
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-white/95">
+            <CardHeader>
+              <CardTitle className="text-center flex justify-between items-center">
+                <span>Player 1: {score.player1}</span>
+                <span>Current: {currentPlayer}</span>
+                <span>Player 2: {score.player2}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div 
+                ref={boardRef}
+                className="carrom-board mx-auto relative"
+                style={{ width: boardSize, height: boardSize }}
+                onMouseMove={handleMouseMove}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              >
+                {/* Hand gesture indicator */}
+                {renderHandGesture()}
+                
+                {/* Corner pockets */}
+                <div className="pocket" style={{ top: -20, left: -20 }} />
+                <div className="pocket" style={{ top: -20, right: -20 }} />
+                <div className="pocket" style={{ bottom: -20, left: -20 }} />
+                <div className="pocket" style={{ bottom: -20, right: -20 }} />
+                
+                {/* Game pieces */}
+                {pieces.filter(piece => !piece.inPocket).map((piece) => (
                   <div
-                    key={i}
-                    className="absolute animate-confetti"
+                    key={piece.id}
+                    className={`carrom-piece ${piece.color}`}
                     style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      background: `${['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]}`,
-                      width: `${Math.random() * 10 + 5}px`,
-                      height: `${Math.random() * 10 + 5}px`,
-                      borderRadius: Math.random() > 0.5 ? '50%' : '0',
-                      animationDuration: `${Math.random() * 2 + 1}s`,
-                      animationDelay: `${Math.random() * 0.5}s`
+                      left: piece.x - pieceSize/2,
+                      top: piece.y - pieceSize/2,
+                      width: pieceSize,
+                      height: pieceSize
+                    }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, piece.id)}
+                  >
+                    {piece.color === 'red' ? '👑' : piece.color === 'white' ? 'W' : 'B'}
+                  </div>
+                ))}
+                
+                {/* Striker */}
+                <div
+                  className="carrom-piece striker"
+                  style={{
+                    left: strikerPosition.x - pieceSize/2,
+                    top: strikerPosition.y - pieceSize/2,
+                    width: pieceSize + 4,
+                    height: pieceSize + 4
+                  }}
+                  onClick={() => setIsAiming(!isAiming)}
+                >
+                  S
+                </div>
+                
+                {/* Aim line */}
+                {isAiming && (
+                  <div
+                    className="aim-line"
+                    style={{
+                      left: strikerPosition.x,
+                      top: strikerPosition.y,
+                      width: 100,
+                      transform: `rotate(${aimAngle}rad)`
                     }}
                   />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <Card className="bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-sm">Game Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className={`font-bold ${currentPlayer === 1 ? 'text-red-600' : ''}`}>Player 1:</span>
-                    <span className={`${currentPlayer === 1 ? 'text-red-600' : ''}`}>{score.player1} points</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className={`font-bold ${currentPlayer === 2 ? 'text-blue-600' : ''}`}>Player 2:</span>
-                    <span className={`${currentPlayer === 2 ? 'text-blue-600' : ''}`}>{score.player2} points</span>
-                  </div>
-                  <div className="font-bold mt-2">Current: Player {currentPlayer}</div>
-                  <div className="capitalize">Phase: {gamePhase}</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-sm">How to Play</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-200 p-1 rounded">Drag →</span>
-                  <span>Position striker along the bottom</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-200 p-1 rounded">Click + Drag ↑</span>
-                  <span>Aim and set power</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-200 p-1 rounded">Release</span>
-                  <span>Shoot the striker</span>
-                </div>
-                <div className="mt-2">
-                  <p><strong>Goal:</strong> Pocket coins to score points:</p>
-                  <ul className="list-disc list-inside">
-                    <li>Regular coins = 1 point</li>
-                    <li>Red coin = 3 points</li>
-                    <li>First to 15 points wins!</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-
-            {gamePhase === 'aiming' && (
-              <Card className="bg-white/95">
-                <CardHeader>
-                  <CardTitle className="text-sm">Controls</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-sm space-y-1">
-                    <p className="font-bold">Drag Power Shot:</p>
-                    <p>Click on striker & drag to aim and set power</p>
-                    <p className="mt-2">- OR -</p>
-                    <p className="font-bold mt-2">Manual Controls:</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1">Power: {power}%</label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={power}
-                      onChange={(e) => setPower(parseInt(e.target.value))}
-                      className="w-full"
+                )}
+                
+                {/* Power meter */}
+                {isAiming && (
+                  <div className="power-meter">
+                    <div 
+                      className="power-fill"
+                      style={{ width: `${power}%` }}
                     />
                   </div>
-                  <Button 
-                    onClick={shoot} 
-                    disabled={power === 0}
-                    className="w-full bg-green-500 hover:bg-green-600"
-                  >
-                    Shoot!
+                )}
+              </div>
+              
+              <div className="mt-6 text-center space-x-4">
+                <Button 
+                  onClick={() => setIsAiming(!isAiming)}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  {isAiming ? 'Cancel Aim' : 'Aim'}
+                </Button>
+                <Button 
+                  onClick={handlePowerAdjust}
+                  disabled={!isAiming}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  Power +
+                </Button>
+                <Button 
+                  onClick={handleShot}
+                  disabled={!isAiming || power === 0}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  Shoot!
+                </Button>
+              </div>
+              
+              {gameFinished && (
+                <div className="text-center mt-6 space-y-4">
+                  <h2 className="text-3xl font-bold">🏆 Game Complete!</h2>
+                  <p className="text-xl">
+                    Winner: {score.player1 > score.player2 ? 'Player 1' : 'Player 2'}
+                  </p>
+                  <Button onClick={() => { setGameStarted(false); setGameFinished(false); }} className="bg-amber-500 hover:bg-amber-600">
+                    New Game
                   </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {!gameStarted ? (
-              <Button onClick={initializeGame} className="w-full bg-amber-500 hover:bg-amber-600">
-                Start New Game
-              </Button>
-            ) : (
-              <Button onClick={() => { setGameStarted(false); }} className="w-full bg-red-500 hover:bg-red-600">
-                Reset Game
-              </Button>
-            )}
-          </div>
-        </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
-      <style jsx global>{`
-        @keyframes confetti {
-          0% { transform: translate(0, 0) rotate(0deg); }
-          100% { transform: translate(var(--translate-x, -100px), var(--translate-y, 100px)) rotate(var(--rotate, 360deg)); }
-        }
-        .animate-confetti {
-          animation: confetti 3s ease-in-out forwards;
-          --translate-x: ${Math.random() * 200 - 100}px;
-          --translate-y: ${Math.random() * 200 - 100}px;
-          --rotate: ${Math.random() * 360}deg;
-        }
-      `}</style>
     </div>
   );
 };
