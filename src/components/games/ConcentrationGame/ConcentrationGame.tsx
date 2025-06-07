@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,160 +9,278 @@ interface ConcentrationGameProps {
   onBack: () => void;
 }
 
-type Difficulty = 'easy' | 'medium' | 'hard' | 'random';
-type GameMode = 'stroop' | 'nback' | 'attention' | 'focus' | 'random';
+type GameMode = 'stroop' | 'color-match' | 'attention' | 'focus';
+type Difficulty = 'easy' | 'medium' | 'hard';
 
-interface StroopTest {
+interface StroopItem {
   word: string;
   color: string;
-  correctAnswer: string;
-  isCongruent: boolean;
+  correct: boolean;
+}
+
+interface ColorBox {
+  id: number;
+  color: string;
+  x: number;
+  y: number;
+  size: number;
 }
 
 export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) => {
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [gameMode, setGameMode] = useState<GameMode>('stroop');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [gameStarted, setGameStarted] = useState(false);
+  const [currentItem, setCurrentItem] = useState<StroopItem | null>(null);
+  const [colorBoxes, setColorBoxes] = useState<ColorBox[]>([]);
+  const [targetColor, setTargetColor] = useState<string>('');
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(1);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [gameActive, setGameActive] = useState(false);
-  const [timer, setTimer] = useState(0);
-  const [reactionTime, setReactionTime] = useState<number[]>([]);
-  const [currentTest, setCurrentTest] = useState<StroopTest | null>(null);
-  const [showResult, setShowResult] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(5);
   const [feedback, setFeedback] = useState('');
-  const [startTime, setStartTime] = useState(0);
   const [showConcept, setShowConcept] = useState(false);
-  const [streak, setStreak] = useState(0);
-  const [colorBoxes, setColorBoxes] = useState<Array<{color: string, position: number}>>([]);
 
   const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
-  const colorMap = {
-    red: '#ef4444',
-    blue: '#3b82f6',
-    green: '#10b981',
-    yellow: '#f59e0b',
-    purple: '#8b5cf6',
-    orange: '#f97316',
-    pink: '#ec4899',
-    cyan: '#06b6d4'
-  };
+  const colorNames = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Cyan'];
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (gameActive) {
-      interval = setInterval(() => setTimer(timer => timer + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [gameActive]);
-
-  // Reset game when settings change
+  // Reset game when mode changes
   useEffect(() => {
     if (gameStarted) {
       setGameStarted(false);
-      setGameActive(false);
-      setCurrentTest(null);
+      setCurrentItem(null);
+      setColorBoxes([]);
+      setScore(0);
+      setRound(1);
+      setFeedback('');
     }
-  }, [difficulty, gameMode]);
+  }, [gameMode, difficulty]);
 
-  const generateRandomColorBoxes = () => {
-    const numBoxes = 6 + Math.floor(Math.random() * 6); // 6-12 boxes
-    const boxes = [];
-    for (let i = 0; i < numBoxes; i++) {
-      boxes.push({
-        color: colors[Math.floor(Math.random() * colors.length)],
-        position: Math.floor(Math.random() * 16) // 4x4 grid positions
-      });
-    }
-    setColorBoxes(boxes);
-  };
-
-  const generateStroopTest = useCallback((): StroopTest => {
-    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE', 'PINK', 'CYAN'];
-    const word = words[Math.floor(Math.random() * words.length)];
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const isCongruent = word.toLowerCase() === color;
+  const generateStroopItem = (): StroopItem => {
+    const wordIndex = Math.floor(Math.random() * colorNames.length);
+    const colorIndex = Math.floor(Math.random() * colors.length);
     
     return {
-      word,
-      color,
-      correctAnswer: color,
-      isCongruent
+      word: colorNames[wordIndex],
+      color: colors[colorIndex],
+      correct: wordIndex === colorIndex
     };
-  }, []);
+  };
+
+  const generateColorBoxes = () => {
+    const boxes: ColorBox[] = [];
+    const count = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 8 : 12;
+    const targetColorIndex = Math.floor(Math.random() * colors.length);
+    setTargetColor(colors[targetColorIndex]);
+    
+    // Add target color boxes
+    const targetCount = Math.floor(count * 0.3);
+    for (let i = 0; i < targetCount; i++) {
+      boxes.push({
+        id: i,
+        color: colors[targetColorIndex],
+        x: Math.random() * 300,
+        y: Math.random() * 300,
+        size: 30 + Math.random() * 20
+      });
+    }
+    
+    // Add distractor boxes
+    for (let i = targetCount; i < count; i++) {
+      let colorIndex;
+      do {
+        colorIndex = Math.floor(Math.random() * colors.length);
+      } while (colorIndex === targetColorIndex);
+      
+      boxes.push({
+        id: i,
+        color: colors[colorIndex],
+        x: Math.random() * 300,
+        y: Math.random() * 300,
+        size: 30 + Math.random() * 20
+      });
+    }
+    
+    setColorBoxes(boxes.sort(() => Math.random() - 0.5));
+  };
+
+  const generateQuestion = () => {
+    switch (gameMode) {
+      case 'stroop':
+        setCurrentItem(generateStroopItem());
+        break;
+      case 'color-match':
+        generateColorBoxes();
+        break;
+      case 'attention':
+        generateColorBoxes();
+        break;
+      case 'focus':
+        setCurrentItem(generateStroopItem());
+        break;
+    }
+    
+    setTimeLeft(difficulty === 'easy' ? 8 : difficulty === 'medium' ? 5 : 3);
+  };
 
   const startGame = () => {
     setGameStarted(true);
-    setGameActive(true);
     setScore(0);
     setRound(1);
-    setTimer(0);
-    setReactionTime([]);
-    setStreak(0);
-    generateNewTest();
-  };
-
-  const generateNewTest = () => {
-    setCurrentTest(generateStroopTest());
-    generateRandomColorBoxes();
-    setStartTime(Date.now());
-    setShowResult(false);
     setFeedback('');
+    generateQuestion();
   };
 
-  const submitAnswer = (answer: string) => {
-    if (!currentTest) return;
-
-    const endTime = Date.now();
-    const reaction = endTime - startTime;
-    setReactionTime([...reactionTime, reaction]);
-
-    const isCorrect = answer === currentTest.correctAnswer;
-    if (isCorrect) {
-      setScore(score + 1);
-      setStreak(streak + 1);
-      setFeedback('✅ Correct!');
+  const handleStroopAnswer = (answer: 'word' | 'color') => {
+    if (!currentItem) return;
+    
+    let isCorrect = false;
+    if (gameMode === 'stroop') {
+      // In Stroop test, answer the COLOR, not the word
+      isCorrect = (answer === 'color');
     } else {
-      setStreak(0);
-      setFeedback(`❌ Incorrect. The color was ${currentTest.correctAnswer}`);
+      // In other modes, different logic
+      isCorrect = (answer === 'word') === currentItem.correct;
     }
-
-    setShowResult(true);
-
+    
+    if (isCorrect) {
+      setScore(score + timeLeft * 2);
+      setFeedback('✅ Correct! Great concentration!');
+    } else {
+      setFeedback('❌ Incorrect. Focus on the instruction!');
+    }
+    
     setTimeout(() => {
-      if (round < 20) {
-        setRound(round + 1);
-        generateNewTest();
-      } else {
-        setGameActive(false);
-      }
+      nextRound();
     }, 1500);
   };
 
-  const getAverageReactionTime = () => {
-    if (reactionTime.length === 0) return 0;
-    return Math.round(reactionTime.reduce((a, b) => a + b, 0) / reactionTime.length);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getDifficultySettings = () => {
-    switch (difficulty === 'random' ? (['easy', 'medium', 'hard'] as const)[Math.floor(Math.random() * 3)] : difficulty) {
-      case 'easy': return { timeLimit: 3000, rounds: 15 };
-      case 'medium': return { timeLimit: 2000, rounds: 20 };
-      case 'hard': return { timeLimit: 1500, rounds: 25 };
+  const handleColorBoxClick = (box: ColorBox) => {
+    if (gameMode === 'color-match' || gameMode === 'attention') {
+      const isCorrect = box.color === targetColor;
+      
+      if (isCorrect) {
+        setScore(score + 10);
+        setFeedback('✅ Correct color found!');
+        // Remove the clicked box
+        setColorBoxes(prev => prev.filter(b => b.id !== box.id));
+        
+        // Check if all target colors found
+        const remainingTargets = colorBoxes.filter(b => b.color === targetColor && b.id !== box.id);
+        if (remainingTargets.length === 0) {
+          setTimeout(() => {
+            nextRound();
+          }, 1000);
+        }
+      } else {
+        setFeedback('❌ Wrong color! Try again.');
+        setTimeout(() => setFeedback(''), 1000);
+      }
     }
   };
 
-  const goBack = () => {
-    if (gameStarted) {
-      setGameStarted(false);
+  const nextRound = () => {
+    if (round < 10) {
+      setRound(round + 1);
+      setFeedback('');
+      generateQuestion();
     } else {
-      onBack();
+      setGameStarted(false);
+      setFeedback(`Game Complete! Final Score: ${score}`);
+    }
+  };
+
+  // Timer countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (gameStarted && timeLeft > 0 && !feedback.includes('Complete')) {
+      interval = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            setFeedback('⏰ Time up!');
+            setTimeout(() => {
+              nextRound();
+            }, 1500);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [gameStarted, timeLeft, feedback, round]);
+
+  const renderGameContent = () => {
+    switch (gameMode) {
+      case 'stroop':
+        return currentItem && (
+          <div className="text-center">
+            <p className="text-lg mb-6">Say the COLOR of the word, not what it says!</p>
+            <div 
+              className="text-8xl font-bold mb-8 animate-pulse"
+              style={{ color: currentItem.color }}
+            >
+              {currentItem.word}
+            </div>
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={() => handleStroopAnswer('word')}
+                disabled={!!feedback}
+                className="bg-blue-500 hover:bg-blue-600 px-8 py-4 text-lg"
+              >
+                Word: {currentItem.word}
+              </Button>
+              <Button
+                onClick={() => handleStroopAnswer('color')}
+                disabled={!!feedback}
+                className="bg-green-500 hover:bg-green-600 px-8 py-4 text-lg"
+                style={{ backgroundColor: currentItem.color }}
+              >
+                Color: {currentItem.color}
+              </Button>
+            </div>
+          </div>
+        );
+        
+      case 'color-match':
+      case 'attention':
+        return (
+          <div className="text-center">
+            <p className="text-lg mb-4">Click all boxes with color: 
+              <span 
+                className="font-bold ml-2 px-3 py-1 rounded text-white"
+                style={{ backgroundColor: targetColor }}
+              >
+                {targetColor}
+              </span>
+            </p>
+            <div className="relative bg-gray-100 w-96 h-96 mx-auto rounded-lg border-4 border-gray-300">
+              {colorBoxes.map((box) => (
+                <div
+                  key={box.id}
+                  className="absolute cursor-pointer transition-transform hover:scale-110 rounded"
+                  style={{
+                    left: box.x,
+                    top: box.y,
+                    width: box.size,
+                    height: box.size,
+                    backgroundColor: box.color,
+                  }}
+                  onClick={() => handleColorBoxClick(box)}
+                />
+              ))}
+            </div>
+            <p className="text-sm text-gray-600 mt-4">
+              Remaining: {colorBoxes.filter(box => box.color === targetColor).length}
+            </p>
+          </div>
+        );
+        
+      default:
+        return (
+          <div className="text-center">
+            <p className="text-lg">Game mode: {gameMode}</p>
+            <p className="text-gray-600">Select a game mode and start playing!</p>
+          </div>
+        );
     }
   };
 
@@ -170,41 +288,38 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
     <div className="container mx-auto p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <Button onClick={goBack} variant="outline" className="bg-white/90">
-            ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
+          <Button onClick={onBack} variant="outline" className="bg-white/90">
+            ← Back to Hub
           </Button>
-          <h1 className="text-4xl font-bold text-white">Concentration Challenge</h1>
+          <h1 className="text-4xl font-bold text-white">🧠 Concentration Challenge</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-yellow-500 text-white hover:bg-yellow-600">
+              <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
                 🧠 Concept
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Concentration & Focus Training</DialogTitle>
-                <DialogDescription>Enhance your cognitive control and attention</DialogDescription>
+                <DialogDescription>Improve selective attention and cognitive control</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="space-y-4">
                 <div className="animate-fade-in">
-                  <h3 className="font-bold text-lg">🎯 Stroop Effect</h3>
-                  <p className="mb-2">The Stroop effect demonstrates how our brain automatically processes word meaning, which can interfere with identifying colors.</p>
-                  <div className="bg-yellow-100 p-3 rounded">
-                    <p className="text-sm">Example: When you see the word <span style={{color: 'blue'}}>"RED"</span> written in blue, your brain wants to say "red" but you must say "blue"</p>
-                  </div>
+                  <h3 className="font-bold text-lg">🧠 What is the Stroop Effect?</h3>
+                  <p>The Stroop effect demonstrates the interference in the reaction time of a task when the name of a color (e.g., "blue") is printed in a color not denoted by the name (e.g., the word "blue" printed in red ink).</p>
                 </div>
-                <div className="animate-scale-in">
-                  <h3 className="font-bold text-lg">🧠 Cognitive Benefits</h3>
+                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <h3 className="font-bold text-lg">🎯 Skills Trained</h3>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Improves selective attention</li>
-                    <li>Enhances cognitive flexibility</li>
-                    <li>Strengthens inhibitory control</li>
-                    <li>Boosts processing speed</li>
+                    <li><strong>Selective Attention:</strong> Focus on relevant stimuli while ignoring distractions</li>
+                    <li><strong>Cognitive Control:</strong> Override automatic responses</li>
+                    <li><strong>Processing Speed:</strong> Quickly analyze and respond to stimuli</li>
+                    <li><strong>Mental Flexibility:</strong> Switch between different mental tasks</li>
                   </ul>
                 </div>
-                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg animate-pulse">
-                  <h4 className="font-bold">💡 Training Tip:</h4>
-                  <p>Focus on the COLOR of the text, not what the word says!</p>
+                <div className="bg-blue-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
+                  <h4 className="font-bold">💡 Benefits:</h4>
+                  <p>Regular practice can improve focus, reduce distractibility, and enhance performance in tasks requiring sustained attention.</p>
                 </div>
               </div>
             </DialogContent>
@@ -212,47 +327,43 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
         </div>
 
         {!gameStarted ? (
-          <Card className="mb-6 bg-white/95">
+          <Card className="bg-white/95">
             <CardHeader>
-              <CardTitle className="text-center">Game Settings</CardTitle>
+              <CardTitle className="text-center">Concentration Challenge Settings</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4 justify-center">
+            <CardContent className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Difficulty</label>
                   <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                      <SelectItem value="random">🎲 Random</SelectItem>
+                      <SelectItem value="easy">Easy (8s per question)</SelectItem>
+                      <SelectItem value="medium">Medium (5s per question)</SelectItem>
+                      <SelectItem value="hard">Hard (3s per question)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium mb-1">Mode</label>
+                  <label className="block text-sm font-medium mb-1">Challenge Mode</label>
                   <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="stroop">🎨 Stroop Test</SelectItem>
-                      <SelectItem value="nback">🧠 N-Back</SelectItem>
-                      <SelectItem value="attention">👁️ Attention</SelectItem>
-                      <SelectItem value="focus">🎯 Focus</SelectItem>
-                      <SelectItem value="random">🎲 Random</SelectItem>
+                      <SelectItem value="stroop">Stroop Test</SelectItem>
+                      <SelectItem value="color-match">Color Matching</SelectItem>
+                      <SelectItem value="attention">Attention Grid</SelectItem>
+                      <SelectItem value="focus">Focus Challenge</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              
               <div className="text-center">
-                <Button onClick={startGame} className="bg-yellow-500 hover:bg-yellow-600">
-                  {gameStarted ? 'New Game' : 'Start Training'}
+                <Button onClick={startGame} className="bg-blue-500 hover:bg-blue-600">
+                  Start Challenge
                 </Button>
               </div>
             </CardContent>
@@ -260,122 +371,26 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
         ) : (
           <Card className="bg-white/95">
             <CardHeader>
-              <CardTitle className="text-center">
-                Round {round}/20 - Score: {score} - Streak: {streak} - Avg: {getAverageReactionTime()}ms
+              <CardTitle className="text-center flex justify-between items-center">
+                <span>Round {round}/10</span>
+                <span>Score: {score}</span>
+                <span className={`${timeLeft <= 2 ? 'text-red-500 animate-pulse' : ''}`}>
+                  Time: {timeLeft}s
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="text-center">
-                {/* Random color boxes display */}
-                <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto mb-6">
-                  {Array.from({ length: 16 }, (_, i) => {
-                    const box = colorBoxes.find(b => b.position === i);
-                    return (
-                      <div
-                        key={i}
-                        className="w-8 h-8 rounded border animate-pulse"
-                        style={{ 
-                          backgroundColor: box ? colorMap[box.color as keyof typeof colorMap] : '#f3f4f6',
-                          animationDelay: `${i * 0.1}s`
-                        }}
-                      />
-                    );
-                  })}
+              {renderGameContent()}
+
+              {feedback && (
+                <div className={`text-center p-4 rounded-lg ${
+                  feedback.includes('Correct') ? 'bg-green-100 text-green-800 animate-bounce' : 
+                  feedback.includes('Incorrect') || feedback.includes('Wrong') ? 'bg-red-100 text-red-800 animate-shake' : 
+                  'bg-blue-100 text-blue-800'
+                }`}>
+                  {feedback}
                 </div>
-
-                {currentTest && (
-                  <div className="mb-6">
-                    <p className="text-lg mb-4">Click the color of the text (not what the word says):</p>
-                    <div 
-                      className="text-8xl font-bold mb-6 animate-pulse"
-                      style={{ color: colorMap[currentTest.color as keyof typeof colorMap] }}
-                    >
-                      {currentTest.word}
-                    </div>
-                    <div className="text-sm text-gray-600 mb-4">
-                      {currentTest.isCongruent ? '(Congruent - word and color match)' : '(Incongruent - word and color differ)'}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-4 gap-3 max-w-2xl mx-auto mb-6">
-                  {colors.map((color, index) => (
-                    <Button
-                      key={color}
-                      className="h-16 text-white font-bold animate-scale-in"
-                      style={{ 
-                        backgroundColor: colorMap[color as keyof typeof colorMap],
-                        animationDelay: `${index * 0.1}s`
-                      }}
-                      onClick={() => submitAnswer(color)}
-                      disabled={showResult}
-                    >
-                      {color.toUpperCase()}
-                    </Button>
-                  ))}
-                </div>
-
-                {feedback && (
-                  <div className={`text-xl font-bold mb-4 animate-bounce ${
-                    feedback.includes('Correct') ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {feedback}
-                  </div>
-                )}
-
-                {showResult && (
-                  <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                    <p className="text-sm text-gray-600">
-                      Reaction Time: {reactionTime[reactionTime.length - 1]}ms
-                    </p>
-                    <div className="bg-blue-50 p-4 rounded-lg mt-4">
-                      <h5 className="font-bold text-blue-800 mb-2">🧠 Cognitive Insight:</h5>
-                      <p className="text-blue-700 text-sm">
-                        {currentTest?.isCongruent 
-                          ? "Congruent trials are easier because word meaning and color align."
-                          : "Incongruent trials require cognitive control to override automatic word reading."
-                        }
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {!gameActive && round > 1 && (
-          <Card className="bg-white/95">
-            <CardContent className="text-center p-6">
-              <h2 className="text-2xl font-bold mb-4">Training Complete!</h2>
-              <div className="space-y-2 mb-6">
-                <p className="text-lg">Final Score: {score}/20</p>
-                <p className="text-lg">Average Reaction Time: {getAverageReactionTime()}ms</p>
-                <p className="text-lg">Best Streak: {Math.max(...reactionTime.map((_, i) => streak))} correct in a row</p>
-              </div>
-              
-              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg mb-6">
-                <h3 className="font-bold mb-2">🎯 Performance Analysis</h3>
-                <p className="text-sm">
-                  {score >= 16 ? '🏆 Excellent concentration! Your cognitive control is outstanding.' :
-                   score >= 12 ? '⭐ Great focus! You handled most conflicts well.' :
-                   score >= 8 ? '👍 Good effort! Practice will improve your cognitive flexibility.' :
-                   '📚 Keep training! Concentration improves with consistent practice.'}
-                </p>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                <h5 className="font-bold text-blue-800 mb-2">🔗 Related Learning Resources:</h5>
-                <div className="space-y-1">
-                  <a href="https://www.braingymmer.com/en/brain-games/" target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:text-blue-800 text-sm underline">BrainGymmer - Concentration Games</a>
-                  <a href="https://www.education.com/worksheets/focus-and-attention/" target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:text-blue-800 text-sm underline">Education.com - Focus Exercises</a>
-                  <a href="https://www.mathplayground.com/brain_workouts.html" target="_blank" rel="noopener noreferrer" className="block text-blue-600 hover:text-blue-800 text-sm underline">Math Playground - Brain Workouts</a>
-                </div>
-              </div>
-              
-              <Button onClick={startGame} className="bg-yellow-500 hover:bg-yellow-600">
-                Train Again
-              </Button>
+              )}
             </CardContent>
           </Card>
         )}

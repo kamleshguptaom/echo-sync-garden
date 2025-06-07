@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -11,7 +12,7 @@ interface TicTacToeProps {
 
 type CellValue = 'X' | 'O' | '';
 type BoardTheme = 'classic' | 'neon' | 'wood' | 'space' | 'ocean' | 'custom';
-type GameMode = 'player-vs-player' | 'player-vs-ai' | 'ai-vs-ai';
+type GameMode = 'player-vs-player' | 'player-vs-ai';
 type Difficulty = 'easy' | 'medium' | 'hard';
 type SymbolType = 'classic' | 'emoji' | 'shapes' | 'custom';
 
@@ -44,6 +45,8 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showConcept, setShowConcept] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
+  const [winningLine, setWinningLine] = useState<[number, number, number][] | null>(null);
+  const [showWinCelebration, setShowWinCelebration] = useState(false);
 
   useEffect(() => {
     if (gameMode === 'player-vs-ai' && currentPlayer === 'O' && !winner) {
@@ -56,6 +59,8 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     setBoard(newBoard);
     setWinner(null);
     setCurrentPlayer('X');
+    setWinningLine(null);
+    setShowWinCelebration(false);
   };
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     // Check rows
     for (let i = 0; i < gridSize; i++) {
       if (board[i][0] && board[i].every(cell => cell === board[i][0])) {
+        setWinningLine([...Array(gridSize).keys()].map(j => [i, j, i * gridSize + j]));
         return board[i][0] as 'X' | 'O';
       }
     }
@@ -73,17 +79,20 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     // Check columns
     for (let j = 0; j < gridSize; j++) {
       if (board[0][j] && board.every(row => row[j] === board[0][j])) {
+        setWinningLine([...Array(gridSize).keys()].map(i => [i, j, i * gridSize + j]));
         return board[0][j] as 'X' | 'O';
       }
     }
 
     // Check main diagonal
     if (board[0][0] && board.every((row, i) => row[i] === board[0][0])) {
+      setWinningLine([...Array(gridSize).keys()].map(i => [i, i, i * gridSize + i]));
       return board[0][0] as 'X' | 'O';
     }
 
     // Check anti-diagonal
     if (board[0][gridSize - 1] && board.every((row, i) => row[gridSize - 1 - i] === board[0][gridSize - 1])) {
+      setWinningLine([...Array(gridSize).keys()].map(i => [i, gridSize - 1 - i, i * gridSize + (gridSize - 1 - i)]));
       return board[0][gridSize - 1] as 'X' | 'O';
     }
 
@@ -106,6 +115,10 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     if (gameWinner) {
       setWinner(gameWinner);
       updateStats(gameWinner);
+      if (gameWinner !== 'Draw') {
+        setShowWinCelebration(true);
+        setTimeout(() => setShowWinCelebration(false), 3000);
+      }
     } else {
       setCurrentPlayer(currentPlayer === 'X' ? 'O' : 'X');
     }
@@ -121,27 +134,15 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     }));
   };
 
+  // Improved AI logic
   const makeAIMove = async () => {
     if (winner || currentPlayer === 'X') return;
 
     setAiThinking(true);
-    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 500));
 
-    let row: number, col: number;
-    
-    if (difficulty === 'easy') {
-      // Random move
-      const emptyCells: [number, number][] = [];
-      board.forEach((r, i) => {
-        r.forEach((cell, j) => {
-          if (cell === '') emptyCells.push([i, j]);
-        });
-      });
-      [row, col] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-    } else {
-      // Smart move (minimax algorithm would go here, simplified version)
-      [row, col] = getBestMove();
-    }
+    // Get best move based on difficulty
+    const [row, col] = getBestMove();
 
     const newBoard = board.map(r => [...r]);
     newBoard[row][col] = 'O';
@@ -151,6 +152,10 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     if (gameWinner) {
       setWinner(gameWinner);
       updateStats(gameWinner);
+      if (gameWinner !== 'Draw') {
+        setShowWinCelebration(true);
+        setTimeout(() => setShowWinCelebration(false), 3000);
+      }
     } else {
       setCurrentPlayer('X');
     }
@@ -159,22 +164,130 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
   };
 
   const getBestMove = (): [number, number] => {
-    // Simplified AI logic
+    // Copy the board
+    const boardCopy = board.map(row => [...row]);
+    
+    if (difficulty === 'easy') {
+      // Random move
+      const emptyCells: [number, number][] = [];
+      boardCopy.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          if (cell === '') {
+            emptyCells.push([rowIndex, colIndex]);
+          }
+        });
+      });
+      return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    } else {
+      // Medium or Hard, use minimax with limited depth for Medium
+      const maxDepth = difficulty === 'medium' ? 2 : Infinity;
+      return findBestMove(boardCopy, maxDepth);
+    }
+  };
+
+  // Minimax algorithm for AI
+  const findBestMove = (boardState: CellValue[][], maxDepth: number): [number, number] => {
+    let bestMove: [number, number] = [-1, -1];
+    let bestScore = -Infinity;
+
+    // Try each empty cell
     for (let i = 0; i < gridSize; i++) {
       for (let j = 0; j < gridSize; j++) {
-        if (board[i][j] === '') {
-          return [i, j];
+        if (boardState[i][j] === '') {
+          boardState[i][j] = 'O';
+          const score = minimax(boardState, 0, false, -Infinity, Infinity, maxDepth);
+          boardState[i][j] = '';
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = [i, j];
+          }
         }
       }
     }
-    return [0, 0];
+
+    return bestMove;
   };
 
-  useEffect(() => {
-    if (gameMode === 'player-vs-ai' && currentPlayer === 'O' && !winner) {
-      makeAIMove();
+  const minimax = (
+    boardState: CellValue[][], 
+    depth: number, 
+    isMaximizing: boolean, 
+    alpha: number, 
+    beta: number, 
+    maxDepth: number
+  ): number => {
+    // Check terminal states or max depth
+    const winner = evaluateBoard(boardState);
+    if (winner === 'O') return 10 - depth;
+    if (winner === 'X') return depth - 10;
+    if (winner === 'Draw' || depth >= maxDepth) return 0;
+
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          if (boardState[i][j] === '') {
+            boardState[i][j] = 'O';
+            const score = minimax(boardState, depth + 1, false, alpha, beta, maxDepth);
+            boardState[i][j] = '';
+            bestScore = Math.max(score, bestScore);
+            alpha = Math.max(alpha, bestScore);
+            if (beta <= alpha) break;
+          }
+        }
+      }
+      return bestScore;
+    } else {
+      let bestScore = Infinity;
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          if (boardState[i][j] === '') {
+            boardState[i][j] = 'X';
+            const score = minimax(boardState, depth + 1, true, alpha, beta, maxDepth);
+            boardState[i][j] = '';
+            bestScore = Math.min(score, bestScore);
+            beta = Math.min(beta, bestScore);
+            if (beta <= alpha) break;
+          }
+        }
+      }
+      return bestScore;
     }
-  }, [currentPlayer, gameMode, winner]);
+  };
+
+  const evaluateBoard = (boardState: CellValue[][]): 'X' | 'O' | 'Draw' | null => {
+    // Check rows
+    for (let i = 0; i < gridSize; i++) {
+      if (boardState[i][0] && boardState[i].every(cell => cell === boardState[i][0])) {
+        return boardState[i][0] as 'X' | 'O';
+      }
+    }
+
+    // Check columns
+    for (let j = 0; j < gridSize; j++) {
+      if (boardState[0][j] && boardState.every(row => row[j] === boardState[0][j])) {
+        return boardState[0][j] as 'X' | 'O';
+      }
+    }
+
+    // Check main diagonal
+    if (boardState[0][0] && boardState.every((row, i) => row[i] === boardState[0][0])) {
+      return boardState[0][0] as 'X' | 'O';
+    }
+
+    // Check anti-diagonal
+    if (boardState[0][gridSize - 1] && boardState.every((row, i) => row[gridSize - 1 - i] === boardState[0][gridSize - 1])) {
+      return boardState[0][gridSize - 1] as 'X' | 'O';
+    }
+
+    // Check for draw
+    if (boardState.every(row => row.every(cell => cell !== ''))) {
+      return 'Draw';
+    }
+
+    return null;
+  };
 
   const getSymbol = (value: CellValue): string => {
     if (!value) return '';
@@ -239,6 +352,11 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
   };
 
   const themeStyles = getThemeStyles();
+
+  const isCellInWinningLine = (rowIndex: number, colIndex: number) => {
+    if (!winningLine) return false;
+    return winningLine.some(([row, col]) => row === rowIndex && col === colIndex);
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -357,7 +475,6 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
                     <SelectContent>
                       <SelectItem value="player-vs-player">👥 Player vs Player</SelectItem>
                       <SelectItem value="player-vs-ai">🤖 Player vs AI</SelectItem>
-                      <SelectItem value="ai-vs-ai">🤖 AI vs AI</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -470,8 +587,29 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
 
           {/* Game Board */}
           <div className="lg:col-span-2">
-            <Card className={`${themeStyles.background} p-6`} style={boardTheme === 'custom' ? { backgroundColor: customColors.background } : {}}>
+            <Card className={`${themeStyles.background} p-6 relative`} style={boardTheme === 'custom' ? { backgroundColor: customColors.background } : {}}>
               <CardContent className="flex flex-col items-center space-y-4">
+                {showWinCelebration && (
+                  <div className="absolute inset-0 z-10 overflow-hidden">
+                    {Array.from({ length: 50 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute animate-confetti"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          top: `${Math.random() * 100}%`,
+                          background: `${['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]}`,
+                          width: `${Math.random() * 10 + 5}px`,
+                          height: `${Math.random() * 10 + 5}px`,
+                          borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                          animationDuration: `${Math.random() * 2 + 1}s`,
+                          animationDelay: `${Math.random() * 0.5}s`
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                
                 <div className="text-center">
                   <h2 className="text-xl font-bold mb-2">
                     {winner ? 
@@ -493,15 +631,17 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
                     row.map((cell, colIndex) => (
                       <button
                         key={`${rowIndex}-${colIndex}`}
-                        className={`w-16 h-16 border-2 ${themeStyles.cell} flex items-center justify-center text-2xl font-bold transition-all duration-200 ${animationsEnabled ? 'transform hover:scale-105' : ''}`}
+                        className={`w-16 h-16 border-2 ${themeStyles.cell} flex items-center justify-center text-2xl font-bold transition-all duration-200 ${
+                          animationsEnabled ? 'transform hover:scale-105' : ''
+                        } ${isCellInWinningLine(rowIndex, colIndex) ? 'bg-yellow-200 animate-pulse' : ''}`}
                         style={boardTheme === 'custom' ? { 
                           borderColor: customColors.grid,
                           color: cell === 'X' ? customColors.x : customColors.o 
                         } : {}}
                         onClick={() => makeMove(rowIndex, colIndex)}
-                        disabled={!!winner || aiThinking}
+                        disabled={!!winner || aiThinking || (gameMode === 'player-vs-ai' && currentPlayer === 'O')}
                       >
-                        <span className={animationsEnabled && cell ? 'animate-bounce' : ''}>
+                        <span className={animationsEnabled && cell ? 'animate-scale-in' : ''}>
                           {getSymbol(cell)}
                         </span>
                       </button>
@@ -560,6 +700,30 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
 
             <Card className="bg-white/95">
               <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Strategy Tips</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="animate-fade-in">
+                  <h4 className="font-bold">Take the Center</h4>
+                  <p className="text-gray-600">The center position provides the most winning opportunities</p>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <h4 className="font-bold">Watch the Corners</h4>
+                  <p className="text-gray-600">Corner positions can create diagonal winning threats</p>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                  <h4 className="font-bold">Block Immediate Threats</h4>
+                  <p className="text-gray-600">Don't let your opponent create a line of two pieces without blocking</p>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                  <h4 className="font-bold">Create Forks</h4>
+                  <p className="text-gray-600">Set up multiple winning opportunities at once</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/95">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Options</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -588,6 +752,19 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes confetti {
+          0% { transform: translate(0, 0) rotate(0deg); }
+          100% { transform: translate(var(--translate-x, -100px), var(--translate-y, 100px)) rotate(var(--rotate, 360deg)); }
+        }
+        .animate-confetti {
+          animation: confetti 3s ease-in-out forwards;
+          --translate-x: ${Math.random() * 200 - 100}px;
+          --translate-y: ${Math.random() * 200 - 100}px;
+          --rotate: ${Math.random() * 360}deg;
+        }
+      `}</style>
     </div>
   );
 };

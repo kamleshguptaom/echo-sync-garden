@@ -30,11 +30,18 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
   const [power, setPower] = useState(0);
   const [angle, setAngle] = useState(0);
   const [isCharging, setIsCharging] = useState(false);
-  const [gamePhase, setGamePhase] = useState<'aiming' | 'moving' | 'finished'>('aiming');
-
+  const [gamePhase, setGamePhase] = useState<'aiming' | 'dragging' | 'moving' | 'finished'>('aiming');
+  const [showWinCelebration, setShowWinCelebration] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [cursorStyle, setCursorStyle] = useState('crosshair');
+  
+  // For positioning striker along the board edge
+  const [strikerPosition, setStrikerPosition] = useState(200);
+  
   const BOARD_SIZE = 400;
   const FRICTION = 0.98;
   const MIN_VELOCITY = 0.5;
+  const MAX_POWER = 30;
 
   const initializeGame = () => {
     const newCoins: Coin[] = [];
@@ -63,8 +70,11 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     
     setCoins(newCoins);
     setStriker({ x: centerX, y: 350, vx: 0, vy: 0, radius: 15 });
+    setStrikerPosition(centerX);
     setGameStarted(true);
     setGamePhase('aiming');
+    setScore({ player1: 0, player2: 0 });
+    setCurrentPlayer(1);
   };
 
   const checkCollisions = useCallback((coins: Coin[], striker: any) => {
@@ -136,6 +146,7 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     const newCoins = [...coins];
     let newStriker = { ...striker };
     let scoreChange = { player1: 0, player2: 0 };
+    let pocketed = false;
     
     // Check coins in pockets
     newCoins.forEach(coin => {
@@ -147,6 +158,7 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
           
           if (distance < 20) {
             coin.pocketed = true;
+            pocketed = true;
             if (coin.color === 'black' && currentPlayer === 1) scoreChange.player1++;
             if (coin.color === 'white' && currentPlayer === 1) scoreChange.player1++;
             if (coin.color === 'black' && currentPlayer === 2) scoreChange.player2++;
@@ -161,20 +173,35 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     });
     
     // Check striker in pocket (foul)
+    let strikerPocketed = false;
     pockets.forEach(pocket => {
       const dx = newStriker.x - pocket.x;
       const dy = newStriker.y - pocket.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
       if (distance < 20) {
-        newStriker.x = BOARD_SIZE / 2;
-        newStriker.y = 350;
-        newStriker.vx = 0;
-        newStriker.vy = 0;
+        strikerPocketed = true;
+        
+        // Penalty for pocketing striker
+        if (currentPlayer === 1) {
+          scoreChange.player1 -= 2;
+        } else {
+          scoreChange.player2 -= 2;
+        }
       }
     });
     
-    return { coins: newCoins, striker: newStriker, scoreChange };
+    if (strikerPocketed) {
+      newStriker = {
+        ...newStriker,
+        x: BOARD_SIZE / 2,
+        y: 350,
+        vx: 0,
+        vy: 0
+      };
+    }
+    
+    return { coins: newCoins, striker: newStriker, scoreChange, pocketed };
   }, [currentPlayer]);
 
   const updatePhysics = useCallback(() => {
@@ -183,14 +210,24 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     setCoins(prevCoins => {
       setStriker(prevStriker => {
         const { coins: collidedCoins, striker: collidedStriker } = checkCollisions(prevCoins, prevStriker);
-        const { coins: finalCoins, striker: finalStriker, scoreChange } = checkPockets(collidedCoins, collidedStriker);
+        const { coins: finalCoins, striker: finalStriker, scoreChange, pocketed } = checkPockets(collidedCoins, collidedStriker);
         
         // Update score
-        if (scoreChange.player1 > 0 || scoreChange.player2 > 0) {
+        if (scoreChange.player1 !== 0 || scoreChange.player2 !== 0) {
           setScore(prev => ({
-            player1: prev.player1 + scoreChange.player1,
-            player2: prev.player2 + scoreChange.player2
+            player1: Math.max(0, prev.player1 + scoreChange.player1),
+            player2: Math.max(0, prev.player2 + scoreChange.player2)
           }));
+          
+          // Check for win condition (first to 15 points)
+          if (prev.player1 + scoreChange.player1 >= 15 || prev.player2 + scoreChange.player2 >= 15) {
+            setGamePhase('finished');
+            setShowWinCelebration(true);
+            setTimeout(() => {
+              setShowWinCelebration(false);
+            }, 3000);
+            return finalStriker;
+          }
         }
         
         // Apply physics
@@ -243,12 +280,22 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
         }
         
         // Check if everything stopped
-        const allStopped = updatedCoins.every(coin => coin.vx === 0 && coin.vy === 0) && 
+        const allStopped = updatedCoins.every(coin => !coin.pocketed && coin.vx === 0 && coin.vy === 0) && 
                           finalStriker.vx === 0 && finalStriker.vy === 0;
         
         if (allStopped) {
           setGamePhase('aiming');
-          setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+          // Switch player if no coins were pocketed
+          if (!pocketed) {
+            setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+          }
+          // Reset striker position
+          setStrikerPosition(BOARD_SIZE / 2);
+          return {
+            ...finalStriker,
+            x: BOARD_SIZE / 2,
+            y: 350
+          };
         }
         
         return finalStriker;
@@ -329,7 +376,75 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
       );
       ctx.stroke();
     }
-  }, [coins, striker, gamePhase, power, angle]);
+    
+    // Draw dragging line for drag-shoot
+    if (gamePhase === 'dragging' && dragStartPos.x !== 0) {
+      const canvas = canvasRef.current;
+      const rect = canvas.getBoundingClientRect();
+      
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(striker.x, striker.y);
+      ctx.lineTo(striker.x, striker.y - (dragStartPos.y - striker.y) * 2);
+      ctx.stroke();
+      
+      // Draw power indicator
+      const dragPower = Math.min(
+        Math.sqrt(
+          Math.pow(dragStartPos.x - striker.x, 2) + 
+          Math.pow(dragStartPos.y - striker.y, 2)
+        ) / 5,
+        MAX_POWER
+      );
+      
+      ctx.fillStyle = dragPower < 10 ? '#00ff00' : 
+                      dragPower < 20 ? '#ffff00' : 
+                      '#ff0000';
+      ctx.fillRect(10, 10, dragPower * 5, 10);
+      ctx.strokeStyle = '#000000';
+      ctx.strokeRect(10, 10, MAX_POWER * 5, 10);
+    }
+    
+    // Draw striker position indicator along the bottom edge
+    if (gamePhase === 'aiming') {
+      ctx.fillStyle = '#ffff00';
+      ctx.beginPath();
+      ctx.moveTo(strikerPosition, BOARD_SIZE - 5);
+      ctx.lineTo(strikerPosition - 10, BOARD_SIZE - 15);
+      ctx.lineTo(strikerPosition + 10, BOARD_SIZE - 15);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Draw arrow for dragging hint
+      if (gamePhase === 'aiming') {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '12px Arial';
+        ctx.fillText('← Drag to position, Click & drag up to shoot →', BOARD_SIZE/2 - 120, BOARD_SIZE - 30);
+      }
+    }
+    
+    // Draw current player indicator
+    ctx.fillStyle = currentPlayer === 1 ? '#ff0000' : '#0000ff';
+    ctx.font = '16px Arial';
+    ctx.fillText(`Player ${currentPlayer}'s Turn`, 10, 30);
+    
+    // Game finished overlay
+    if (gamePhase === 'finished') {
+      const winner = score.player1 >= 15 ? 1 : 2;
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '30px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Player ${winner} Wins!`, BOARD_SIZE/2, BOARD_SIZE/2 - 20);
+      
+      ctx.font = '20px Arial';
+      ctx.fillText(`Score: ${score.player1} - ${score.player2}`, BOARD_SIZE/2, BOARD_SIZE/2 + 20);
+    }
+    
+  }, [coins, striker, gamePhase, power, angle, dragStartPos, strikerPosition, currentPlayer, score]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (gamePhase !== 'aiming') return;
@@ -341,13 +456,66 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
+    // Check if click is near striker
     const dx = mouseX - striker.x;
     const dy = mouseY - striker.y;
-    setAngle(Math.atan2(dy, dx));
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < striker.radius * 2) {
+      // Start dragging
+      setGamePhase('dragging');
+      setDragStartPos({ x: mouseX, y: mouseY });
+    } else {
+      // Just update aiming angle
+      setAngle(Math.atan2(mouseY - striker.y, mouseX - striker.x));
+    }
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    if (gamePhase === 'aiming') {
+      // Update striker position if dragging along the bottom edge
+      if (mouseY > BOARD_SIZE - 40 && mouseX > 20 && mouseX < BOARD_SIZE - 20) {
+        setStrikerPosition(mouseX);
+        setStriker(prev => ({ ...prev, x: mouseX }));
+        setCursorStyle('ew-resize'); // Horizontal resize cursor
+      } else {
+        setCursorStyle('crosshair');
+      }
+    } else if (gamePhase === 'dragging') {
+      // Update angle based on drag direction
+      const dx = mouseX - striker.x;
+      const dy = mouseY - striker.y;
+      setAngle(Math.atan2(dy, dx));
+      
+      // Update power based on drag distance
+      const dragDistance = Math.sqrt(dx * dx + dy * dy);
+      setPower(Math.min(dragDistance / 5, MAX_POWER));
+    }
+  };
+
+  const handleCanvasMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (gamePhase === 'dragging') {
+      shoot();
+      setDragStartPos({ x: 0, y: 0 });
+    }
+  };
+
+  const handleCanvasMouseLeave = () => {
+    if (gamePhase === 'dragging') {
+      setGamePhase('aiming');
+      setDragStartPos({ x: 0, y: 0 });
+    }
   };
 
   const shoot = () => {
-    if (gamePhase !== 'aiming' || power === 0) return;
+    if (gamePhase !== 'aiming' && gamePhase !== 'dragging') return;
     
     const shootPower = power / 10;
     setStriker(prev => ({
@@ -414,7 +582,15 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
               <div className="space-y-4">
                 <div className="animate-fade-in">
                   <h3 className="font-bold text-lg">🎯 How to Play Carrom</h3>
-                  <p>Use the striker to hit coins into the corner pockets. Plan your shots carefully considering angles and force!</p>
+                  <p className="mb-2">Use the striker to hit coins into the corner pockets. Plan your shots carefully considering angles and force!</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Position the striker by dragging it along the bottom edge</li>
+                    <li>Click on the striker and drag upward to aim and set power</li>
+                    <li>Release to shoot the striker</li>
+                    <li>Pocket coins of your color to score points</li>
+                    <li>The red coin (queen) is worth 3 points</li>
+                    <li>First to 15 points wins the game</li>
+                  </ul>
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
                   <h3 className="font-bold text-lg">🧠 Skills Developed</h3>
@@ -433,6 +609,13 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                      • Use the center circle for strategic positioning<br/>
                      • Plan 2-3 moves ahead like chess!</p>
                 </div>
+                <div className="bg-blue-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.6s' }}>
+                  <h4 className="font-bold">👋 Hand Gestures:</h4>
+                  <p>• <strong>Drag horizontally</strong>: Position striker along the bottom edge<br/>
+                     • <strong>Click & drag upward</strong>: Aim and set power for your shot<br/>
+                     • <strong>Short drag</strong>: Gentle shot with precision<br/>
+                     • <strong>Long drag</strong>: Powerful shot for breaking or long distances</p>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -446,11 +629,36 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                   ref={canvasRef}
                   width={BOARD_SIZE}
                   height={BOARD_SIZE}
-                  className="border-4 border-brown-600 rounded-lg cursor-crosshair"
+                  className="border-4 border-brown-600 rounded-lg"
+                  style={{ cursor: cursorStyle }}
                   onClick={handleCanvasClick}
+                  onMouseMove={handleCanvasMouseMove}
+                  onMouseUp={handleCanvasMouseUp}
+                  onMouseLeave={handleCanvasMouseLeave}
                 />
               </CardContent>
             </Card>
+            
+            {showWinCelebration && (
+              <div className="absolute inset-0 pointer-events-none">
+                {Array.from({ length: 50 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute animate-confetti"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      background: `${['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]}`,
+                      width: `${Math.random() * 10 + 5}px`,
+                      height: `${Math.random() * 10 + 5}px`,
+                      borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                      animationDuration: `${Math.random() * 2 + 1}s`,
+                      animationDelay: `${Math.random() * 0.5}s`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -460,10 +668,44 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div>Player 1: {score.player1} points</div>
-                  <div>Player 2: {score.player2} points</div>
-                  <div className="font-bold">Current: Player {currentPlayer}</div>
+                  <div className="flex justify-between">
+                    <span className={`font-bold ${currentPlayer === 1 ? 'text-red-600' : ''}`}>Player 1:</span>
+                    <span className={`${currentPlayer === 1 ? 'text-red-600' : ''}`}>{score.player1} points</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={`font-bold ${currentPlayer === 2 ? 'text-blue-600' : ''}`}>Player 2:</span>
+                    <span className={`${currentPlayer === 2 ? 'text-blue-600' : ''}`}>{score.player2} points</span>
+                  </div>
+                  <div className="font-bold mt-2">Current: Player {currentPlayer}</div>
                   <div className="capitalize">Phase: {gamePhase}</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/95">
+              <CardHeader>
+                <CardTitle className="text-sm">How to Play</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-200 p-1 rounded">Drag →</span>
+                  <span>Position striker along the bottom</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-200 p-1 rounded">Click + Drag ↑</span>
+                  <span>Aim and set power</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-amber-200 p-1 rounded">Release</span>
+                  <span>Shoot the striker</span>
+                </div>
+                <div className="mt-2">
+                  <p><strong>Goal:</strong> Pocket coins to score points:</p>
+                  <ul className="list-disc list-inside">
+                    <li>Regular coins = 1 point</li>
+                    <li>Red coin = 3 points</li>
+                    <li>First to 15 points wins!</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
@@ -474,6 +716,12 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                   <CardTitle className="text-sm">Controls</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="text-sm space-y-1">
+                    <p className="font-bold">Drag Power Shot:</p>
+                    <p>Click on striker & drag to aim and set power</p>
+                    <p className="mt-2">- OR -</p>
+                    <p className="font-bold mt-2">Manual Controls:</p>
+                  </div>
                   <div>
                     <label className="block text-xs mb-1">Power: {power}%</label>
                     <input
@@ -492,9 +740,6 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                   >
                     Shoot!
                   </Button>
-                  <p className="text-xs text-gray-600">
-                    Click on the board to aim, adjust power, then shoot!
-                  </p>
                 </CardContent>
               </Card>
             )}
@@ -511,6 +756,18 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
+      <style jsx global>{`
+        @keyframes confetti {
+          0% { transform: translate(0, 0) rotate(0deg); }
+          100% { transform: translate(var(--translate-x, -100px), var(--translate-y, 100px)) rotate(var(--rotate, 360deg)); }
+        }
+        .animate-confetti {
+          animation: confetti 3s ease-in-out forwards;
+          --translate-x: ${Math.random() * 200 - 100}px;
+          --translate-y: ${Math.random() * 200 - 100}px;
+          --rotate: ${Math.random() * 360}deg;
+        }
+      `}</style>
     </div>
   );
 };

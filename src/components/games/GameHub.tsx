@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,10 +28,8 @@ import { GolfGame } from './GolfGame/GolfGame';
 import { CarromGame } from './CarromGame/CarromGame';
 import { RoadSafetyGame } from './RoadSafetyGame/RoadSafetyGame';
 import { NumberSequence } from './NumberSequence/NumberSequence';
-import { ColorMemory } from './ColorMemory/ColorMemory';
 import { MathRacing } from './MathRacing/MathRacing';
 import { VisualPerception } from './VisualPerception/VisualPerception';
-import { WorkingMemory } from './WorkingMemory/WorkingMemory';
 import { AttentionTraining } from './AttentionTraining/AttentionTraining';
 import { FractionGame } from './FractionGame/FractionGame';
 import { AlgebraGame } from './AlgebraGame/AlgebraGame';
@@ -43,8 +42,8 @@ type GameType =
   | 'memory' | 'math' | 'word' | 'logic' | 'geometry' | 'science' | 'geography' | 'history'
   | 'tictactoe' | 'sudoku' | 'jigsaw' | 'waffle' | 'laddersnake' | 'aiming' | 'builder'
   | 'pattern' | 'concentration' | 'speedreading' | 'typing' | 'drawing' 
-  | 'visualperception' | 'workingmemory' | 'attention' | 'fractions' | 'algebra' | 'coding' 
-  | 'criticalthinking' | 'golf' | 'carrom' | 'roadsafety' | 'numbersequence' | 'colormemory' 
+  | 'visualperception' | 'attention' | 'fractions' | 'algebra' | 'coding' 
+  | 'criticalthinking' | 'golf' | 'carrom' | 'roadsafety' | 'numbersequence' 
   | 'mathracing' | 'grammar' | 'bloodrelations' | null;
 
 interface GameInfo {
@@ -64,7 +63,10 @@ export const GameHub = () => {
   if (selectedGame) {
     const gameProps = { 
       onBack: () => {
-        setGameHistory(prev => [selectedGame, ...prev.slice(0, 9)]);
+        // Add to history only if not already the most recent
+        if (gameHistory[0] !== selectedGame) {
+          setGameHistory(prev => [selectedGame, ...prev.filter(g => g !== selectedGame).slice(0, 3)]);
+        }
         setSelectedGame(null);
       }
     };
@@ -91,7 +93,6 @@ export const GameHub = () => {
       case 'typing': return <TypingGame {...gameProps} />;
       case 'drawing': return <DrawingGame {...gameProps} />;
       case 'visualperception': return <VisualPerception {...gameProps} />;
-      case 'workingmemory': return <WorkingMemory {...gameProps} />;
       case 'attention': return <AttentionTraining {...gameProps} />;
       case 'fractions': return <FractionGame {...gameProps} />;
       case 'algebra': return <AlgebraGame {...gameProps} />;
@@ -101,7 +102,6 @@ export const GameHub = () => {
       case 'carrom': return <CarromGame {...gameProps} />;
       case 'roadsafety': return <RoadSafetyGame {...gameProps} />;
       case 'numbersequence': return <NumberSequence {...gameProps} />;
-      case 'colormemory': return <ColorMemory {...gameProps} />;
       case 'mathracing': return <MathRacing {...gameProps} />;
       case 'grammar': return <GrammarGame {...gameProps} />;
       case 'bloodrelations': return <BloodRelations {...gameProps} />;
@@ -112,7 +112,6 @@ export const GameHub = () => {
   const games: GameInfo[] = [
     // Core Cognitive Skills
     { id: 'memory', title: 'Memory Training', emoji: '🧠', description: 'Enhance memory capacity and recall', category: 'Cognitive Skills' },
-    { id: 'workingmemory', title: 'Working Memory', emoji: '🔄', description: 'Strengthen working memory abilities', category: 'Cognitive Skills' },
     { id: 'attention', title: 'Attention Training', emoji: '🎯', description: 'Improve focus and concentration', category: 'Cognitive Skills' },
     { id: 'visualperception', title: 'Visual Perception', emoji: '👁️', description: 'Enhance visual processing skills', category: 'Cognitive Skills' },
     { id: 'pattern', title: 'Pattern Recognition', emoji: '🔍', description: 'Identify and predict patterns', category: 'Cognitive Skills' },
@@ -120,7 +119,6 @@ export const GameHub = () => {
     { id: 'logic', title: 'Logic Puzzles', emoji: '🧩', description: 'Develop logical reasoning', category: 'Cognitive Skills' },
     { id: 'criticalthinking', title: 'Critical Thinking', emoji: '🤔', description: 'Analyze and evaluate information', category: 'Cognitive Skills' },
     { id: 'bloodrelations', title: 'Blood Relations', emoji: '👪', description: 'Master family relationship puzzles', category: 'Cognitive Skills', isNew: true },
-    { id: 'colormemory', title: 'Color Memory', emoji: '🌈', description: 'Remember color sequences', category: 'Cognitive Skills' },
     { id: 'numbersequence', title: 'Number Patterns', emoji: '🔢', description: 'Identify numerical sequences', category: 'Cognitive Skills' },
     
     // Mathematics & Numbers
@@ -167,6 +165,7 @@ export const GameHub = () => {
   const categories = [...new Set(games.map(game => game.category))];
   const featuredGames = games.filter(game => game.isFeatured);
   const recentlyPlayed = gameHistory
+    .slice(0, 4) // Only show 4 recent games
     .map(id => games.find(game => game.id === id))
     .filter((game): game is GameInfo => !!game);
 
@@ -230,8 +229,8 @@ export const GameHub = () => {
           <h2 className="text-3xl font-bold text-white mb-4 animate-fade-in">
             🕹️ Recently Played
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {recentlyPlayed.slice(0, 6).map((game, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {recentlyPlayed.map((game, index) => (
               <Button
                 key={`recent-${game.id}-${index}`}
                 className="h-auto flex flex-col items-center p-4 bg-white/20 hover:bg-white/30 rounded-lg animate-fade-in"

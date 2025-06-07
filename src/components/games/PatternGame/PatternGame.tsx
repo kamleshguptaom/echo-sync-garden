@@ -73,7 +73,13 @@ export const PatternGame: React.FC<PatternGameProps> = ({ onBack }) => {
 
   const generatePattern = (): Pattern => {
     const actualDiff = difficulty === 'random' ? (['easy', 'medium', 'hard'] as const)[Math.floor(Math.random() * 3)] : difficulty;
-    const actualType = patternType === 'random' ? (['colors', 'shapes', 'numbers'] as const)[Math.floor(Math.random() * 3)] : patternType;
+    
+    let actualType: 'colors' | 'shapes' | 'numbers';
+    if (patternType === 'random' || patternType === 'mixed') {
+      actualType = (['colors', 'shapes', 'numbers'] as const)[Math.floor(Math.random() * 3)];
+    } else {
+      actualType = patternType as 'colors' | 'shapes' | 'numbers';
+    }
     
     let elements: string[] = [];
     

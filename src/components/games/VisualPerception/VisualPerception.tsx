@@ -20,12 +20,20 @@ interface Pattern {
   size: number;
 }
 
+interface HiddenObject {
+  x: number;
+  y: number;
+  found: boolean;
+  emoji: string;
+}
+
 export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) => {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [gameMode, setGameMode] = useState<GameMode>('pattern-match');
   const [gameStarted, setGameStarted] = useState(false);
   const [targetPattern, setTargetPattern] = useState<Pattern | null>(null);
   const [options, setOptions] = useState<Pattern[]>([]);
+  const [hiddenObjects, setHiddenObjects] = useState<HiddenObject[]>([]);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(1);
   const [feedback, setFeedback] = useState('');
@@ -34,6 +42,20 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
 
   const shapes = ['●', '■', '▲', '♦', '★', '◆', '▼', '♠', '♥', '♣'];
   const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff', '#ff8844', '#8844ff'];
+  const hiddenEmojis = ['🎯', '⭐', '🔍', '🎪', '🎨', '🎭', '🎪', '🎲'];
+
+  // Reset game when mode changes
+  useEffect(() => {
+    if (gameStarted) {
+      setGameStarted(false);
+      setTargetPattern(null);
+      setOptions([]);
+      setHiddenObjects([]);
+      setScore(0);
+      setRound(1);
+      setFeedback('');
+    }
+  }, [gameMode, difficulty]);
 
   const generatePattern = (): Pattern => {
     return {
@@ -45,30 +67,46 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
     };
   };
 
-  const generateQuestion = () => {
-    const target = generatePattern();
-    setTargetPattern(target);
+  const generateHiddenObjects = () => {
+    const objects: HiddenObject[] = [];
+    const count = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 5 : 7;
     
-    const correctOption = { ...target };
-    const wrongOptions: Pattern[] = [];
-    
-    // Generate 3 wrong options
-    for (let i = 0; i < 3; i++) {
-      let wrongOption = generatePattern();
-      // Make sure it's different from target
-      while (wrongOption.shape === target.shape && 
-             wrongOption.color === target.color && 
-             wrongOption.rotation === target.rotation) {
-        wrongOption = generatePattern();
-      }
-      wrongOptions.push(wrongOption);
+    for (let i = 0; i < count; i++) {
+      objects.push({
+        x: Math.random() * 350 + 25,
+        y: Math.random() * 350 + 25,
+        found: false,
+        emoji: hiddenEmojis[Math.floor(Math.random() * hiddenEmojis.length)]
+      });
     }
     
-    // Shuffle all options
-    const allOptions = [correctOption, ...wrongOptions].sort(() => Math.random() - 0.5);
-    setOptions(allOptions);
+    setHiddenObjects(objects);
+  };
+
+  const generateQuestion = () => {
+    if (gameMode === 'pattern-match') {
+      const target = generatePattern();
+      setTargetPattern(target);
+      
+      const correctOption = { ...target };
+      const wrongOptions: Pattern[] = [];
+      
+      for (let i = 0; i < 3; i++) {
+        let wrongOption = generatePattern();
+        while (wrongOption.shape === target.shape && 
+               wrongOption.color === target.color && 
+               wrongOption.rotation === target.rotation) {
+          wrongOption = generatePattern();
+        }
+        wrongOptions.push(wrongOption);
+      }
+      
+      const allOptions = [correctOption, ...wrongOptions].sort(() => Math.random() - 0.5);
+      setOptions(allOptions);
+    } else if (gameMode === 'hidden-object') {
+      generateHiddenObjects();
+    }
     
-    // Reset timer
     setTimeLeft(difficulty === 'easy' ? 15 : difficulty === 'medium' ? 10 : 8);
   };
 
@@ -106,10 +144,35 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
     }, 2000);
   };
 
+  const handleObjectClick = (index: number) => {
+    if (gameMode !== 'hidden-object') return;
+    
+    const newObjects = [...hiddenObjects];
+    if (!newObjects[index].found) {
+      newObjects[index].found = true;
+      setHiddenObjects(newObjects);
+      setScore(score + 10);
+      
+      if (newObjects.every(obj => obj.found)) {
+        setFeedback('✅ All objects found! Excellent visual scanning!');
+        setTimeout(() => {
+          setRound(round + 1);
+          if (round < 10) {
+            generateQuestion();
+            setFeedback('');
+          } else {
+            setGameStarted(false);
+            setFeedback(`Game Complete! Final Score: ${score}`);
+          }
+        }, 2000);
+      }
+    }
+  };
+
   // Timer countdown
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (gameStarted && timeLeft > 0 && !feedback) {
+    if (gameStarted && timeLeft > 0 && !feedback && gameMode !== 'hidden-object') {
       interval = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -131,7 +194,7 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [gameStarted, timeLeft, feedback, round, score]);
+  }, [gameStarted, timeLeft, feedback, round, score, gameMode]);
 
   const renderPattern = (pattern: Pattern, size: 'small' | 'large' = 'small') => {
     const fontSize = size === 'small' ? 'text-4xl' : 'text-6xl';
@@ -147,6 +210,93 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
         {pattern.shape}
       </div>
     );
+  };
+
+  const renderGameContent = () => {
+    switch (gameMode) {
+      case 'pattern-match':
+        return (
+          <>
+            {targetPattern && (
+              <div className="text-center">
+                <p className="text-lg mb-4">Find the pattern that matches this one exactly:</p>
+                <div className="bg-gray-100 p-8 rounded-lg mb-6 inline-block">
+                  {renderPattern(targetPattern, 'large')}
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-4">
+                  Look carefully at shape, color, and rotation!
+                </p>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                  {options.map((option, index) => (
+                    <Button
+                      key={index}
+                      className="h-24 w-24 mx-auto bg-gray-50 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 transition-all"
+                      onClick={() => handleAnswer(option)}
+                      disabled={!!feedback}
+                    >
+                      {renderPattern(option)}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      
+      case 'hidden-object':
+        return (
+          <div className="text-center">
+            <p className="text-lg mb-4">Find all hidden objects in the scene:</p>
+            <div className="relative bg-gradient-to-br from-green-200 to-blue-200 w-96 h-96 mx-auto rounded-lg border-4 border-gray-300">
+              {/* Background pattern */}
+              <div className="absolute inset-0 opacity-20">
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-8 h-8 bg-yellow-400 rounded-full"
+                    style={{
+                      left: `${Math.random() * 90}%`,
+                      top: `${Math.random() * 90}%`,
+                    }}
+                  />
+                ))}
+              </div>
+              
+              {/* Hidden objects */}
+              {hiddenObjects.map((obj, index) => (
+                <div
+                  key={index}
+                  className={`absolute text-2xl cursor-pointer transition-all duration-300 ${
+                    obj.found ? 'scale-125 animate-bounce' : 'hover:scale-110'
+                  }`}
+                  style={{
+                    left: obj.x,
+                    top: obj.y,
+                    opacity: obj.found ? 1 : 0.7,
+                    filter: obj.found ? 'none' : 'brightness(0.8)',
+                  }}
+                  onClick={() => handleObjectClick(index)}
+                >
+                  {obj.emoji}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-gray-600 mt-4">
+              Found: {hiddenObjects.filter(obj => obj.found).length} / {hiddenObjects.length}
+            </p>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="text-center">
+            <p className="text-lg mb-4">Game mode: {gameMode}</p>
+            <p className="text-gray-600">This mode is under development!</p>
+          </div>
+        );
+    }
   };
 
   const goBack = () => {
@@ -247,37 +397,15 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
               <CardTitle className="text-center flex justify-between items-center">
                 <span>Round {round}/15</span>
                 <span>Score: {score}</span>
-                <span className={`${timeLeft <= 3 ? 'text-red-500 animate-pulse' : ''}`}>
-                  Time: {timeLeft}s
-                </span>
+                {gameMode !== 'hidden-object' && (
+                  <span className={`${timeLeft <= 3 ? 'text-red-500 animate-pulse' : ''}`}>
+                    Time: {timeLeft}s
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {targetPattern && (
-                <div className="text-center">
-                  <p className="text-lg mb-4">Find the pattern that matches this one exactly:</p>
-                  <div className="bg-gray-100 p-8 rounded-lg mb-6 inline-block">
-                    {renderPattern(targetPattern, 'large')}
-                  </div>
-                  
-                  <p className="text-sm text-gray-600 mb-4">
-                    Look carefully at shape, color, and rotation!
-                  </p>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-                    {options.map((option, index) => (
-                      <Button
-                        key={index}
-                        className="h-24 w-24 mx-auto bg-gray-50 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 transition-all"
-                        onClick={() => handleAnswer(option)}
-                        disabled={!!feedback}
-                      >
-                        {renderPattern(option)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {renderGameContent()}
 
               {feedback && (
                 <div className={`text-center p-4 rounded-lg animate-bounce ${
