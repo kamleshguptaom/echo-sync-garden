@@ -22,7 +22,7 @@ interface Piece {
 }
 
 interface HandGesture {
-  type: 'aim' | 'power' | 'spin';
+  type: 'aim' | 'power' | 'spin' | 'drag';
   intensity: number;
 }
 
@@ -41,6 +41,7 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
   const [showConcept, setShowConcept] = useState(false);
   const [handGesture, setHandGesture] = useState<HandGesture>({ type: 'aim', intensity: 0 });
   const [draggedPiece, setDraggedPiece] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
 
   const boardSize = 400;
@@ -114,7 +115,7 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     setHandGesture({ type: 'aim', intensity: 50 });
   };
 
-  const handlePowerAdjust = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePowerAdjust = () => {
     if (!isAiming) return;
     
     const powerLevel = Math.min(100, Math.max(0, power + 10));
@@ -141,13 +142,27 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
       );
       
       if (distance < 50) {
-        return {
+        const newPiece = {
           ...piece,
           velocity: {
             x: shotVelocity.x * 0.8,
             y: shotVelocity.y * 0.8
           }
         };
+        
+        // Check if piece goes into pocket
+        const pocketDistance = Math.sqrt(Math.pow(piece.x - 20, 2) + Math.pow(piece.y - 20, 2));
+        if (pocketDistance < 30) {
+          newPiece.inPocket = true;
+          if (piece.color === 'white' || piece.color === 'black') {
+            setScore(prev => ({
+              ...prev,
+              [currentPlayer]: prev[currentPlayer] + 1
+            }));
+          }
+        }
+        
+        return newPiece;
       }
       return piece;
     }));
@@ -163,7 +178,8 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
 
   const handleDragStart = (e: React.DragEvent, pieceId: string) => {
     setDraggedPiece(pieceId);
-    setHandGesture({ type: 'aim', intensity: 30 });
+    setIsDragging(true);
+    setHandGesture({ type: 'drag', intensity: 30 });
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -186,21 +202,26 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
     }));
     
     setDraggedPiece(null);
-    setHandGesture({ type: 'power', intensity: 0 });
+    setIsDragging(false);
+    setHandGesture({ type: 'aim', intensity: 0 });
   };
 
   const renderHandGesture = () => {
     const gestureEmoji = {
       aim: '👉',
       power: '✊',
-      spin: '🌀'
+      spin: '🌀',
+      drag: '✋'
     };
     
     return (
       <div className="absolute top-4 right-4 text-4xl animate-pulse">
         {gestureEmoji[handGesture.type]}
-        <div className="text-sm text-center mt-1">
+        <div className="text-sm text-center mt-1 text-white">
           {handGesture.type.toUpperCase()}
+        </div>
+        <div className="text-xs text-center text-white/80">
+          Intensity: {handGesture.intensity}%
         </div>
       </div>
     );
@@ -238,6 +259,11 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
         .carrom-piece:hover {
           transform: scale(1.1);
           box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .carrom-piece.dragging {
+          transform: scale(1.2);
+          z-index: 100;
+          opacity: 0.8;
         }
         .carrom-piece.white {
           background: #FFFFFF;
@@ -293,6 +319,24 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
         .hand-gesture {
           animation: handGesture 1s infinite;
         }
+        .board-lines {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        }
+        .center-circle {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 80px;
+          height: 80px;
+          border: 2px solid #654321;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+        }
       `}</style>
 
       <div className="max-w-4xl mx-auto">
@@ -323,8 +367,9 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                   <h3 className="font-bold text-lg">🎮 Controls</h3>
                   <ul className="list-disc list-inside space-y-1">
                     <li><strong>Mouse:</strong> Aim and adjust power</li>
-                    <li><strong>Drag & Drop:</strong> Fine positioning</li>
-                    <li><strong>Hand Gestures:</strong> Visual feedback for actions</li>
+                    <li><strong>Drag & Drop:</strong> Fine positioning of pieces</li>
+                    <li><strong>Hand Gestures:</strong> Visual feedback for different actions</li>
+                    <li><strong>Click Striker:</strong> Start aiming mode</li>
                   </ul>
                 </div>
                 <div className="bg-amber-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
@@ -332,7 +377,8 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                   <p>• Plan your shots carefully<br/>
                      • Use angles and rebounds<br/>
                      • Control the striker power<br/>
-                     • Watch opponent's pieces</p>
+                     • Watch opponent's pieces<br/>
+                     • Drag pieces for better positioning</p>
                 </div>
               </div>
             </DialogContent>
@@ -401,6 +447,32 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                 {/* Hand gesture indicator */}
                 {renderHandGesture()}
                 
+                {/* Board lines and center circle */}
+                <div className="board-lines">
+                  <div className="center-circle" />
+                  {/* Diagonal lines */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    width: '100%',
+                    height: '2px',
+                    background: '#654321',
+                    transformOrigin: 'top left',
+                    transform: 'rotate(45deg)'
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    top: '0',
+                    right: '0',
+                    width: '100%',
+                    height: '2px',
+                    background: '#654321',
+                    transformOrigin: 'top right',
+                    transform: 'rotate(-45deg)'
+                  }} />
+                </div>
+                
                 {/* Corner pockets */}
                 <div className="pocket" style={{ top: -20, left: -20 }} />
                 <div className="pocket" style={{ top: -20, right: -20 }} />
@@ -411,7 +483,7 @@ export const CarromGame: React.FC<CarromGameProps> = ({ onBack }) => {
                 {pieces.filter(piece => !piece.inPocket).map((piece) => (
                   <div
                     key={piece.id}
-                    className={`carrom-piece ${piece.color}`}
+                    className={`carrom-piece ${piece.color} ${draggedPiece === piece.id ? 'dragging' : ''}`}
                     style={{
                       left: piece.x - pieceSize/2,
                       top: piece.y - pieceSize/2,
