@@ -1,470 +1,320 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Search, Clock, Trophy, Target, Brain, Book, Gamepad2, Calculator, Palette, Zap, Eye, Music, Puzzle, Code, Globe, History, Languages, Atom, Car, Users, Mountain, Crosshair } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-interface GameHubProps {
-  onGameSelect: (gameId: string) => void;
-}
+// Game imports
+import { MemoryGame } from './MemoryGame/MemoryGame';
+import { MathGame } from './MathGame/MathGame';
+import { WordGame } from './WordGame/WordGame';
+import { LogicGame } from './LogicGame/LogicGame';
+import { GeometryGame } from './GeometryGame/GeometryGame';
+import { ScienceGame } from './ScienceGame/ScienceGame';
+import { GeographyGame } from './GeographyGame/GeographyGame';
+import { HistoryGame } from './HistoryGame/HistoryGame';
+import { TicTacToe } from './TicTacToe/TicTacToe';
+import { Sudoku } from './Sudoku/Sudoku';
+import { JigsawPuzzle } from './JigsawPuzzle/JigsawPuzzle';
+import { WaffleGame } from './WaffleGame/WaffleGame';
+import { LadderSnake } from './LadderSnake/LadderSnake';
+import { AimingGame } from './AimingGame/AimingGame';
+import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
+import { PatternGame } from './PatternGame/PatternGame';
+import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
+import { SpeedReading } from './SpeedReading/SpeedReading';
+import { TypingGame } from './TypingGame/TypingGame';
+import { DrawingGame } from './DrawingGame/DrawingGame';
+import { GolfGame } from './GolfGame/GolfGame';
+import { CarromGame } from './CarromGame/CarromGame';
+import { RoadSafetyGame } from './RoadSafetyGame/RoadSafetyGame';
+import { NumberSequence } from './NumberSequence/NumberSequence';
+import { ColorMemory } from './ColorMemory/ColorMemory';
+import { MathRacing } from './MathRacing/MathRacing';
+import { VisualPerception } from './VisualPerception/VisualPerception';
+import { WorkingMemory } from './WorkingMemory/WorkingMemory';
+import { AttentionTraining } from './AttentionTraining/AttentionTraining';
+import { FractionGame } from './FractionGame/FractionGame';
+import { AlgebraGame } from './AlgebraGame/AlgebraGame';
+import { CodingGame } from './CodingGame/CodingGame';
+import { CriticalThinking } from './CriticalThinking/CriticalThinking';
+import { GrammarGame } from './GrammarGame/GrammarGame';
+import { BloodRelations } from './BloodRelations/BloodRelations';
 
-interface Game {
-  id: string;
+type GameType = 
+  | 'memory' | 'math' | 'word' | 'logic' | 'geometry' | 'science' | 'geography' | 'history'
+  | 'tictactoe' | 'sudoku' | 'jigsaw' | 'waffle' | 'laddersnake' | 'aiming' | 'builder'
+  | 'pattern' | 'concentration' | 'speedreading' | 'typing' | 'drawing' 
+  | 'visualperception' | 'workingmemory' | 'attention' | 'fractions' | 'algebra' | 'coding' 
+  | 'criticalthinking' | 'golf' | 'carrom' | 'roadsafety' | 'numbersequence' | 'colormemory' 
+  | 'mathracing' | 'grammar' | 'bloodrelations' | null;
+
+interface GameInfo {
+  id: GameType;
   title: string;
-  category: string;
+  emoji: string;
   description: string;
-  icon: React.ComponentType<any>;
-  difficulty: string;
-  estimatedTime: string;
-  skills: string[];
+  category: string;
+  isNew?: boolean;
+  isFeatured?: boolean;
 }
 
-export const GameHub: React.FC<GameHubProps> = ({ onGameSelect }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [difficultyFilter, setDifficultyFilter] = useState('all');
-  const [sortOption, setSortOption] = useState('popularity');
-  const [recentlyPlayed, setRecentlyPlayed] = useState<string[]>([]);
+export const GameHub = () => {
+  const [selectedGame, setSelectedGame] = useState<GameType>(null);
+  const [gameHistory, setGameHistory] = useState<GameType[]>([]);
 
-  const games = [
-    // Cognitive & Brain Training
-    { 
-      id: 'memory-game', 
-      title: '🧠 Memory Game', 
-      category: 'cognitive', 
-      description: 'Test and improve your memory skills',
-      icon: Brain,
-      difficulty: 'Medium',
-      estimatedTime: '5-10 min',
-      skills: ['Memory', 'Concentration', 'Pattern Recognition']
-    },
-    { 
-      id: 'visual-perception', 
-      title: '👁️ Visual Perception Training', 
-      category: 'cognitive', 
-      description: 'Enhance visual processing and pattern recognition',
-      icon: Eye,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Visual Processing', 'Pattern Recognition', 'Attention']
-    },
-    { 
-      id: 'concentration-game', 
-      title: '🎯 Concentration Challenge', 
-      category: 'cognitive', 
-      description: 'Improve focus and cognitive control',
-      icon: Target,
-      difficulty: 'Hard',
-      estimatedTime: '8-12 min',
-      skills: ['Focus', 'Cognitive Control', 'Reaction Time']
-    },
-    { 
-      id: 'pattern-game', 
-      title: '🔍 Pattern Recognition', 
-      category: 'cognitive', 
-      description: 'Identify and complete complex patterns',
-      icon: Puzzle,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Pattern Recognition', 'Logic', 'Analysis']
-    },
-    { 
-      id: 'attention-training', 
-      title: '⚡ Attention Training', 
-      category: 'cognitive', 
-      description: 'Enhance focus and selective attention',
-      icon: Zap,
-      difficulty: 'Medium',
-      estimatedTime: '8-12 min',
-      skills: ['Attention', 'Focus', 'Processing Speed']
-    },
-
-    // Math & Logic Games
-    { 
-      id: 'math-game', 
-      title: '🔢 Math Challenge', 
-      category: 'math', 
-      description: 'Solve math problems at your level',
-      icon: Calculator,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Arithmetic', 'Problem Solving', 'Speed']
-    },
-    { 
-      id: 'algebra-game', 
-      title: '📊 Algebra Quest', 
-      category: 'math', 
-      description: 'Master algebraic equations and concepts',
-      icon: Calculator,
-      difficulty: 'Hard',
-      estimatedTime: '15-20 min',
-      skills: ['Algebra', 'Equations', 'Mathematical Reasoning']
-    },
-    { 
-      id: 'geometry-game', 
-      title: '📐 Geometry Challenge', 
-      category: 'math', 
-      description: 'Explore shapes, angles, and spatial reasoning',
-      icon: Calculator,
-      difficulty: 'Hard',
-      estimatedTime: '15-20 min',
-      skills: ['Geometry', 'Spatial Reasoning', 'Visualization']
-    },
-    { 
-      id: 'fraction-game', 
-      title: '🍕 Fraction Master', 
-      category: 'math', 
-      description: 'Learn fractions through visual exercises',
-      icon: Calculator,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Fractions', 'Visual Math', 'Number Sense']
-    },
-    { 
-      id: 'logic-game', 
-      title: '🧩 Logic Challenge', 
-      category: 'logic', 
-      description: 'Solve logical puzzles and reasoning problems',
-      icon: Puzzle,
-      difficulty: 'Hard',
-      estimatedTime: '15-20 min',
-      skills: ['Logic', 'Deduction', 'Critical Thinking']
-    },
-    { 
-      id: 'critical-thinking', 
-      title: '🤔 Critical Thinking', 
-      category: 'logic', 
-      description: 'Develop analytical and critical thinking skills',
-      icon: Brain,
-      difficulty: 'Hard',
-      estimatedTime: '15-25 min',
-      skills: ['Analysis', 'Evaluation', 'Reasoning']
-    },
-    { 
-      id: 'number-sequence', 
-      title: '🔢 Number Patterns', 
-      category: 'math', 
-      description: 'Identify and complete number sequences',
-      icon: Calculator,
-      difficulty: 'Medium',
-      estimatedTime: '8-12 min',
-      skills: ['Pattern Recognition', 'Number Sense', 'Logic']
-    },
-    { 
-      id: 'math-racing', 
-      title: '🏎️ Math Racing', 
-      category: 'math', 
-      description: 'Fast-paced math problem solving race',
-      icon: Zap,
-      difficulty: 'Medium',
-      estimatedTime: '5-10 min',
-      skills: ['Speed Math', 'Quick Thinking', 'Accuracy']
-    },
-
-    // Language & Communication
-    { 
-      id: 'word-game', 
-      title: '📝 Word Masters', 
-      category: 'language', 
-      description: 'Expand vocabulary and language skills',
-      icon: Book,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Vocabulary', 'Language', 'Word Recognition']
-    },
-    { 
-      id: 'grammar-game', 
-      title: '✏️ Grammar Master', 
-      category: 'language', 
-      description: 'Perfect your grammar and sentence structure',
-      icon: Languages,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Grammar', 'Language Rules', 'Writing']
-    },
-    { 
-      id: 'speed-reading', 
-      title: '⚡ Speed Reading', 
-      category: 'language', 
-      description: 'Improve reading speed and comprehension',
-      icon: Book,
-      difficulty: 'Medium',
-      estimatedTime: '15-20 min',
-      skills: ['Reading Speed', 'Comprehension', 'Focus']
-    },
-    { 
-      id: 'story-book', 
-      title: '📚 Interactive Stories', 
-      category: 'language', 
-      description: 'Engage with interactive storytelling',
-      icon: Book,
-      difficulty: 'Easy',
-      estimatedTime: '10-20 min',
-      skills: ['Reading', 'Comprehension', 'Imagination']
-    },
-
-    // Subject Learning
-    { 
-      id: 'science-game', 
-      title: '🧪 Science Explorer', 
-      category: 'science', 
-      description: 'Discover scientific concepts through experiments',
-      icon: Atom,
-      difficulty: 'Medium',
-      estimatedTime: '15-20 min',
-      skills: ['Science', 'Experimentation', 'Discovery']
-    },
-    { 
-      id: 'history-game', 
-      title: '🏛️ History Quest', 
-      category: 'social', 
-      description: 'Journey through historical events and figures',
-      icon: History,
-      difficulty: 'Medium',
-      estimatedTime: '15-20 min',
-      skills: ['History', 'Timeline', 'Cultural Knowledge']
-    },
-    { 
-      id: 'geography-game', 
-      title: '🌍 Geography Explorer', 
-      category: 'social', 
-      description: 'Explore countries, capitals, and landmarks',
-      icon: Globe,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Geography', 'World Knowledge', 'Spatial Awareness']
-    },
-    { 
-      id: 'road-safety', 
-      title: '🚦 Road Safety Academy', 
-      category: 'life-skills', 
-      description: 'Learn essential road safety rules and signs',
-      icon: Car,
-      difficulty: 'Easy',
-      estimatedTime: '10-15 min',
-      skills: ['Safety', 'Traffic Rules', 'Awareness']
-    },
-
-    // Games & Entertainment
-    { 
-      id: 'tic-tac-toe', 
-      title: '⭕ Tic Tac Toe Pro', 
-      category: 'strategy', 
-      description: 'Classic strategy game with advanced features',
-      icon: Users,
-      difficulty: 'Easy',
-      estimatedTime: '3-8 min',
-      skills: ['Strategy', 'Planning', 'Logic']
-    },
-    { 
-      id: 'carrom-game', 
-      title: '🎯 Carrom Master', 
-      category: 'sports', 
-      description: 'Digital carrom board game with realistic physics',
-      icon: Target,
-      difficulty: 'Medium',
-      estimatedTime: '10-20 min',
-      skills: ['Precision', 'Physics', 'Strategy']
-    },
-    { 
-      id: 'aiming-game', 
-      title: '🏹 Advanced Archery', 
-      category: 'sports', 
-      description: 'Precision archery and shooting challenges',
-      icon: Crosshair,
-      difficulty: 'Medium',
-      estimatedTime: '8-15 min',
-      skills: ['Precision', 'Hand-eye Coordination', 'Focus']
-    },
-
-    // Creative & Skills
-    { 
-      id: 'typing-game', 
-      title: '⌨️ Typing Master', 
-      category: 'skills', 
-      description: 'Improve typing speed and accuracy',
-      icon: Gamepad2,
-      difficulty: 'Medium',
-      estimatedTime: '10-15 min',
-      skills: ['Typing', 'Speed', 'Accuracy']
-    },
-    { 
-      id: 'coding-game', 
-      title: '💻 Coding Adventure', 
-      category: 'technology', 
-      description: 'Learn programming concepts through games',
-      icon: Code,
-      difficulty: 'Hard',
-      estimatedTime: '20-30 min',
-      skills: ['Programming', 'Logic', 'Problem Solving']
-    },
-    { 
-      id: 'drawing-game', 
-      title: '🎨 Creative Drawing', 
-      category: 'creative', 
-      description: 'Express creativity through digital drawing',
-      icon: Palette,
-      difficulty: 'Easy',
-      estimatedTime: '15-30 min',
-      skills: ['Creativity', 'Art', 'Expression']
-    }
-  ];
-
-  const filteredGames = games.filter(game => {
-    const searchMatch = game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        game.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const categoryMatch = categoryFilter === 'all' || game.category === categoryFilter;
-    const difficultyMatch = difficultyFilter === 'all' || game.difficulty === difficultyFilter;
-    return searchMatch && categoryMatch && difficultyMatch;
-  });
-
-  const sortedGames = [...filteredGames].sort((a, b) => {
-    if (sortOption === 'name') {
-      return a.title.localeCompare(b.title);
-    } else if (sortOption === 'difficulty') {
-      const difficultyOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
-      return (difficultyOrder[a.difficulty] || 2) - (difficultyOrder[b.difficulty] || 2);
-    } else {
-      // Popularity (Placeholder - Replace with actual popularity metric)
-      return Math.random() - 0.5;
-    }
-  });
-
-  const handleGameSelect = (gameId: string) => {
-    onGameSelect(gameId);
-    addToRecentlyPlayed(gameId);
-  };
-
-  const addToRecentlyPlayed = (gameId: string) => {
-    setRecentlyPlayed(prev => {
-      const filtered = prev.filter(id => id !== gameId);
-      return [gameId, ...filtered].slice(0, 4); // Keep only 4 unique games
-    });
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'cognitive': return <Brain className="mr-2 h-4 w-4" />;
-      case 'math': return <Calculator className="mr-2 h-4 w-4" />;
-      case 'language': return <Book className="mr-2 h-4 w-4" />;
-      case 'science': return <Atom className="mr-2 h-4 w-4" />;
-      case 'social': return <Globe className="mr-2 h-4 w-4" />;
-      case 'life-skills': return <Car className="mr-2 h-4 w-4" />;
-      case 'strategy': return <Users className="mr-2 h-4 w-4" />;
-      case 'sports': return <Mountain className="mr-2 h-4 w-4" />;
-      case 'skills': return <Gamepad2 className="mr-2 h-4 w-4" />;
-      case 'technology': return <Code className="mr-2 h-4 w-4" />;
-      case 'creative': return <Palette className="mr-2 h-4 w-4" />;
+  if (selectedGame) {
+    const gameProps = { 
+      onBack: () => {
+        setGameHistory(prev => [selectedGame, ...prev.slice(0, 9)]);
+        setSelectedGame(null);
+      }
+    };
+    
+    switch (selectedGame) {
+      case 'memory': return <MemoryGame {...gameProps} />;
+      case 'math': return <MathGame {...gameProps} />;
+      case 'word': return <WordGame {...gameProps} />;
+      case 'logic': return <LogicGame {...gameProps} />;
+      case 'geometry': return <GeometryGame {...gameProps} />;
+      case 'science': return <ScienceGame {...gameProps} />;
+      case 'geography': return <GeographyGame {...gameProps} />;
+      case 'history': return <HistoryGame {...gameProps} />;
+      case 'tictactoe': return <TicTacToe {...gameProps} />;
+      case 'sudoku': return <Sudoku {...gameProps} />;
+      case 'jigsaw': return <JigsawPuzzle {...gameProps} />;
+      case 'waffle': return <WaffleGame {...gameProps} />;
+      case 'laddersnake': return <LadderSnake {...gameProps} />;
+      case 'aiming': return <AimingGame {...gameProps} />;
+      case 'builder': return <ObjectBuilder {...gameProps} />;
+      case 'pattern': return <PatternGame {...gameProps} />;
+      case 'concentration': return <ConcentrationGame {...gameProps} />;
+      case 'speedreading': return <SpeedReading {...gameProps} />;
+      case 'typing': return <TypingGame {...gameProps} />;
+      case 'drawing': return <DrawingGame {...gameProps} />;
+      case 'visualperception': return <VisualPerception {...gameProps} />;
+      case 'workingmemory': return <WorkingMemory {...gameProps} />;
+      case 'attention': return <AttentionTraining {...gameProps} />;
+      case 'fractions': return <FractionGame {...gameProps} />;
+      case 'algebra': return <AlgebraGame {...gameProps} />;
+      case 'coding': return <CodingGame {...gameProps} />;
+      case 'criticalthinking': return <CriticalThinking {...gameProps} />;
+      case 'golf': return <GolfGame {...gameProps} />;
+      case 'carrom': return <CarromGame {...gameProps} />;
+      case 'roadsafety': return <RoadSafetyGame {...gameProps} />;
+      case 'numbersequence': return <NumberSequence {...gameProps} />;
+      case 'colormemory': return <ColorMemory {...gameProps} />;
+      case 'mathracing': return <MathRacing {...gameProps} />;
+      case 'grammar': return <GrammarGame {...gameProps} />;
+      case 'bloodrelations': return <BloodRelations {...gameProps} />;
       default: return null;
     }
-  };
+  }
+
+  const games: GameInfo[] = [
+    // Core Cognitive Skills
+    { id: 'memory', title: 'Memory Training', emoji: '🧠', description: 'Enhance memory capacity and recall', category: 'Cognitive Skills' },
+    { id: 'workingmemory', title: 'Working Memory', emoji: '🔄', description: 'Strengthen working memory abilities', category: 'Cognitive Skills' },
+    { id: 'attention', title: 'Attention Training', emoji: '🎯', description: 'Improve focus and concentration', category: 'Cognitive Skills' },
+    { id: 'visualperception', title: 'Visual Perception', emoji: '👁️', description: 'Enhance visual processing skills', category: 'Cognitive Skills' },
+    { id: 'pattern', title: 'Pattern Recognition', emoji: '🔍', description: 'Identify and predict patterns', category: 'Cognitive Skills' },
+    { id: 'concentration', title: 'Concentration Test', emoji: '🎨', description: 'Stroop test & focus training', category: 'Cognitive Skills' },
+    { id: 'logic', title: 'Logic Puzzles', emoji: '🧩', description: 'Develop logical reasoning', category: 'Cognitive Skills' },
+    { id: 'criticalthinking', title: 'Critical Thinking', emoji: '🤔', description: 'Analyze and evaluate information', category: 'Cognitive Skills' },
+    { id: 'bloodrelations', title: 'Blood Relations', emoji: '👪', description: 'Master family relationship puzzles', category: 'Cognitive Skills', isNew: true },
+    { id: 'colormemory', title: 'Color Memory', emoji: '🌈', description: 'Remember color sequences', category: 'Cognitive Skills' },
+    { id: 'numbersequence', title: 'Number Patterns', emoji: '🔢', description: 'Identify numerical sequences', category: 'Cognitive Skills' },
+    
+    // Mathematics & Numbers
+    { id: 'math', title: 'Math Challenge', emoji: '🧮', description: 'Comprehensive math training', category: 'Mathematics' },
+    { id: 'mathracing', title: 'Math Racing', emoji: '🏎️', description: 'Speed math challenges', category: 'Mathematics' },
+    { id: 'fractions', title: 'Fraction Master', emoji: '½', description: 'Learn fractions visually', category: 'Mathematics' },
+    { id: 'algebra', title: 'Algebra Quest', emoji: '📊', description: 'Solve algebraic equations', category: 'Mathematics' },
+    { id: 'geometry', title: 'Geometry Studio', emoji: '📐', description: 'Explore shapes and angles', category: 'Mathematics' },
+    
+    // Language & Communication
+    { id: 'word', title: 'Word Games', emoji: '📝', description: 'Vocabulary and spelling', category: 'Language' },
+    { id: 'grammar', title: 'Grammar Master', emoji: '📚', description: 'Master language structure', category: 'Language', isNew: true, isFeatured: true },
+    { id: 'speedreading', title: 'Speed Reading', emoji: '📖', description: 'Improve reading speed', category: 'Language' },
+    { id: 'typing', title: 'Typing Master', emoji: '⌨️', description: 'Professional typing skills', category: 'Language' },
+    
+    // STEM & Technology
+    { id: 'science', title: 'Science Explorer', emoji: '🔬', description: 'Interactive science learning', category: 'STEM' },
+    { id: 'coding', title: 'Coding Adventure', emoji: '💻', description: 'Learn programming basics', category: 'STEM' },
+    { id: 'roadsafety', title: 'Road Safety', emoji: '🚦', description: 'Learn traffic rules and safety', category: 'STEM' },
+    
+    // World Knowledge
+    { id: 'geography', title: 'Geography Quest', emoji: '🌍', description: 'Explore world geography', category: 'World Knowledge' },
+    { id: 'history', title: 'History Journey', emoji: '🏛️', description: 'Travel through time', category: 'World Knowledge' },
+    
+    // Creative & Arts
+    { id: 'drawing', title: 'Art Studio Pro', emoji: '🎨', description: 'Professional digital art', category: 'Creative', isFeatured: true },
+    { id: 'builder', title: 'Object Builder', emoji: '🏗️', description: 'Create 3D objects', category: 'Creative' },
+    
+    // Puzzle Games
+    { id: 'sudoku', title: 'Sudoku Master', emoji: '🔢', description: 'Number placement puzzles', category: 'Puzzles' },
+    { id: 'jigsaw', title: 'Jigsaw Puzzles', emoji: '🧩', description: 'Picture piece puzzles', category: 'Puzzles' },
+    { id: 'waffle', title: 'Waffle Game', emoji: '🧇', description: 'Word puzzle challenge', category: 'Puzzles' },
+    
+    // Sports & Action
+    { id: 'aiming', title: 'Archery Challenge', emoji: '🏹', description: 'Advanced shooting range', category: 'Sports', isFeatured: true },
+    { id: 'golf', title: 'Mini Golf', emoji: '⛳', description: 'Physics-based golf game', category: 'Sports' },
+    { id: 'carrom', title: 'Carrom Board', emoji: '🎯', description: 'Strike and pocket coins', category: 'Sports' },
+    
+    // Classic Games
+    { id: 'tictactoe', title: 'Tic Tac Toe Pro', emoji: '⭕', description: 'Advanced strategy game', category: 'Classic', isFeatured: true },
+    { id: 'laddersnake', title: 'Snakes & Ladders', emoji: '🐍', description: 'Classic board game', category: 'Classic' }
+  ];
+
+  const categories = [...new Set(games.map(game => game.category))];
+  const featuredGames = games.filter(game => game.isFeatured);
+  const recentlyPlayed = gameHistory
+    .map(id => games.find(game => game.id === id))
+    .filter((game): game is GameInfo => !!game);
 
   return (
     <div className="container mx-auto p-6">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-white mb-8">🧠 Brain Training Games</h1>
+      <div className="text-center mb-8">
+        <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
+          🎮 Ultimate Learning Hub
+        </h1>
+        <p className="text-xl text-white/90 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          Comprehensive brain training and educational games
+        </p>
+      </div>
 
-        {/* Search and Filter Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="md:col-span-2">
-            <Input
-              type="text"
-              placeholder="Search games..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-white/90"
-            />
-          </div>
-          <div className="flex items-center space-x-4">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="p-2 rounded bg-white/90 text-sm"
-            >
-              <option value="all">All Categories</option>
-              <option value="cognitive">Cognitive</option>
-              <option value="math">Math</option>
-              <option value="language">Language</option>
-              <option value="science">Science</option>
-              <option value="social">Social</option>
-              <option value="life-skills">Life Skills</option>
-              <option value="strategy">Strategy</option>
-              <option value="sports">Sports</option>
-              <option value="skills">Skills</option>
-              <option value="technology">Technology</option>
-              <option value="creative">Creative</option>
-            </select>
-            <select
-              value={difficultyFilter}
-              onChange={(e) => setDifficultyFilter(e.target.value)}
-              className="p-2 rounded bg-white/90 text-sm"
-            >
-              <option value="all">All Difficulties</option>
-              <option value="Easy">Easy</option>
-              <option value="Medium">Medium</option>
-              <option value="Hard">Hard</option>
-            </select>
+      {/* Featured Games */}
+      {featuredGames.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-white mb-4 animate-fade-in">
+            🌟 Featured Games
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {featuredGames.map((game, index) => (
+              <Card 
+                key={`featured-${game.id}`}
+                className="hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 bg-gradient-to-br from-purple-500/30 to-blue-500/30 backdrop-blur-sm border border-white/20 animate-scale-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+                onClick={() => setSelectedGame(game.id)}
+              >
+                <CardHeader className="text-center pb-2">
+                  <div className="text-5xl mb-3 animate-bounce" style={{ animationDelay: `${index * 0.2}s` }}>
+                    {game.emoji}
+                  </div>
+                  <CardTitle className="text-lg font-bold text-white">
+                    {game.title}
+                    {game.isNew && (
+                      <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">NEW</span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-center pt-0">
+                  <p className="text-sm text-white/90 mb-4 leading-relaxed">{game.description}</p>
+                  <Button 
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedGame(game.id);
+                    }}
+                  >
+                    Play Now
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Recently Played Games */}
-        {recentlyPlayed.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4">
-              <History className="inline-block mr-2 h-5 w-5" /> Recently Played
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {recentlyPlayed.map(gameId => {
-                const game = games.find(g => g.id === gameId);
-                return game ? (
-                  <Card key={game.id} className="bg-white/95 hover:scale-105 transition-transform">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg font-semibold">{game.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Button onClick={() => handleGameSelect(game.id)} className="w-full">
-                        Play Again
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : null;
-              })}
-            </div>
+      {/* Recently Played */}
+      {recentlyPlayed.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-white mb-4 animate-fade-in">
+            🕹️ Recently Played
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {recentlyPlayed.slice(0, 6).map((game, index) => (
+              <Button
+                key={`recent-${game.id}-${index}`}
+                className="h-auto flex flex-col items-center p-4 bg-white/20 hover:bg-white/30 rounded-lg animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
+                onClick={() => setSelectedGame(game.id)}
+              >
+                <div className="text-2xl mb-1">{game.emoji}</div>
+                <div className="text-sm font-medium text-white">{game.title}</div>
+              </Button>
+            ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Game Listing */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedGames.map((game) => (
-            <Card key={game.id} className="bg-white/95 hover:scale-105 transition-transform">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-semibold flex items-center">
-                  {getCategoryIcon(game.category)}
-                  {game.title}
-                </CardTitle>
-                <Trophy className="text-yellow-500 h-5 w-5" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">{game.description}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {game.skills.map((skill, index) => (
-                    <Badge key={index} variant="secondary">{skill}</Badge>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div className="flex items-center">
-                    <Clock className="mr-1 h-4 w-4" />
-                    {game.estimatedTime}
-                  </div>
-                  <div>Difficulty: {game.difficulty}</div>
-                </div>
-                <Button onClick={() => handleGameSelect(game.id)} className="mt-4 w-full">
-                  Play Now
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+      {/* All Categories */}
+      {categories.map((category, categoryIndex) => (
+        <div key={category} className="mb-8">
+          <h2 className="text-3xl font-bold text-white mb-4 animate-fade-in"
+              style={{ animationDelay: `${categoryIndex * 0.1}s` }}>
+            {category}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {games
+              .filter(game => game.category === category)
+              .map((game, index) => (
+                <Card 
+                  key={game.id}
+                  className="hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105 bg-white/95 animate-scale-in"
+                  style={{ animationDelay: `${(categoryIndex * 4 + index) * 0.05}s` }}
+                  onClick={() => setSelectedGame(game.id as GameType)}
+                >
+                  <CardHeader className="text-center pb-2">
+                    <div className="text-4xl mb-2">
+                      {game.emoji}
+                    </div>
+                    <CardTitle className="flex items-center justify-center gap-2 text-lg font-bold">
+                      {game.title}
+                      {game.isNew && (
+                        <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">NEW</span>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center pt-0">
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">{game.description}</p>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGame(game.id as GameType);
+                      }}
+                    >
+                      Play Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="text-center mt-12 p-8 bg-gradient-to-r from-white/10 to-white/20 rounded-xl backdrop-blur animate-fade-in">
+        <h3 className="text-2xl font-bold text-white mb-4">🧠 Comprehensive Brain Training</h3>
+        <div className="grid md:grid-cols-4 gap-6 text-white/90">
+          <div>
+            <div className="text-4xl mb-2">🎯</div>
+            <h4 className="font-bold mb-2">Cognitive Skills</h4>
+            <p className="text-sm">Memory, attention, and processing speed</p>
+          </div>
+          <div>
+            <div className="text-4xl mb-2">📚</div>
+            <h4 className="font-bold mb-2">Academic Skills</h4>
+            <p className="text-sm">Math, language, science, and more</p>
+          </div>
+          <div>
+            <div className="text-4xl mb-2">🧩</div>
+            <h4 className="font-bold mb-2">Problem Solving</h4>
+            <p className="text-sm">Logic, critical thinking, and creativity</p>
+          </div>
+          <div>
+            <div className="text-4xl mb-2">🏆</div>
+            <h4 className="font-bold mb-2">Achievement</h4>
+            <p className="text-sm">Track progress and celebrate success</p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -35,7 +36,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
   const [streak, setStreak] = useState(0);
   const [colorBoxes, setColorBoxes] = useState<Array<{color: string, position: number}>>([]);
 
-  const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan', 'brown', 'lime'];
+  const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'cyan'];
   const colorMap = {
     red: '#ef4444',
     blue: '#3b82f6',
@@ -44,9 +45,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
     purple: '#8b5cf6',
     orange: '#f97316',
     pink: '#ec4899',
-    cyan: '#06b6d4',
-    brown: '#8b4513',
-    lime: '#84cc16'
+    cyan: '#06b6d4'
   };
 
   useEffect(() => {
@@ -63,25 +62,23 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
       setGameStarted(false);
       setGameActive(false);
       setCurrentTest(null);
-      setScore(0);
-      setRound(1);
     }
   }, [difficulty, gameMode]);
 
   const generateRandomColorBoxes = () => {
-    const numBoxes = 8 + Math.floor(Math.random() * 8); // 8-16 boxes
+    const numBoxes = 6 + Math.floor(Math.random() * 6); // 6-12 boxes
     const boxes = [];
     for (let i = 0; i < numBoxes; i++) {
       boxes.push({
         color: colors[Math.floor(Math.random() * colors.length)],
-        position: Math.floor(Math.random() * 25) // 5x5 grid positions
+        position: Math.floor(Math.random() * 16) // 4x4 grid positions
       });
     }
     setColorBoxes(boxes);
   };
 
   const generateStroopTest = useCallback((): StroopTest => {
-    const words = colors.map(c => c.toUpperCase());
+    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW', 'PURPLE', 'ORANGE', 'PINK', 'CYAN'];
     const word = words[Math.floor(Math.random() * words.length)];
     const color = colors[Math.floor(Math.random() * colors.length)];
     const isCongruent = word.toLowerCase() === color;
@@ -93,54 +90,6 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
       isCongruent
     };
   }, []);
-
-  const generateNBackTest = () => {
-    // Simple N-back implementation
-    const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-    const currentLetter = letters[Math.floor(Math.random() * letters.length)];
-    
-    return {
-      word: currentLetter,
-      color: 'black',
-      correctAnswer: currentLetter,
-      isCongruent: true
-    };
-  };
-
-  const generateAttentionTest = () => {
-    const shapes = ['●', '■', '▲', '♦'];
-    const targetShape = shapes[Math.floor(Math.random() * shapes.length)];
-    const targetColor = colors[Math.floor(Math.random() * colors.length)];
-    
-    return {
-      word: targetShape,
-      color: targetColor,
-      correctAnswer: targetColor,
-      isCongruent: true
-    };
-  };
-
-  const generateTest = () => {
-    let currentMode = gameMode;
-    
-    if (gameMode === 'random') {
-      const modes: GameMode[] = ['stroop', 'nback', 'attention', 'focus'];
-      currentMode = modes[Math.floor(Math.random() * modes.length)];
-    }
-
-    switch (currentMode) {
-      case 'stroop':
-        return generateStroopTest();
-      case 'nback':
-        return generateNBackTest();
-      case 'attention':
-        return generateAttentionTest();
-      case 'focus':
-        return generateStroopTest(); // Use stroop for focus mode too
-      default:
-        return generateStroopTest();
-    }
-  };
 
   const startGame = () => {
     setGameStarted(true);
@@ -154,7 +103,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
   };
 
   const generateNewTest = () => {
-    setCurrentTest(generateTest());
+    setCurrentTest(generateStroopTest());
     generateRandomColorBoxes();
     setStartTime(Date.now());
     setShowResult(false);
@@ -217,63 +166,6 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
     }
   };
 
-  const renderColorBoxes = () => (
-    <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto mb-6">
-      {Array.from({ length: 25 }, (_, i) => {
-        const box = colorBoxes.find(b => b.position === i);
-        return (
-          <div
-            key={i}
-            className="w-6 h-6 rounded border animate-pulse"
-            style={{ 
-              backgroundColor: box ? colorMap[box.color as keyof typeof colorMap] : '#f3f4f6',
-              animationDelay: `${i * 0.05}s`
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-
-  const renderGameContent = () => {
-    if (!currentTest) return null;
-
-    if (gameMode === 'stroop' || gameMode === 'focus' || gameMode === 'random') {
-      return (
-        <>
-          {renderColorBoxes()}
-          <div className="mb-6">
-            <p className="text-lg mb-4">Click the color of the text (not what the word says):</p>
-            <div 
-              className="text-8xl font-bold mb-6 animate-pulse"
-              style={{ color: colorMap[currentTest.color as keyof typeof colorMap] }}
-            >
-              {currentTest.word}
-            </div>
-            <div className="text-sm text-gray-600 mb-4">
-              {currentTest.isCongruent ? '(Congruent - word and color match)' : '(Incongruent - word and color differ)'}
-            </div>
-          </div>
-        </>
-      );
-    } else if (gameMode === 'nback' || gameMode === 'attention') {
-      return (
-        <>
-          {renderColorBoxes()}
-          <div className="mb-6">
-            <p className="text-lg mb-4">Remember this item:</p>
-            <div 
-              className="text-8xl font-bold mb-6 animate-bounce"
-              style={{ color: colorMap[currentTest.color as keyof typeof colorMap] }}
-            >
-              {currentTest.word}
-            </div>
-          </div>
-        </>
-      );
-    }
-  };
-
   return (
     <div className="container mx-auto p-6">
       <div className="max-w-4xl mx-auto">
@@ -281,7 +173,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
           <Button onClick={goBack} variant="outline" className="bg-white/90">
             ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
           </Button>
-          <h1 className="text-4xl font-bold text-white">🎯 Concentration Challenge</h1>
+          <h1 className="text-4xl font-bold text-white">Concentration Challenge</h1>
           <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
               <Button variant="outline" className="bg-yellow-500 text-white hover:bg-yellow-600">
@@ -360,7 +252,7 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
               
               <div className="text-center">
                 <Button onClick={startGame} className="bg-yellow-500 hover:bg-yellow-600">
-                  Start Training
+                  {gameStarted ? 'New Game' : 'Start Training'}
                 </Button>
               </div>
             </CardContent>
@@ -374,16 +266,46 @@ export const ConcentrationGame: React.FC<ConcentrationGameProps> = ({ onBack }) 
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                {renderGameContent()}
+                {/* Random color boxes display */}
+                <div className="grid grid-cols-4 gap-2 max-w-xs mx-auto mb-6">
+                  {Array.from({ length: 16 }, (_, i) => {
+                    const box = colorBoxes.find(b => b.position === i);
+                    return (
+                      <div
+                        key={i}
+                        className="w-8 h-8 rounded border animate-pulse"
+                        style={{ 
+                          backgroundColor: box ? colorMap[box.color as keyof typeof colorMap] : '#f3f4f6',
+                          animationDelay: `${i * 0.1}s`
+                        }}
+                      />
+                    );
+                  })}
+                </div>
 
-                <div className="grid grid-cols-5 gap-3 max-w-2xl mx-auto mb-6">
+                {currentTest && (
+                  <div className="mb-6">
+                    <p className="text-lg mb-4">Click the color of the text (not what the word says):</p>
+                    <div 
+                      className="text-8xl font-bold mb-6 animate-pulse"
+                      style={{ color: colorMap[currentTest.color as keyof typeof colorMap] }}
+                    >
+                      {currentTest.word}
+                    </div>
+                    <div className="text-sm text-gray-600 mb-4">
+                      {currentTest.isCongruent ? '(Congruent - word and color match)' : '(Incongruent - word and color differ)'}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-4 gap-3 max-w-2xl mx-auto mb-6">
                   {colors.map((color, index) => (
                     <Button
                       key={color}
-                      className="h-12 text-white font-bold animate-scale-in text-sm"
+                      className="h-16 text-white font-bold animate-scale-in"
                       style={{ 
                         backgroundColor: colorMap[color as keyof typeof colorMap],
-                        animationDelay: `${index * 0.05}s`
+                        animationDelay: `${index * 0.1}s`
                       }}
                       onClick={() => submitAnswer(color)}
                       disabled={showResult}

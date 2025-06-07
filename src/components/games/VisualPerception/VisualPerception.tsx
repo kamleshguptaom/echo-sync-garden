@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -45,41 +46,29 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
   };
 
   const generateQuestion = () => {
-    if (gameMode === 'pattern-match') {
-      const target = generatePattern();
-      setTargetPattern(target);
-      
-      const correctOption = { ...target };
-      const wrongOptions: Pattern[] = [];
-      
-      for (let i = 0; i < 3; i++) {
-        let wrongOption = generatePattern();
-        while (wrongOption.shape === target.shape && 
-               wrongOption.color === target.color && 
-               wrongOption.rotation === target.rotation) {
-          wrongOption = generatePattern();
-        }
-        wrongOptions.push(wrongOption);
+    const target = generatePattern();
+    setTargetPattern(target);
+    
+    const correctOption = { ...target };
+    const wrongOptions: Pattern[] = [];
+    
+    // Generate 3 wrong options
+    for (let i = 0; i < 3; i++) {
+      let wrongOption = generatePattern();
+      // Make sure it's different from target
+      while (wrongOption.shape === target.shape && 
+             wrongOption.color === target.color && 
+             wrongOption.rotation === target.rotation) {
+        wrongOption = generatePattern();
       }
-      
-      const allOptions = [correctOption, ...wrongOptions].sort(() => Math.random() - 0.5);
-      setOptions(allOptions);
-    } else if (gameMode === 'shape-rotate') {
-      const target = generatePattern();
-      setTargetPattern(target);
-      
-      const correctOption = { ...target };
-      const wrongOptions: Pattern[] = [];
-      
-      for (let i = 0; i < 3; i++) {
-        const wrongOption = { ...target, rotation: (target.rotation + 90 * (i + 1)) % 360 };
-        wrongOptions.push(wrongOption);
-      }
-      
-      const allOptions = [correctOption, ...wrongOptions].sort(() => Math.random() - 0.5);
-      setOptions(allOptions);
+      wrongOptions.push(wrongOption);
     }
     
+    // Shuffle all options
+    const allOptions = [correctOption, ...wrongOptions].sort(() => Math.random() - 0.5);
+    setOptions(allOptions);
+    
+    // Reset timer
     setTimeLeft(difficulty === 'easy' ? 15 : difficulty === 'medium' ? 10 : 8);
   };
 
@@ -94,17 +83,9 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
   const handleAnswer = (selectedPattern: Pattern) => {
     if (!targetPattern) return;
     
-    let isCorrect = false;
-    
-    if (gameMode === 'pattern-match') {
-      isCorrect = selectedPattern.shape === targetPattern.shape &&
-                  selectedPattern.color === targetPattern.color &&
-                  selectedPattern.rotation === targetPattern.rotation;
-    } else if (gameMode === 'shape-rotate') {
-      isCorrect = selectedPattern.shape === targetPattern.shape &&
-                  selectedPattern.color === targetPattern.color &&
-                  selectedPattern.rotation === targetPattern.rotation;
-    }
+    const isCorrect = selectedPattern.shape === targetPattern.shape &&
+                      selectedPattern.color === targetPattern.color &&
+                      selectedPattern.rotation === targetPattern.rotation;
     
     if (isCorrect) {
       setScore(score + (timeLeft * 2));
@@ -124,16 +105,6 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
       }
     }, 2000);
   };
-
-  // Reset game when mode changes
-  useEffect(() => {
-    if (gameStarted) {
-      setGameStarted(false);
-      setScore(0);
-      setRound(1);
-      setFeedback('');
-    }
-  }, [gameMode, difficulty]);
 
   // Timer countdown
   useEffect(() => {
@@ -176,60 +147,6 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
         {pattern.shape}
       </div>
     );
-  };
-
-  const renderGameContent = () => {
-    if (gameMode === 'pattern-match') {
-      return (
-        <div className="text-center">
-          <p className="text-lg mb-4">Find the pattern that matches this one exactly:</p>
-          <div className="bg-gray-100 p-8 rounded-lg mb-6 inline-block">
-            {targetPattern && renderPattern(targetPattern, 'large')}
-          </div>
-          
-          <p className="text-sm text-gray-600 mb-4">
-            Look carefully at shape, color, and rotation!
-          </p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-            {options.map((option, index) => (
-              <Button
-                key={index}
-                className="h-24 w-24 mx-auto bg-gray-50 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 transition-all"
-                onClick={() => handleAnswer(option)}
-                disabled={!!feedback}
-              >
-                {renderPattern(option)}
-              </Button>
-            ))}
-          </div>
-        </div>
-      );
-    } else if (gameMode === 'shape-rotate') {
-      return (
-        <div className="text-center">
-          <p className="text-lg mb-4">Find the same shape with the same rotation:</p>
-          <div className="bg-gray-100 p-8 rounded-lg mb-6 inline-block">
-            {targetPattern && renderPattern(targetPattern, 'large')}
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
-            {options.map((option, index) => (
-              <Button
-                key={index}
-                className="h-24 w-24 mx-auto bg-gray-50 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 transition-all"
-                onClick={() => handleAnswer(option)}
-                disabled={!!feedback}
-              >
-                {renderPattern(option)}
-              </Button>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    
-    return <div>Game mode not implemented yet</div>;
   };
 
   const goBack = () => {
@@ -311,8 +228,8 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
                     <SelectContent>
                       <SelectItem value="pattern-match">Pattern Matching</SelectItem>
                       <SelectItem value="shape-rotate">Shape Rotation</SelectItem>
-                      <SelectItem value="hidden-object">Hidden Objects (Coming Soon)</SelectItem>
-                      <SelectItem value="visual-scan">Visual Scanning (Coming Soon)</SelectItem>
+                      <SelectItem value="hidden-object">Hidden Objects</SelectItem>
+                      <SelectItem value="visual-scan">Visual Scanning</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -336,7 +253,31 @@ export const VisualPerception: React.FC<VisualPerceptionProps> = ({ onBack }) =>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {targetPattern && renderGameContent()}
+              {targetPattern && (
+                <div className="text-center">
+                  <p className="text-lg mb-4">Find the pattern that matches this one exactly:</p>
+                  <div className="bg-gray-100 p-8 rounded-lg mb-6 inline-block">
+                    {renderPattern(targetPattern, 'large')}
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-4">
+                    Look carefully at shape, color, and rotation!
+                  </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                    {options.map((option, index) => (
+                      <Button
+                        key={index}
+                        className="h-24 w-24 mx-auto bg-gray-50 hover:bg-blue-100 border-2 border-gray-300 hover:border-blue-400 transition-all"
+                        onClick={() => handleAnswer(option)}
+                        disabled={!!feedback}
+                      >
+                        {renderPattern(option)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {feedback && (
                 <div className={`text-center p-4 rounded-lg animate-bounce ${
