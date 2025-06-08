@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { VictoryCelebration } from './VictoryCelebration';
+import { GameBoard } from './GameBoard';
+import { GameSettings } from './GameSettings';
 
 interface TicTacToeProps {
   onBack: () => void;
@@ -234,75 +232,8 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
     }
   };
 
-  const getBoardThemeStyles = () => {
-    switch (settings.boardTheme) {
-      case 'neon':
-        return 'bg-black border-4 border-cyan-400 shadow-lg shadow-cyan-400/50';
-      case 'wood':
-        return 'bg-amber-800 border-4 border-amber-900 shadow-lg';
-      case 'glass':
-        return 'bg-white/10 backdrop-blur-sm border-4 border-white/30 shadow-lg';
-      default:
-        return 'bg-white border-4 border-gray-300 shadow-lg';
-    }
-  };
-
-  const getCellThemeStyles = (cell: Player, index: number) => {
-    const baseStyles = "aspect-square border font-bold cursor-pointer transition-all duration-300 flex items-center justify-center text-4xl";
-    
-    switch (settings.boardTheme) {
-      case 'neon':
-        return `${baseStyles} bg-gray-900 border-cyan-400 text-cyan-400 hover:bg-cyan-400/20 ${cell ? 'shadow-lg shadow-cyan-400/50' : ''}`;
-      case 'wood':
-        return `${baseStyles} bg-amber-700 border-amber-900 text-amber-100 hover:bg-amber-600`;
-      case 'glass':
-        return `${baseStyles} bg-white/20 border-white/30 text-white hover:bg-white/30`;
-      default:
-        return `${baseStyles} bg-white border-gray-300 ${cell === 'X' ? 'text-blue-600' : 'text-red-600'} hover:bg-gray-50`;
-    }
-  };
-
-  const getAnimationSpeed = () => {
-    switch (settings.animationSpeed) {
-      case 'slow': return 'duration-700';
-      case 'fast': return 'duration-150';
-      default: return 'duration-300';
-    }
-  };
-
   return (
     <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-600">
-      <style>{`
-        .board {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 4px;
-          padding: 4px;
-          border-radius: 8px;
-          margin: 0 auto;
-        }
-        .cell:hover:not(:disabled) {
-          transform: scale(1.05);
-        }
-        .cell:disabled {
-          cursor: not-allowed;
-        }
-        .winner-animation {
-          animation: winner 0.5s ease-in-out;
-        }
-        @keyframes winner {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-        }
-        .ai-thinking {
-          animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
-
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div className="flex gap-2">
@@ -349,117 +280,21 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
         </div>
 
         {!gameStarted ? (
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Card className="bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-center">🎮 Game Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium mb-1">Game Mode</Label>
-                    <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="human-vs-human">👥 Human vs Human</SelectItem>
-                        <SelectItem value="human-vs-ai">🤖 Human vs AI</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {gameMode === 'human-vs-ai' && (
-                    <div>
-                      <Label className="text-sm font-medium mb-1">AI Difficulty</Label>
-                      <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="easy">😊 Easy</SelectItem>
-                          <SelectItem value="medium">😐 Medium</SelectItem>
-                          <SelectItem value="hard">😤 Hard</SelectItem>
-                          <SelectItem value="impossible">😈 Impossible</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-                <Button onClick={startGame} className="w-full bg-purple-500 hover:bg-purple-600">
-                  Start Game
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/95">
-              <CardHeader>
-                <CardTitle className="text-center">🎨 Customization</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium mb-2">Board Theme</Label>
-                  <Select value={settings.boardTheme} onValueChange={(value) => setSettings({...settings, boardTheme: value as any})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="classic">🎯 Classic</SelectItem>
-                      <SelectItem value="neon">🌟 Neon</SelectItem>
-                      <SelectItem value="wood">🌳 Wood</SelectItem>
-                      <SelectItem value="glass">💎 Glass</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium mb-2">Board Size: {settings.boardSize}px</Label>
-                  <Slider
-                    value={[settings.boardSize]}
-                    onValueChange={(value) => setSettings({...settings, boardSize: value[0]})}
-                    max={400}
-                    min={200}
-                    step={25}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium mb-2">Animation Speed</Label>
-                  <Select value={settings.animationSpeed} onValueChange={(value) => setSettings({...settings, animationSpeed: value as any})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="slow">🐌 Slow</SelectItem>
-                      <SelectItem value="normal">⚡ Normal</SelectItem>
-                      <SelectItem value="fast">🚀 Fast</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Show Hints</Label>
-                  <Switch
-                    checked={settings.showHints}
-                    onCheckedChange={(checked) => setSettings({...settings, showHints: checked})}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Sound Effects</Label>
-                  <Switch
-                    checked={settings.soundEnabled}
-                    onCheckedChange={(checked) => setSettings({...settings, soundEnabled: checked})}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <GameSettings
+            gameMode={gameMode}
+            difficulty={difficulty}
+            settings={settings}
+            onGameModeChange={setGameMode}
+            onDifficultyChange={setDifficulty}
+            onSettingsChange={setSettings}
+            onStartGame={startGame}
+          />
         ) : (
           <Card className="bg-white/95 max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="text-center flex justify-between items-center">
                 <span>X Wins: {score.X}</span>
-                <span className={aiThinking ? 'ai-thinking' : ''}>
+                <span className={aiThinking ? 'animate-pulse' : ''}>
                   {gameState.gameOver 
                     ? (gameState.winner === 'tie' ? '🤝 Tie Game!' : `🏆 ${gameState.winner} Wins!`)
                     : aiThinking 
@@ -471,21 +306,12 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div 
-                className={`board ${getBoardThemeStyles()} ${gameState.gameOver ? 'winner-animation' : ''} ${getAnimationSpeed()}`}
-                style={{ maxWidth: `${settings.boardSize}px` }}
-              >
-                {gameState.board.map((cell, index) => (
-                  <button
-                    key={index}
-                    className={`cell ${getCellThemeStyles(cell, index)}`}
-                    onClick={() => makeMove(index)}
-                    disabled={!!cell || gameState.gameOver || aiThinking}
-                  >
-                    {cell ? settings.playerSymbols[cell] : ''}
-                  </button>
-                ))}
-              </div>
+              <GameBoard
+                board={gameState.board}
+                onCellClick={makeMove}
+                disabled={gameState.gameOver || aiThinking}
+                settings={settings}
+              />
 
               <div className="text-center space-x-4">
                 <Button onClick={resetGame} className="bg-blue-500 hover:bg-blue-600">
@@ -512,7 +338,6 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ onBack }) => {
         {showVictory && gameState.winner && (
           <VictoryCelebration
             winner={gameState.winner}
-            onNewRound={resetGame}
             onClose={() => setShowVictory(false)}
           />
         )}

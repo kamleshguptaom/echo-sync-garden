@@ -1,50 +1,51 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useEffect } from 'react';
 
 interface VictoryCelebrationProps {
   winner: 'X' | 'O' | 'tie';
-  onNewRound: () => void;
   onClose: () => void;
 }
 
 export const VictoryCelebration: React.FC<VictoryCelebrationProps> = ({ 
   winner, 
-  onNewRound, 
   onClose 
 }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
   const getWinnerConfig = () => {
     switch (winner) {
       case 'X':
         return {
-          title: '🎉 Player X Wins! 🎉',
-          subtitle: 'Excellent strategy!',
-          colors: 'from-blue-400 via-purple-500 to-pink-500',
-          textColor: 'text-blue-100',
+          title: '🎉 Player X Wins!',
+          colors: 'from-cyan-400 via-blue-500 to-purple-600',
+          textColor: 'text-white',
           emoji: '🥇'
         };
       case 'O':
         return {
-          title: '🎊 Player O Wins! 🎊',
-          subtitle: 'Outstanding moves!',
-          colors: 'from-red-400 via-orange-500 to-yellow-500',
-          textColor: 'text-red-100',
+          title: '🎊 Player O Wins!',
+          colors: 'from-pink-400 via-red-500 to-orange-500',
+          textColor: 'text-white',
           emoji: '🏆'
         };
       case 'tie':
         return {
-          title: '🤝 It\'s a Tie! 🤝',
-          subtitle: 'Both played brilliantly!',
-          colors: 'from-green-400 via-teal-500 to-blue-500',
-          textColor: 'text-green-100',
+          title: '🤝 It\'s a Tie!',
+          colors: 'from-emerald-400 via-teal-500 to-cyan-500',
+          textColor: 'text-white',
           emoji: '⚖️'
         };
       default:
         return {
           title: 'Game Over',
-          subtitle: 'Thanks for playing!',
           colors: 'from-gray-400 to-gray-600',
-          textColor: 'text-gray-100',
+          textColor: 'text-white',
           emoji: '🎮'
         };
     }
@@ -53,77 +54,77 @@ export const VictoryCelebration: React.FC<VictoryCelebrationProps> = ({
   const config = getWinnerConfig();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className={`relative bg-gradient-to-br ${config.colors} p-8 rounded-3xl shadow-2xl border-4 border-white/30 max-w-md w-full mx-4 animate-scale-in`}>
-        {/* Celebration particles */}
-        <div className="absolute inset-0 overflow-hidden rounded-3xl">
-          {[...Array(12)].map((_, i) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in">
+      <div className={`relative bg-gradient-to-br ${config.colors} p-6 rounded-2xl shadow-2xl border-2 border-white/40 max-w-xs w-full mx-4 animate-scale-in`}>
+        <style>{`
+          @keyframes sparkle {
+            0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+          }
+          @keyframes slideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+          }
+          .sparkle-animation { animation: sparkle 0.8s ease-in-out infinite; }
+          .slide-up { animation: slideUp 0.5s ease-out; }
+        `}</style>
+        
+        {/* Animated sparkles */}
+        <div className="absolute inset-0 overflow-hidden rounded-2xl">
+          {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute animate-bounce"
+              className="absolute sparkle-animation"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${1 + Math.random()}s`
+                left: `${10 + Math.random() * 80}%`,
+                top: `${10 + Math.random() * 80}%`,
+                animationDelay: `${Math.random() * 0.8}s`,
               }}
             >
-              {['✨', '🌟', '💫', '⭐'][Math.floor(Math.random() * 4)]}
+              ✨
             </div>
           ))}
         </div>
 
         {/* Glowing border effect */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/20 via-white/40 to-white/20 animate-pulse" />
         
         {/* Content */}
-        <div className="relative text-center space-y-6">
-          <div className="text-6xl animate-bounce">{config.emoji}</div>
+        <div className="relative text-center space-y-3">
+          <div className="text-4xl animate-bounce">{config.emoji}</div>
           
-          <div className="space-y-2">
-            <h2 className={`text-3xl font-bold ${config.textColor} animate-fade-in`}>
-              {config.title}
-            </h2>
-            <p className={`text-lg ${config.textColor} opacity-90 animate-fade-in`} style={{ animationDelay: '0.2s' }}>
-              {config.subtitle}
-            </p>
-          </div>
+          <h2 className={`text-xl font-bold ${config.textColor} slide-up`}>
+            {config.title}
+          </h2>
 
-          {/* Animated celebration text */}
-          {winner !== 'tie' && (
-            <div className="flex justify-center space-x-2 text-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <span className="animate-bounce" style={{ animationDelay: '0s' }}>🎉</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.1s' }}>V</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>I</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.3s' }}>C</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>T</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.5s' }}>O</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.6s' }}>R</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.7s' }}>Y</span>
-              <span className="animate-bounce" style={{ animationDelay: '0.8s' }}>🎉</span>
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex gap-4 justify-center animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <Button
-              onClick={onNewRound}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-2 border-white/50 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              🎮 New Round
-            </Button>
-            <Button
-              onClick={onClose}
-              variant="outline"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              📊 View Scores
-            </Button>
+          {/* Animated celebration letters */}
+          <div className="flex justify-center space-x-1 text-lg slide-up" style={{ animationDelay: '0.2s' }}>
+            {winner !== 'tie' ? (
+              ['🎉', 'W', 'I', 'N', '!', '🎉'].map((char, index) => (
+                <span 
+                  key={index}
+                  className={`${config.textColor} font-bold animate-bounce`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  {char}
+                </span>
+              ))
+            ) : (
+              ['🤝', 'T', 'I', 'E', '!', '🤝'].map((char, index) => (
+                <span 
+                  key={index}
+                  className={`${config.textColor} font-bold animate-bounce`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  {char}
+                </span>
+              ))
+            )}
           </div>
         </div>
 
         {/* Animated glow effect */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-3xl blur opacity-20 animate-pulse" />
+        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 rounded-2xl blur opacity-30 animate-pulse" />
       </div>
     </div>
   );
