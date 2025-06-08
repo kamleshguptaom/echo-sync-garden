@@ -1,4 +1,3 @@
-
 import { GameInfo } from './GameGrid';
 
 export const gamesData: GameInfo[] = [
@@ -28,7 +27,6 @@ export const gamesData: GameInfo[] = [
   
   // STEM & Technology
   { id: 'science', title: 'Science Explorer', emoji: '🔬', description: 'Interactive science learning', category: 'STEM', difficulty: 'medium' },
-  { id: 'coding', title: 'Coding Adventure', emoji: '💻', description: 'Learn programming basics', category: 'STEM', difficulty: 'hard' },
   { id: 'roadsafety', title: 'Road Safety', emoji: '🚦', description: 'Learn traffic rules and safety', category: 'STEM', difficulty: 'easy' },
   
   // World Knowledge
@@ -46,7 +44,6 @@ export const gamesData: GameInfo[] = [
   
   // Sports & Action
   { id: 'aiming', title: 'Archery Challenge', emoji: '🏹', description: 'Advanced shooting range', category: 'Sports', difficulty: 'medium', isFeatured: true },
-  { id: 'golf', title: 'Mini Golf', emoji: '⛳', description: 'Physics-based golf game', category: 'Sports', difficulty: 'easy' },
   { id: 'carrom', title: 'Carrom Board', emoji: '🎯', description: 'Strike and pocket coins', category: 'Sports', difficulty: 'medium' },
   
   // Classic Games

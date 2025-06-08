@@ -5,6 +5,7 @@ import { SearchFilter } from './SearchFilter';
 import { GameGrid, GameInfo } from './GameGrid';
 import { FeaturedSection } from './FeaturedSection';
 import { GameRenderer } from './GameRenderer';
+import { AdminPanel } from '../admin/AdminPanel';
 import { gamesData, getGameCategories } from './gamesConfig';
 
 type GameType = string | null;
@@ -12,13 +13,13 @@ type GameType = string | null;
 export const GameHub = () => {
   const [selectedGame, setSelectedGame] = useState<GameType>(null);
   const [gameHistory, setGameHistory] = useState<string[]>([]);
+  const [showAdmin, setShowAdmin] = useState(false);
   
   // Search and Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
 
-  // Move all hooks before any conditional returns
   const categories = getGameCategories();
 
   // Filter and search logic
@@ -50,7 +51,12 @@ export const GameHub = () => {
     setSelectedDifficulty('all');
   };
 
-  // Now handle the conditional render after all hooks
+  // Handle admin panel
+  if (showAdmin) {
+    return <AdminPanel onBack={() => setShowAdmin(false)} />;
+  }
+
+  // Handle game rendering
   if (selectedGame) {
     return (
       <GameRenderer 
@@ -69,12 +75,24 @@ export const GameHub = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="text-center mb-8">
-        <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
-          🎮 Ultimate Learning Hub
-        </h1>
-        <p className="text-xl text-white/90 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          Comprehensive brain training and educational games
-        </p>
+        <div className="flex justify-between items-start">
+          <div></div>
+          <div>
+            <h1 className="text-5xl font-bold text-white mb-4 animate-fade-in">
+              🎮 Ultimate Learning Hub
+            </h1>
+            <p className="text-xl text-white/90 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              Comprehensive brain training and educational games
+            </p>
+          </div>
+          <Button 
+            onClick={() => setShowAdmin(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white animate-fade-in"
+            style={{ animationDelay: '0.3s' }}
+          >
+            🔧 Admin
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filter Component */}
