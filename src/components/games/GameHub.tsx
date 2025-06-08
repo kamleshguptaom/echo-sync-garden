@@ -18,21 +18,7 @@ export const GameHub = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
 
-  if (selectedGame) {
-    return (
-      <GameRenderer 
-        gameId={selectedGame}
-        onBack={() => {
-          // Add to history only if not already the most recent
-          if (gameHistory[0] !== selectedGame) {
-            setGameHistory(prev => [selectedGame, ...prev.filter(g => g !== selectedGame).slice(0, 3)]);
-          }
-          setSelectedGame(null);
-        }}
-      />
-    );
-  }
-
+  // Move all hooks before any conditional returns
   const categories = getGameCategories();
 
   // Filter and search logic
@@ -47,11 +33,14 @@ export const GameHub = () => {
     });
   }, [searchTerm, selectedCategory, selectedDifficulty]);
 
-  const featuredGames = filteredGames.filter(game => game.isFeatured);
-  const recentlyPlayed = gameHistory
-    .slice(0, 4) // Only show 4 recent games
-    .map(id => gamesData.find(game => game.id === id))
-    .filter((game): game is GameInfo => !!game);
+  const featuredGames = useMemo(() => filteredGames.filter(game => game.isFeatured), [filteredGames]);
+  
+  const recentlyPlayed = useMemo(() => {
+    return gameHistory
+      .slice(0, 4) // Only show 4 recent games
+      .map(id => gamesData.find(game => game.id === id))
+      .filter((game): game is GameInfo => !!game);
+  }, [gameHistory]);
 
   const hasActiveFilters = searchTerm !== '' || selectedCategory !== 'all' || selectedDifficulty !== 'all';
 
@@ -60,6 +49,22 @@ export const GameHub = () => {
     setSelectedCategory('all');
     setSelectedDifficulty('all');
   };
+
+  // Now handle the conditional render after all hooks
+  if (selectedGame) {
+    return (
+      <GameRenderer 
+        gameId={selectedGame}
+        onBack={() => {
+          // Add to history only if not already the most recent
+          if (gameHistory[0] !== selectedGame) {
+            setGameHistory(prev => [selectedGame, ...prev.filter(g => g !== selectedGame).slice(0, 3)]);
+          }
+          setSelectedGame(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
