@@ -3,431 +3,368 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 interface MathGameProps {
   onBack: () => void;
 }
 
-type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division' | 'mixed' | 'algebra' | 'fractions' | 'percentages';
-type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
-
 interface Question {
   num1: number;
   num2: number;
-  num3?: number;
-  operation: Operation;
+  operation: '+' | '-' | '*' | '/';
   answer: number;
-  displayQuestion: string;
-  isAlgebra?: boolean;
-  variable?: string;
 }
 
 export const MathGame: React.FC<MathGameProps> = ({ onBack }) => {
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-  const [operation, setOperation] = useState<Operation>('addition');
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
+  const [questionCount, setQuestionCount] = useState(0);
   const [timeLeft, setTimeLeft] = useState(30);
   const [gameActive, setGameActive] = useState(false);
-  const [feedback, setFeedback] = useState<string>('');
-  const [hintsUsed, setHintsUsed] = useState(0);
-
-  useEffect(() => {
-    if (gameActive && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      setGameActive(false);
-    }
-  }, [gameActive, timeLeft]);
-
-  const getNumberRange = (diff: Difficulty, op: Operation) => {
-    const ranges = {
-      easy: { min: 1, max: 10 },
-      medium: { min: 10, max: 50 },
-      hard: { min: 50, max: 100 },
-      expert: { min: 100, max: 500 }
-    };
-    
-    if (op === 'fractions') {
-      return { min: 1, max: diff === 'easy' ? 10 : diff === 'medium' ? 20 : 50 };
-    }
-    
-    return ranges[diff];
-  };
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [feedback, setFeedback] = useState<{ type: 'correct' | 'incorrect' | null; message: string }>({ type: null, message: '' });
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [showConcept, setShowConcept] = useState(false);
 
   const generateQuestion = (): Question => {
-    const range = getNumberRange(difficulty, operation);
-    
-    switch (operation) {
-      case 'addition':
-        return generateBasicOperation(range, '+');
-      case 'subtraction':
-        return generateBasicOperation(range, '-');
-      case 'multiplication':
-        return generateBasicOperation(range, '×');
-      case 'division':
-        return generateDivision(range);
-      case 'mixed':
-        return generateMixed(range);
-      case 'algebra':
-        return generateAlgebra(range);
-      case 'fractions':
-        return generateFractions(range);
-      case 'percentages':
-        return generatePercentages(range);
-      default:
-        return generateBasicOperation(range, '+');
-    }
-  };
+    let num1: number, num2: number, operation: '+' | '-' | '*' | '/', answer: number;
 
-  const generateBasicOperation = (range: {min: number, max: number}, op: string): Question => {
-    let num1 = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-    let num2 = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-    
-    // For subtraction, ensure positive results
-    if (op === '-' && num2 > num1) {
-      [num1, num2] = [num2, num1];
+    switch (difficulty) {
+      case 'easy':
+        num1 = Math.floor(Math.random() * 10) + 1;
+        num2 = Math.floor(Math.random() * 10) + 1;
+        operation = Math.random() > 0.5 ? '+' : '-';
+        if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+        break;
+      case 'medium':
+        num1 = Math.floor(Math.random() * 50) + 1;
+        num2 = Math.floor(Math.random() * 20) + 1;
+        operation = ['+', '-', '*'][Math.floor(Math.random() * 3)] as '+' | '-' | '*';
+        if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+        if (operation === '*') {
+          num1 = Math.floor(Math.random() * 12) + 1;
+          num2 = Math.floor(Math.random() * 12) + 1;
+        }
+        break;
+      case 'hard':
+        num1 = Math.floor(Math.random() * 100) + 1;
+        num2 = Math.floor(Math.random() * 50) + 1;
+        operation = ['+', '-', '*', '/'][Math.floor(Math.random() * 4)] as '+' | '-' | '*' | '/';
+        if (operation === '-' && num1 < num2) [num1, num2] = [num2, num1];
+        if (operation === '*') {
+          num1 = Math.floor(Math.random() * 15) + 1;
+          num2 = Math.floor(Math.random() * 15) + 1;
+        }
+        if (operation === '/') {
+          answer = Math.floor(Math.random() * 20) + 1;
+          num2 = Math.floor(Math.random() * 10) + 1;
+          num1 = answer * num2;
+        }
+        break;
     }
-    
-    let answer: number;
-    let operation: Operation;
-    
-    switch (op) {
+
+    switch (operation) {
       case '+':
         answer = num1 + num2;
-        operation = 'addition';
         break;
       case '-':
         answer = num1 - num2;
-        operation = 'subtraction';
         break;
-      case '×':
+      case '*':
         answer = num1 * num2;
-        operation = 'multiplication';
         break;
-      default:
-        answer = num1 + num2;
-        operation = 'addition';
+      case '/':
+        answer = Math.round(num1 / num2);
+        break;
     }
 
-    return {
-      num1,
-      num2,
-      operation,
-      answer,
-      displayQuestion: `${num1} ${op} ${num2} = ?`
-    };
-  };
-
-  const generateDivision = (range: {min: number, max: number}): Question => {
-    let num2 = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-    let answer = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
-    let num1 = num2 * answer;
-    
-    return {
-      num1,
-      num2,
-      operation: 'division',
-      answer,
-      displayQuestion: `${num1} ÷ ${num2} = ?`
-    };
-  };
-
-  const generateMixed = (range: {min: number, max: number}): Question => {
-    const operations = ['+', '-', '×'];
-    const randomOp = operations[Math.floor(Math.random() * operations.length)];
-    return generateBasicOperation(range, randomOp);
-  };
-
-  const generateAlgebra = (range: {min: number, max: number}): Question => {
-    const variable = 'x';
-    const coefficient = Math.floor(Math.random() * 10) + 1;
-    const constant = Math.floor(Math.random() * 20) + 1;
-    const result = Math.floor(Math.random() * 30) + 1;
-    const answer = Math.floor((result - constant) / coefficient);
-    
-    return {
-      num1: coefficient,
-      num2: constant,
-      operation: 'algebra',
-      answer,
-      displayQuestion: `${coefficient}${variable} + ${constant} = ${result}. Find ${variable}`,
-      isAlgebra: true,
-      variable
-    };
-  };
-
-  const generateFractions = (range: {min: number, max: number}): Question => {
-    const num1 = Math.floor(Math.random() * range.max) + 1;
-    const den1 = Math.floor(Math.random() * range.max) + 1;
-    const num2 = Math.floor(Math.random() * range.max) + 1;
-    const den2 = Math.floor(Math.random() * range.max) + 1;
-    
-    // Addition of fractions: a/b + c/d = (ad + bc) / (bd)
-    const numerator = (num1 * den2) + (num2 * den1);
-    const denominator = den1 * den2;
-    
-    // Simplify if possible
-    const gcd = findGCD(numerator, denominator);
-    const answer = numerator / gcd;
-    const answerDen = denominator / gcd;
-    
-    return {
-      num1,
-      num2,
-      operation: 'fractions',
-      answer: parseFloat((answer / answerDen).toFixed(2)),
-      displayQuestion: `${num1}/${den1} + ${num2}/${den2} = ? (as decimal)`
-    };
-  };
-
-  const generatePercentages = (range: {min: number, max: number}): Question => {
-    const percentage = Math.floor(Math.random() * 50) + 10; // 10-60%
-    const total = Math.floor(Math.random() * 200) + 50; // 50-250
-    const answer = Math.round((percentage / 100) * total);
-    
-    return {
-      num1: percentage,
-      num2: total,
-      operation: 'percentages',
-      answer,
-      displayQuestion: `What is ${percentage}% of ${total}?`
-    };
-  };
-
-  const findGCD = (a: number, b: number): number => {
-    return b === 0 ? a : findGCD(b, a % b);
+    return { num1, num2, operation, answer };
   };
 
   const startGame = () => {
-    setGameActive(true);
     setScore(0);
+    setQuestionCount(0);
+    setTimeLeft(60);
+    setGameActive(true);
     setStreak(0);
-    setTimeLeft(operation === 'algebra' ? 45 : 30);
-    setFeedback('');
-    setHintsUsed(0);
+    setMaxStreak(0);
+    setFeedback({ type: null, message: '' });
     setCurrentQuestion(generateQuestion());
   };
 
-  const useHint = () => {
-    if (!currentQuestion || hintsUsed >= 2) return;
-    
-    let hint = '';
-    switch (currentQuestion.operation) {
-      case 'algebra':
-        hint = `Try solving: isolate the variable by doing inverse operations`;
-        break;
-      case 'fractions':
-        hint = `Convert fractions to decimals: divide numerator by denominator`;
-        break;
-      case 'percentages':
-        hint = `Percentage formula: (percentage ÷ 100) × total`;
-        break;
-      case 'division':
-        hint = `Think: ${currentQuestion.num2} × ? = ${currentQuestion.num1}`;
-        break;
-      default:
-        hint = `The answer is between ${Math.floor(currentQuestion.answer * 0.8)} and ${Math.ceil(currentQuestion.answer * 1.2)}`;
-    }
-    
-    setFeedback(`💡 Hint: ${hint}`);
-    setHintsUsed(hintsUsed + 1);
-    
-    setTimeout(() => setFeedback(''), 4000);
-  };
+  const submitAnswer = () => {
+    if (!currentQuestion || userAnswer === '') return;
 
-  const checkAnswer = () => {
-    if (!currentQuestion) return;
+    const isCorrect = parseInt(userAnswer) === currentQuestion.answer;
     
-    const userNum = parseFloat(userAnswer);
-    const tolerance = currentQuestion.operation === 'fractions' ? 0.01 : 0;
-    
-    if (Math.abs(userNum - currentQuestion.answer) <= tolerance) {
-      const basePoints = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 20 : difficulty === 'hard' ? 30 : 40;
-      const operationMultiplier = currentQuestion.operation === 'algebra' ? 2 : currentQuestion.operation === 'fractions' ? 1.5 : 1;
-      const points = Math.floor(basePoints * operationMultiplier * (streak + 1));
-      
-      setScore(score + points);
-      setStreak(streak + 1);
-      setFeedback('Correct! 🎉');
+    if (isCorrect) {
+      const points = (difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3) + Math.floor(streak / 3);
+      setScore(prev => prev + points);
+      setStreak(prev => prev + 1);
+      setMaxStreak(prev => Math.max(prev, streak + 1));
+      setFeedback({ 
+        type: 'correct', 
+        message: `Correct! +${points} points${streak >= 2 ? ` (Streak: ${streak + 1})` : ''}` 
+      });
     } else {
       setStreak(0);
-      setFeedback(`Incorrect. The answer was ${currentQuestion.answer}`);
+      setFeedback({ 
+        type: 'incorrect', 
+        message: `Incorrect. Answer was ${currentQuestion.answer}` 
+      });
     }
-    
+
+    setQuestionCount(prev => prev + 1);
     setUserAnswer('');
-    if (gameActive) {
-      setTimeout(() => {
-        setCurrentQuestion(generateQuestion());
-        setFeedback('');
-      }, 1500);
-    }
+    
+    setTimeout(() => {
+      setFeedback({ type: null, message: '' });
+      setCurrentQuestion(generateQuestion());
+    }, 1500);
   };
 
-  const getOperationDisplay = () => {
-    const displays = {
-      addition: '➕ Addition',
-      subtraction: '➖ Subtraction',
-      multiplication: '✖️ Multiplication',
-      division: '➗ Division',
-      mixed: '🔄 Mixed Operations',
-      algebra: '📐 Algebra',
-      fractions: '📊 Fractions',
-      percentages: '📈 Percentages'
-    };
-    return displays[operation];
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (gameActive && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setGameActive(false);
+    }
+    return () => clearInterval(timer);
+  }, [gameActive, timeLeft]);
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      submitAnswer();
+    }
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-orange-300 via-red-400 to-pink-500 p-6">
+      <style>{`
+        .floating-elements {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          pointer-events: none;
+        }
+        .number-float {
+          position: absolute;
+          animation: float-numbers 4s ease-in-out infinite;
+          font-size: 2rem;
+          opacity: 0.1;
+        }
+        @keyframes float-numbers {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-30px) rotate(180deg); }
+        }
+        .answer-correct {
+          animation: bounce-correct 0.5s ease;
+        }
+        .answer-incorrect {
+          animation: shake-incorrect 0.5s ease;
+        }
+        @keyframes bounce-correct {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
+        @keyframes shake-incorrect {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+          20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+      `}</style>
+
+      <div className="floating-elements">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="number-float text-white"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 4}s`,
+            }}
+          >
+            {Math.floor(Math.random() * 100)}
+          </div>
+        ))}
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
         <div className="flex justify-between items-center mb-6">
-          <Button onClick={onBack} variant="outline" className="bg-white/90">
+          <Button onClick={onBack} variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
             ← Back to Hub
           </Button>
-          <h1 className="text-4xl font-bold text-white">Math Challenge</h1>
-          <Dialog>
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg">🔢 Math Challenge</h1>
+          <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-white/90">How to Play</Button>
+              <Button variant="outline" className="bg-purple-500/80 text-white hover:bg-purple-600/80">
+                🧠 Concept
+              </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>How to Play Math Challenge</DialogTitle>
+                <DialogTitle>Mathematical Fluency & Problem Solving</DialogTitle>
+                <DialogDescription>Build computational skills and number sense</DialogDescription>
               </DialogHeader>
-              <div className="space-y-3 text-sm">
-                <p><strong>Basic Operations:</strong> Solve addition, subtraction, multiplication, division</p>
-                <p><strong>Algebra:</strong> Find the value of the variable</p>
-                <p><strong>Fractions:</strong> Add fractions and give decimal answer</p>
-                <p><strong>Percentages:</strong> Calculate percentage of numbers</p>
-                <p>💡 Use hints if you get stuck (max 2 per game)</p>
-                <p>🏆 Higher difficulty and complex operations give more points</p>
+              <div className="space-y-4">
+                <div className="animate-fade-in">
+                  <h3 className="font-bold text-lg">🎯 Learning Goals</h3>
+                  <p>Math fluency games develop automatic recall of number facts, improve computational speed, and strengthen number sense through repeated practice.</p>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <h3 className="font-bold text-lg">🧠 Skills Developed</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Computational Fluency:</strong> Quick and accurate calculations</li>
+                    <li><strong>Number Sense:</strong> Understanding number relationships</li>
+                    <li><strong>Mental Math:</strong> Solving problems without external aids</li>
+                    <li><strong>Pattern Recognition:</strong> Identifying mathematical patterns</li>
+                  </ul>
+                </div>
+                <div className="bg-orange-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
+                  <h4 className="font-bold">💡 Strategy Tips:</h4>
+                  <p>• Practice basic facts daily for automaticity<br/>
+                     • Use mental math strategies (doubles, near doubles)<br/>
+                     • Break complex problems into simpler parts<br/>
+                     • Build confidence through regular practice</p>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        <Card className="mb-6 bg-white/95">
-          <CardHeader>
-            <CardTitle className="text-center">Game Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4 justify-center flex-wrap">
-              <div>
-                <label className="block text-sm font-medium mb-1">Difficulty</label>
-                <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
-                    <SelectItem value="expert">Expert</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Operation</label>
-                <Select value={operation} onValueChange={(value) => setOperation(value as Operation)}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="addition">➕ Addition</SelectItem>
-                    <SelectItem value="subtraction">➖ Subtraction</SelectItem>
-                    <SelectItem value="multiplication">✖️ Multiplication</SelectItem>
-                    <SelectItem value="division">➗ Division</SelectItem>
-                    <SelectItem value="mixed">🔄 Mixed Operations</SelectItem>
-                    <SelectItem value="algebra">📐 Algebra</SelectItem>
-                    <SelectItem value="fractions">📊 Fractions</SelectItem>
-                    <SelectItem value="percentages">📈 Percentages</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/95">
-          <CardHeader>
-            <CardTitle className="text-center flex justify-between items-center">
-              <span>Score: {score}</span>
-              <span>Streak: {streak}</span>
-              <span>Time: {timeLeft}s</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-6">
-            {!gameActive && !currentQuestion ? (
-              <div>
-                <p className="text-lg mb-2">Ready to test your math skills?</p>
-                <p className="text-sm text-gray-600 mb-4">
-                  Current: {getOperationDisplay()} | {difficulty.toUpperCase()}
-                </p>
-                <Button onClick={startGame} className="bg-green-500 hover:bg-green-600 text-xl px-8 py-3">
-                  Start Game
-                </Button>
-              </div>
-            ) : gameActive && currentQuestion ? (
-              <div className="space-y-6">
-                <div className="text-4xl font-bold text-blue-600 animate-pulse">
-                  {currentQuestion.displayQuestion}
-                </div>
-                
-                <div className="text-sm text-gray-500">
-                  Operation: {getOperationDisplay()} | Difficulty: {difficulty.toUpperCase()}
-                </div>
-                
-                <div className="flex justify-center gap-4 items-center">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && checkAnswer()}
-                    placeholder="Your answer"
-                    className="w-32 text-xl text-center"
-                    autoFocus
-                  />
-                  <Button onClick={checkAnswer} className="bg-blue-500 hover:bg-blue-600">
-                    Submit
-                  </Button>
-                  <Button 
-                    onClick={useHint} 
-                    disabled={hintsUsed >= 2} 
-                    variant="outline"
-                    className="bg-yellow-100 hover:bg-yellow-200"
+        {!gameActive && questionCount === 0 ? (
+          <Card className="bg-white/20 backdrop-blur-md border-2 border-white/30 max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-white text-center text-2xl">Choose Difficulty</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                {(['easy', 'medium', 'hard'] as const).map((level) => (
+                  <Button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    variant={difficulty === level ? "default" : "outline"}
+                    className={`p-6 h-auto flex flex-col items-center gap-2 ${
+                      difficulty === level 
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' 
+                        : 'bg-white/20 border-white/30 text-white hover:bg-white/30'
+                    }`}
                   >
-                    💡 Hint ({hintsUsed}/2)
+                    <span className="text-2xl">
+                      {level === 'easy' ? '🟢' : level === 'medium' ? '🟡' : '🔴'}
+                    </span>
+                    <span className="font-bold capitalize">{level}</span>
+                    <span className="text-sm opacity-80">
+                      {level === 'easy' ? '+ and -' : level === 'medium' ? '+ - ×' : '+ - × ÷'}
+                    </span>
                   </Button>
-                </div>
-                
-                {feedback && (
-                  <div className={`text-xl font-bold ${feedback.includes('Correct') ? 'text-green-600' : feedback.includes('Hint') ? 'text-yellow-600' : 'text-red-600'} animate-bounce`}>
-                    {feedback}
+                ))}
+              </div>
+              <Button onClick={startGame} className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-bold py-3 text-lg">
+                🎮 Start Challenge
+              </Button>
+            </CardContent>
+          </Card>
+        ) : gameActive ? (
+          <div className="space-y-6">
+            {/* Game Stats */}
+            <div className="flex justify-center gap-4">
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                ⏱️ {timeLeft}s
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                📊 Score: {score}
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                🔥 Streak: {streak}
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                📝 {questionCount}
+              </Badge>
+            </div>
+
+            <Progress value={(timeLeft / 60) * 100} className="w-full max-w-md mx-auto" />
+
+            {/* Question Card */}
+            <Card className={`bg-white/20 backdrop-blur-md border-2 border-white/30 max-w-md mx-auto ${
+              feedback.type === 'correct' ? 'answer-correct' : 
+              feedback.type === 'incorrect' ? 'answer-incorrect' : ''
+            }`}>
+              <CardContent className="p-8 text-center">
+                {currentQuestion && (
+                  <div className="space-y-6">
+                    <div className="text-4xl font-bold text-white">
+                      {currentQuestion.num1} {currentQuestion.operation} {currentQuestion.num2} = ?
+                    </div>
+                    
+                    <Input
+                      type="number"
+                      value={userAnswer}
+                      onChange={(e) => setUserAnswer(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Your answer..."
+                      className="text-center text-2xl font-bold bg-white/30 border-white/50 text-white placeholder:text-white/70"
+                      autoFocus
+                    />
+                    
+                    <Button 
+                      onClick={submitAnswer} 
+                      disabled={userAnswer === ''}
+                      className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold py-3 text-lg"
+                    >
+                      Submit Answer
+                    </Button>
+                    
+                    {feedback.message && (
+                      <div className={`p-3 rounded-lg font-bold ${
+                        feedback.type === 'correct' 
+                          ? 'bg-green-500/30 text-green-100' 
+                          : 'bg-red-500/30 text-red-100'
+                      }`}>
+                        {feedback.message}
+                      </div>
+                    )}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          // Game Over Screen
+          <Card className="bg-gradient-to-br from-blue-400 via-purple-500 to-pink-600 max-w-2xl mx-auto border-2 border-white/40">
+            <CardContent className="p-8 text-center space-y-4">
+              <div className="text-6xl animate-bounce">
+                {score >= 50 ? '🏆' : score >= 30 ? '🎉' : '👏'}
               </div>
-            ) : (
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-blue-600">Game Over!</h3>
-                <p className="text-lg">Final Score: {score}</p>
-                <p className="text-lg">Best Streak: {streak}</p>
-                <div className="text-sm text-gray-600">
-                  Performance: {streak >= 10 ? '🏆 Math Genius!' : streak >= 5 ? '⭐ Great Job!' : '👍 Keep Practicing!'}
-                </div>
-                <Button onClick={startGame} className="bg-green-500 hover:bg-green-600">
-                  Play Again
+              <h2 className="text-3xl font-bold text-white">Time's Up!</h2>
+              <div className="space-y-2 text-white text-lg">
+                <p>Final Score: <span className="font-bold">{score}</span></p>
+                <p>Questions Answered: <span className="font-bold">{questionCount}</span></p>
+                <p>Best Streak: <span className="font-bold">{maxStreak}</span></p>
+                <p>Accuracy: <span className="font-bold">{questionCount > 0 ? Math.round((score / questionCount) * 100) : 0}%</span></p>
+              </div>
+              <div className="flex gap-2 justify-center pt-4">
+                <Button onClick={startGame} className="bg-white/20 text-white hover:bg-white/30">
+                  🔄 Play Again
+                </Button>
+                <Button onClick={() => setQuestionCount(0)} className="bg-white/20 text-white hover:bg-white/30">
+                  ⚙️ Change Level
                 </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

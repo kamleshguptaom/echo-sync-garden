@@ -6,8 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuestionManager } from './QuestionManager';
 import { ThemeCustomizer } from './ThemeCustomizer';
 import { MediaManager } from './MediaManager';
-import { GameAnalytics } from './GameAnalytics';
-import { UserManager } from './UserManager';
 import { ContentLibrary } from './ContentLibrary';
 
 interface AdminPanelProps {
@@ -18,27 +16,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState('questions');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-400 via-fuchsia-500 to-pink-500 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-300 via-blue-400 to-purple-500 p-6">
       <style>{`
         .admin-card {
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(25px);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+          border-radius: 20px;
         }
         .admin-tab {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1));
+          border: 2px solid rgba(255, 255, 255, 0.3);
           color: white;
-          transition: all 0.3s ease;
+          transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          border-radius: 15px;
+          font-weight: 600;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         .admin-tab:hover {
-          background: rgba(255, 255, 255, 0.2);
-          transform: translateY(-2px);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2));
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
         }
         .admin-tab[data-state="active"] {
-          background: rgba(255, 255, 255, 0.3);
-          box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+          box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+          transform: scale(1.05);
         }
         .floating-elements {
           position: absolute;
@@ -50,99 +54,116 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         .floating-shape {
           position: absolute;
           border-radius: 50%;
-          animation: float 6s ease-in-out infinite;
+          animation: float 8s ease-in-out infinite;
+          background: linear-gradient(45deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
         }
         @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(180deg); }
+          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+          33% { transform: translateY(-30px) rotate(120deg); opacity: 1; }
+          66% { transform: translateY(-15px) rotate(240deg); opacity: 0.8; }
         }
         .sparkle {
           position: absolute;
-          animation: sparkle 2s ease-in-out infinite;
+          animation: sparkle 3s ease-in-out infinite;
+          font-size: 1.5rem;
         }
         @keyframes sparkle {
-          0%, 100% { opacity: 0; transform: scale(0); }
-          50% { opacity: 1; transform: scale(1); }
+          0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+        }
+        .glow-effect {
+          position: relative;
+        }
+        .glow-effect::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #f9ca24, #f0932b, #eb4d4b, #6c5ce7);
+          border-radius: 22px;
+          z-index: -1;
+          animation: rotate-gradient 3s linear infinite;
+          filter: blur(8px);
+        }
+        @keyframes rotate-gradient {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
 
       <div className="floating-elements">
-        {/* Floating background elements */}
-        {[...Array(8)].map((_, i) => (
+        {/* Enhanced floating background elements */}
+        {[...Array(12)].map((_, i) => (
           <div
             key={i}
             className="floating-shape"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              width: `${30 + Math.random() * 50}px`,
-              height: `${30 + Math.random() * 50}px`,
-              background: `rgba(255, 255, 255, ${0.1 + Math.random() * 0.1})`,
-              animationDelay: `${Math.random() * 6}s`,
-              animationDuration: `${4 + Math.random() * 4}s`
+              width: `${40 + Math.random() * 80}px`,
+              height: `${40 + Math.random() * 80}px`,
+              animationDelay: `${Math.random() * 8}s`,
+              animationDuration: `${6 + Math.random() * 6}s`
             }}
           />
         ))}
         
-        {/* Sparkles */}
-        {[...Array(12)].map((_, i) => (
+        {/* Enhanced sparkles */}
+        {[...Array(20)].map((_, i) => (
           <div
             key={`sparkle-${i}`}
-            className="sparkle text-white text-lg"
+            className="sparkle"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
+              animationDelay: `${Math.random() * 3}s`,
             }}
           >
-            ✨
+            {['✨', '💫', '⭐', '🌟'][Math.floor(Math.random() * 4)]}
           </div>
         ))}
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex justify-between items-center mb-8">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold text-white mb-3 drop-shadow-lg">
-              🔧 Advanced Admin Dashboard
+          <div className="text-center glow-effect">
+            <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-2xl">
+              🎨 Advanced Learning Hub
             </h1>
-            <p className="text-white/90 text-lg drop-shadow">
-              Complete control center for games, content, and customization
+            <p className="text-white/95 text-xl drop-shadow-lg font-medium">
+              Create, customize, and manage educational content with ease
             </p>
-            <div className="flex gap-2 justify-center mt-2">
-              <span className="px-3 py-1 bg-white/20 rounded-full text-white text-sm">🎮 Game Manager</span>
-              <span className="px-3 py-1 bg-white/20 rounded-full text-white text-sm">📊 Analytics</span>
-              <span className="px-3 py-1 bg-white/20 rounded-full text-white text-sm">🎨 Customizer</span>
+            <div className="flex gap-3 justify-center mt-4">
+              <span className="px-4 py-2 bg-gradient-to-r from-pink-400 to-red-400 rounded-full text-white text-sm font-semibold shadow-lg">📝 Questions</span>
+              <span className="px-4 py-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full text-white text-sm font-semibold shadow-lg">🎨 Media</span>
+              <span className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full text-white text-sm font-semibold shadow-lg">🌈 Themes</span>
+              <span className="px-4 py-2 bg-gradient-to-r from-green-400 to-teal-400 rounded-full text-white text-sm font-semibold shadow-lg">📚 Content</span>
             </div>
           </div>
           <Button 
             onClick={onBack} 
             variant="outline" 
-            className="bg-white/20 border-white/30 text-white hover:bg-white/30 hover:scale-105 transition-all duration-300 backdrop-blur-sm"
+            className="bg-gradient-to-r from-white/30 to-white/20 border-white/40 text-white hover:from-white/40 hover:to-white/30 hover:scale-110 transition-all duration-300 backdrop-blur-sm font-semibold shadow-xl"
           >
             ← Back to Games
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 admin-card p-2 gap-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-4 admin-card p-3 gap-3">
             <TabsTrigger value="questions" className="admin-tab">
-              📝 Questions
+              📝 Questions & Learning
             </TabsTrigger>
             <TabsTrigger value="media" className="admin-tab">
-              🎨 Media
+              🎨 Media Library
             </TabsTrigger>
             <TabsTrigger value="themes" className="admin-tab">
-              🌈 Themes
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="admin-tab">
-              📊 Analytics
-            </TabsTrigger>
-            <TabsTrigger value="users" className="admin-tab">
-              👥 Users
+              🌈 Theme Studio
             </TabsTrigger>
             <TabsTrigger value="content" className="admin-tab">
-              📚 Content
+              📚 Content Hub
             </TabsTrigger>
           </TabsList>
 
@@ -156,14 +177,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
           <TabsContent value="themes" className="animate-fade-in">
             <ThemeCustomizer />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="animate-fade-in">
-            <GameAnalytics />
-          </TabsContent>
-
-          <TabsContent value="users" className="animate-fade-in">
-            <UserManager />
           </TabsContent>
 
           <TabsContent value="content" className="animate-fade-in">

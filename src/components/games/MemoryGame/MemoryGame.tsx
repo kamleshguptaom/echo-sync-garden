@@ -2,361 +2,338 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 
 interface MemoryGameProps {
   onBack: () => void;
 }
 
-type Difficulty = 'easy' | 'medium' | 'hard';
-type GameType = 'symbols' | 'numbers' | 'colors' | 'words' | 'patterns';
-
-interface MemoryCard {
+interface GameCard {
   id: number;
-  symbol: string;
+  value: string;
   isFlipped: boolean;
   isMatched: boolean;
-  color?: string;
-  pairId: number;
 }
 
 export const MemoryGame: React.FC<MemoryGameProps> = ({ onBack }) => {
-  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
-  const [gameType, setGameType] = useState<GameType>('symbols');
-  const [cards, setCards] = useState<MemoryCard[]>([]);
+  const [cards, setCards] = useState<GameCard[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   const [matches, setMatches] = useState(0);
+  const [timeElapsed, setTimeElapsed] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
-  const [gameWon, setGameWon] = useState(false);
-  const [startTime, setStartTime] = useState<number>(0);
-  const [currentTime, setCurrentTime] = useState<number>(0);
-  const [hintsUsed, setHintsUsed] = useState(0);
-  const [showWinPopup, setShowWinPopup] = useState(false);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [showConcept, setShowConcept] = useState(false);
 
-  const gameContent = {
-    symbols: ['🎮', '🎯', '🎲', '🃏', '🎪', '🎨', '🎭', '🎸', '🎹', '🎺', '🎻', '🥁', '🎤', '🎧', '🎬', '📱', '💎', '⭐'],
-    numbers: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18'],
-    colors: [
-      { symbol: '●', color: '#ff4444' }, { symbol: '●', color: '#44ff44' }, { symbol: '●', color: '#4444ff' },
-      { symbol: '●', color: '#ffff44' }, { symbol: '●', color: '#ff44ff' }, { symbol: '●', color: '#44ffff' },
-      { symbol: '●', color: '#ff8844' }, { symbol: '●', color: '#8844ff' }, { symbol: '●', color: '#44ff88' },
-      { symbol: '●', color: '#ff4488' }, { symbol: '●', color: '#88ff44' }, { symbol: '●', color: '#4488ff' },
-      { symbol: '●', color: '#888888' }, { symbol: '●', color: '#ffaa44' }, { symbol: '●', color: '#44aaff' },
-      { symbol: '●', color: '#aa44ff' }, { symbol: '●', color: '#ff44aa' }, { symbol: '●', color: '#44ffaa' }
-    ],
-    words: ['CAT', 'DOG', 'SUN', 'MOON', 'STAR', 'TREE', 'BOOK', 'FISH', 'BIRD', 'FLOWER', 'HOUSE', 'CAR', 'BOAT', 'PLANE', 'TRAIN', 'BIKE', 'BALL', 'CAKE'],
-    patterns: ['▲', '●', '■', '♦', '▼', '♠', '♥', '♣', '⬟', '⬢', '⬡', '⬠', '◆', '◇', '○', '□', '△', '▽']
+  const cardSets = {
+    easy: ['🐶', '🐱', '🐰', '🦊', '🐻', '🐼'],
+    medium: ['🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🦁', '🐯'],
+    hard: ['🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🦁', '🐯', '🐸', '🐵']
   };
-
-  const getDifficultySettings = (diff: Difficulty) => {
-    switch (diff) {
-      case 'easy': return { pairs: 6, cols: 3, timeLimit: 120 };
-      case 'medium': return { pairs: 8, cols: 4, timeLimit: 90 };
-      case 'hard': return { pairs: 12, cols: 4, timeLimit: 60 };
-    }
-  };
-
-  // Real-time timer
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (gameStarted && !gameWon) {
-      interval = setInterval(() => {
-        setCurrentTime(Date.now());
-      }, 100);
-    }
-    return () => clearInterval(interval);
-  }, [gameStarted, gameWon]);
 
   const initializeGame = () => {
-    const settings = getDifficultySettings(difficulty);
-    let gameSymbols: any[] = [];
-    
-    if (gameType === 'colors') {
-      gameSymbols = gameContent.colors.slice(0, settings.pairs);
-    } else {
-      gameSymbols = gameContent[gameType].slice(0, settings.pairs);
-    }
-    
-    const cardPairs: MemoryCard[] = [];
-    
-    gameSymbols.forEach((item, index) => {
-      // Create two identical cards with same pairId
-      const card1: MemoryCard = {
-        id: index * 2,
-        symbol: typeof item === 'object' ? item.symbol : item,
-        color: typeof item === 'object' ? item.color : undefined,
-        isFlipped: false,
-        isMatched: false,
-        pairId: index
-      };
-      
-      const card2: MemoryCard = {
-        id: index * 2 + 1,
-        symbol: typeof item === 'object' ? item.symbol : item,
-        color: typeof item === 'object' ? item.color : undefined,
-        isFlipped: false,
-        isMatched: false,
-        pairId: index
-      };
-      
-      cardPairs.push(card1, card2);
-    });
+    const cardValues = cardSets[difficulty];
+    const gameCards = [...cardValues, ...cardValues].map((value, index) => ({
+      id: index,
+      value,
+      isFlipped: false,
+      isMatched: false
+    }));
     
     // Shuffle cards
-    const shuffledCards = cardPairs.sort(() => Math.random() - 0.5);
-
-    setCards(shuffledCards);
+    const shuffled = gameCards.sort(() => Math.random() - 0.5);
+    setCards(shuffled);
     setFlippedCards([]);
     setMoves(0);
     setMatches(0);
+    setTimeElapsed(0);
+    setGameCompleted(false);
     setGameStarted(true);
-    setGameWon(false);
-    setStartTime(Date.now());
-    setCurrentTime(Date.now());
-    setHintsUsed(0);
-    setShowWinPopup(false);
   };
 
-  const flipCard = (cardId: number) => {
-    if (flippedCards.length === 2 || cards.find(c => c.id === cardId)?.isMatched || cards.find(c => c.id === cardId)?.isFlipped) {
-      return;
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (gameStarted && !gameCompleted) {
+      timer = setInterval(() => {
+        setTimeElapsed(prev => prev + 1);
+      }, 1000);
     }
+    return () => clearInterval(timer);
+  }, [gameStarted, gameCompleted]);
 
-    const newCards = [...cards];
-    const cardIndex = newCards.findIndex(c => c.id === cardId);
-    newCards[cardIndex].isFlipped = true;
-    setCards(newCards);
+  useEffect(() => {
+    if (flippedCards.length === 2) {
+      const [first, second] = flippedCards;
+      const firstCard = cards.find(card => card.id === first);
+      const secondCard = cards.find(card => card.id === second);
 
-    const newFlippedCards = [...flippedCards, cardId];
-    setFlippedCards(newFlippedCards);
-
-    if (newFlippedCards.length === 2) {
-      setMoves(moves + 1);
-      
-      const [firstCardId, secondCardId] = newFlippedCards;
-      const firstCard = newCards.find(c => c.id === firstCardId);
-      const secondCard = newCards.find(c => c.id === secondCardId);
-      
-      const isMatch = firstCard?.pairId === secondCard?.pairId;
-      
-      if (isMatch) {
+      if (firstCard && secondCard && firstCard.value === secondCard.value) {
         setTimeout(() => {
-          const updatedCards = [...newCards];
-          const firstCardIndex = updatedCards.findIndex(c => c.id === firstCardId);
-          const secondCardIndex = updatedCards.findIndex(c => c.id === secondCardId);
-          updatedCards[firstCardIndex].isMatched = true;
-          updatedCards[secondCardIndex].isMatched = true;
-          setCards(updatedCards);
-          setMatches(matches + 1);
+          setCards(prev => prev.map(card =>
+            card.id === first || card.id === second
+              ? { ...card, isMatched: true }
+              : card
+          ));
+          setMatches(prev => prev + 1);
           setFlippedCards([]);
           
-          if (matches + 1 === getDifficultySettings(difficulty).pairs) {
-            setGameWon(true);
-            setShowWinPopup(true);
+          if (matches + 1 === cardSets[difficulty].length) {
+            setGameCompleted(true);
+            setGameStarted(false);
           }
-        }, 1000);
+        }, 500);
       } else {
         setTimeout(() => {
-          const resetCards = [...newCards];
-          const firstCardIndex = resetCards.findIndex(c => c.id === firstCardId);
-          const secondCardIndex = resetCards.findIndex(c => c.id === secondCardId);
-          resetCards[firstCardIndex].isFlipped = false;
-          resetCards[secondCardIndex].isFlipped = false;
-          setCards(resetCards);
+          setCards(prev => prev.map(card =>
+            card.id === first || card.id === second
+              ? { ...card, isFlipped: false }
+              : card
+          ));
           setFlippedCards([]);
         }, 1000);
       }
+      setMoves(prev => prev + 1);
     }
-  };
+  }, [flippedCards, cards, matches, difficulty]);
 
-  const useHint = () => {
-    if (hintsUsed >= 2) return;
+  const handleCardClick = (cardId: number) => {
+    if (flippedCards.length === 2) return;
     
-    const unmatched = cards.filter(card => !card.isMatched && !card.isFlipped);
-    if (unmatched.length < 2) return;
-    
-    // Find a matching pair by pairId
-    for (let i = 0; i < unmatched.length; i++) {
-      for (let j = i + 1; j < unmatched.length; j++) {
-        if (unmatched[i].pairId === unmatched[j].pairId) {
-          // Briefly show the pair
-          const newCards = [...cards];
-          const card1Index = newCards.findIndex(c => c.id === unmatched[i].id);
-          const card2Index = newCards.findIndex(c => c.id === unmatched[j].id);
-          newCards[card1Index].isFlipped = true;
-          newCards[card2Index].isFlipped = true;
-          setCards(newCards);
-          setHintsUsed(hintsUsed + 1);
-          
-          setTimeout(() => {
-            const resetCards = [...newCards];
-            resetCards[card1Index].isFlipped = false;
-            resetCards[card2Index].isFlipped = false;
-            setCards(resetCards);
-          }, 2000);
-          return;
-        }
-      }
+    const card = cards.find(c => c.id === cardId);
+    if (!card || card.isFlipped || card.isMatched) return;
+
+    setCards(prev => prev.map(c =>
+      c.id === cardId ? { ...c, isFlipped: true } : c
+    ));
+    setFlippedCards(prev => [...prev, cardId]);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getGridCols = () => {
+    switch (difficulty) {
+      case 'easy': return 'grid-cols-3';
+      case 'medium': return 'grid-cols-4';
+      case 'hard': return 'grid-cols-5';
+      default: return 'grid-cols-4';
     }
   };
-
-  const getGameTime = () => {
-    if (!startTime) return 0;
-    const endTimeToUse = gameWon ? currentTime : Date.now();
-    return Math.floor((endTimeToUse - startTime) / 1000);
-  };
-
-  const goBack = () => {
-    if (gameStarted) {
-      setGameStarted(false);
-      setGameWon(false);
-    } else {
-      onBack();
-    }
-  };
-
-  const settings = getDifficultySettings(difficulty);
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex gap-2">
-            <Button onClick={goBack} variant="outline" className="bg-white/90">
-              ← {gameStarted ? 'Back to Settings' : 'Back to Hub'}
-            </Button>
+    <div className="min-h-screen bg-gradient-to-br from-cyan-300 via-blue-400 to-purple-500 p-6">
+      <style>{`
+        .memory-card {
+          perspective: 1000px;
+          transition: transform 0.3s ease;
+        }
+        .memory-card:hover {
+          transform: scale(1.05);
+        }
+        .card-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.6s;
+          transform-style: preserve-3d;
+        }
+        .card-flipped .card-inner {
+          transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          backface-visibility: hidden;
+          border-radius: 12px;
+        }
+        .card-back {
+          transform: rotateY(180deg);
+        }
+        .floating-elements {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          pointer-events: none;
+        }
+        .sparkle {
+          position: absolute;
+          animation: sparkle 2s ease-in-out infinite;
+        }
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+
+      <div className="floating-elements">
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={i}
+            className="sparkle text-white text-lg"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+            }}
+          >
+            ✨
           </div>
-          <h1 className="text-4xl font-bold text-white">Memory Game</h1>
-          <Dialog>
+        ))}
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="flex justify-between items-center mb-6">
+          <Button onClick={onBack} variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+            ← Back to Hub
+          </Button>
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg">🧠 Memory Challenge</h1>
+          <Dialog open={showConcept} onOpenChange={setShowConcept}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-white/90">How to Play</Button>
+              <Button variant="outline" className="bg-purple-500/80 text-white hover:bg-purple-600/80">
+                🧠 Concept
+              </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>How to Play Memory Game</DialogTitle>
+                <DialogTitle>Memory & Cognitive Development</DialogTitle>
+                <DialogDescription>Enhance working memory and pattern recognition</DialogDescription>
               </DialogHeader>
-              <div className="space-y-3 text-sm">
-                <p>1. Choose your difficulty and game type</p>
-                <p>2. Click cards to flip them over</p>
-                <p>3. Try to find matching pairs</p>
-                <p>4. Match all pairs to win!</p>
-                <p>💡 Use hints to reveal a matching pair briefly</p>
-                <p>🎯 Complete in minimum moves for better score</p>
+              <div className="space-y-4">
+                <div className="animate-fade-in">
+                  <h3 className="font-bold text-lg">🎯 Game Concept</h3>
+                  <p>Memory games strengthen working memory, attention span, and visual processing. They help develop the ability to hold and manipulate information in your mind.</p>
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                  <h3 className="font-bold text-lg">🧠 Skills Developed</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li><strong>Working Memory:</strong> Hold multiple items in mind simultaneously</li>
+                    <li><strong>Visual Processing:</strong> Quickly identify and remember visual patterns</li>
+                    <li><strong>Concentration:</strong> Maintain focus for extended periods</li>
+                    <li><strong>Strategic Thinking:</strong> Develop systematic approaches to memorization</li>
+                  </ul>
+                </div>
+                <div className="bg-blue-100 p-4 rounded-lg animate-scale-in" style={{ animationDelay: '0.4s' }}>
+                  <h4 className="font-bold">💡 Memory Tips:</h4>
+                  <p>• Use spatial memory - remember card positions<br/>
+                     • Create mental associations between pairs<br/>
+                     • Start from corners and work systematically<br/>
+                     • Practice daily to improve memory capacity</p>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        {!gameStarted ? (
-          <Card className="mb-6 bg-white/95">
+        {!gameStarted && !gameCompleted ? (
+          <Card className="bg-white/20 backdrop-blur-md border-2 border-white/30 max-w-2xl mx-auto">
             <CardHeader>
-              <CardTitle className="text-center">Game Settings</CardTitle>
+              <CardTitle className="text-white text-center text-2xl">Choose Difficulty</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4 justify-center items-center flex-wrap">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Difficulty</label>
-                  <Select value={difficulty} onValueChange={(value) => setDifficulty(value as Difficulty)}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy (6 pairs)</SelectItem>
-                      <SelectItem value="medium">Medium (8 pairs)</SelectItem>
-                      <SelectItem value="hard">Hard (12 pairs)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Game Type</label>
-                  <Select value={gameType} onValueChange={(value) => setGameType(value as GameType)}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="symbols">🎮 Symbols</SelectItem>
-                      <SelectItem value="numbers">🔢 Numbers</SelectItem>
-                      <SelectItem value="colors">🎨 Colors</SelectItem>
-                      <SelectItem value="words">📝 Words</SelectItem>
-                      <SelectItem value="patterns">⬟ Patterns</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button onClick={initializeGame} className="bg-green-500 hover:bg-green-600 mt-6">
-                  Start Game
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="bg-white/95">
-            <CardHeader>
-              <CardTitle className="text-center flex justify-between items-center">
-                <span>Moves: {moves}</span>
-                <span>Matches: {matches}/{settings.pairs}</span>
-                <span>Time: {getGameTime()}s</span>
-                <Button 
-                  onClick={useHint} 
-                  disabled={hintsUsed >= 2} 
-                  size="sm" 
-                  variant="outline"
-                  className="bg-yellow-100 hover:bg-yellow-200"
-                >
-                  💡 Hint ({hintsUsed}/2)
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div 
-                className={`grid gap-3 justify-center`}
-                style={{ 
-                  gridTemplateColumns: `repeat(${settings.cols}, 1fr)`,
-                  maxWidth: `${settings.cols * 100}px`,
-                  margin: '0 auto'
-                }}
-              >
-                {cards.map((card) => (
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                {(['easy', 'medium', 'hard'] as const).map((level) => (
                   <Button
-                    key={card.id}
-                    className={`w-20 h-20 text-2xl transition-all duration-500 transform ${
-                      card.isFlipped || card.isMatched
-                        ? 'bg-blue-500 hover:bg-blue-600 scale-105'
-                        : 'bg-gray-400 hover:bg-gray-500 hover:scale-105'
-                    } ${card.isMatched ? 'ring-4 ring-green-400' : ''}`}
-                    onClick={() => flipCard(card.id)}
-                    disabled={card.isMatched || flippedCards.length === 2}
-                    style={card.isFlipped || card.isMatched ? { color: card.color } : {}}
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    variant={difficulty === level ? "default" : "outline"}
+                    className={`p-6 h-auto flex flex-col items-center gap-2 ${
+                      difficulty === level 
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                        : 'bg-white/20 border-white/30 text-white hover:bg-white/30'
+                    }`}
                   >
-                    {card.isFlipped || card.isMatched ? card.symbol : '?'}
+                    <span className="text-2xl">
+                      {level === 'easy' ? '🟢' : level === 'medium' ? '🟡' : '🔴'}
+                    </span>
+                    <span className="font-bold capitalize">{level}</span>
+                    <span className="text-sm opacity-80">
+                      {level === 'easy' ? '6 pairs' : level === 'medium' ? '8 pairs' : '10 pairs'}
+                    </span>
                   </Button>
                 ))}
               </div>
+              <Button onClick={initializeGame} className="w-full bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-bold py-3 text-lg">
+                🎮 Start Game
+              </Button>
             </CardContent>
           </Card>
-        )}
-
-        {/* Winning Celebration Popup */}
-        <Dialog open={showWinPopup} onOpenChange={setShowWinPopup}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-center text-2xl">🎉 Congratulations! 🎉</DialogTitle>
-            </DialogHeader>
-            <div className="text-center space-y-4 animate-bounce">
-              <div className="text-6xl">🏆</div>
-              <p className="text-xl">You won in {moves} moves and {getGameTime()} seconds!</p>
-              <div className="text-lg">
-                <p>Performance: {moves <= settings.pairs ? '⭐⭐⭐ Perfect!' : moves <= settings.pairs * 1.5 ? '⭐⭐ Great!' : '⭐ Good!'}</p>
-              </div>
-              <Button onClick={() => { setShowWinPopup(false); initializeGame(); }} className="bg-blue-500 hover:bg-blue-600">
-                Play Again
-              </Button>
+        ) : (
+          <div className="space-y-6">
+            {/* Game Stats */}
+            <div className="flex justify-center gap-6">
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                ⏱️ {formatTime(timeElapsed)}
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                🎯 {moves} moves
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-lg">
+                ✅ {matches}/{cardSets[difficulty].length} pairs
+              </Badge>
             </div>
-          </DialogContent>
-        </Dialog>
+
+            {/* Game Board */}
+            <div className={`grid ${getGridCols()} gap-4 max-w-2xl mx-auto`}>
+              {cards.map((card) => (
+                <div
+                  key={card.id}
+                  className={`memory-card aspect-square cursor-pointer ${
+                    card.isFlipped || card.isMatched ? 'card-flipped' : ''
+                  }`}
+                  onClick={() => handleCardClick(card.id)}
+                >
+                  <div className="card-inner h-full">
+                    <div className="card-front bg-gradient-to-br from-blue-400 to-purple-500 border-2 border-white/30 flex items-center justify-center">
+                      <span className="text-3xl">❓</span>
+                    </div>
+                    <div className="card-back bg-gradient-to-br from-green-400 to-teal-500 border-2 border-white/30 flex items-center justify-center">
+                      <span className="text-4xl">{card.value}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {gameCompleted && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                <Card className="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 p-6 max-w-md mx-4 border-2 border-white/40">
+                  <CardContent className="text-center space-y-4">
+                    <div className="text-6xl animate-bounce">🎉</div>
+                    <h2 className="text-2xl font-bold text-white">Congratulations!</h2>
+                    <div className="space-y-2 text-white">
+                      <p>Time: {formatTime(timeElapsed)}</p>
+                      <p>Moves: {moves}</p>
+                      <p>Difficulty: {difficulty}</p>
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      <Button onClick={initializeGame} className="bg-white/20 text-white hover:bg-white/30">
+                        🔄 Play Again
+                      </Button>
+                      <Button onClick={() => {setGameStarted(false); setGameCompleted(false);}} className="bg-white/20 text-white hover:bg-white/30">
+                        ⚙️ Change Level
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {gameStarted && (
+              <div className="text-center">
+                <Button onClick={() => {setGameStarted(false); setGameCompleted(false);}} variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                  🏠 Back to Menu
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
