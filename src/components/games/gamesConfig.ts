@@ -1,3 +1,4 @@
+
 import { GameInfo } from './GameGrid';
 
 export const gamesData: GameInfo[] = [
@@ -43,12 +44,11 @@ export const gamesData: GameInfo[] = [
   { id: 'waffle', title: 'Waffle Game', emoji: '🧇', description: 'Word puzzle challenge', category: 'Puzzles', difficulty: 'medium' },
   
   // Sports & Action
-  { id: 'aiming', title: 'Archery Challenge', emoji: '🏹', description: 'Advanced shooting range', category: 'Sports', difficulty: 'medium', isFeatured: true },
-  { id: 'carrom', title: 'Carrom Board', emoji: '🎯', description: 'Strike and pocket coins', category: 'Sports', difficulty: 'medium' },
+  { id: 'aiming', title: 'Archery Master', emoji: '🏹', description: 'Professional archery training', category: 'Sports', difficulty: 'medium', isFeatured: true },
   
   // Classic Games
   { id: 'tictactoe', title: 'Tic Tac Toe Pro', emoji: '⭕', description: 'Advanced strategy game', category: 'Classic', difficulty: 'easy', isFeatured: true },
-  { id: 'laddersnake', title: 'Snakes & Ladders', emoji: '🐍', description: 'Classic board game', category: 'Classic', difficulty: 'easy' }
+  { id: 'laddersnake', title: 'Snakes & Ladders Plus', emoji: '🐍', description: 'Enhanced classic board game', category: 'Classic', difficulty: 'easy' }
 ];
 
 export const getGameCategories = (): string[] => {

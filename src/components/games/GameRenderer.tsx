@@ -22,7 +22,6 @@ import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
 import { SpeedReading } from './SpeedReading/SpeedReading';
 import { TypingGame } from './TypingGame/TypingGame';
 import { DrawingGame } from './DrawingGame/DrawingGame';
-import { CarromGame } from './CarromGame/CarromGame';
 import { RoadSafetyGame } from './RoadSafetyGame/RoadSafetyGame';
 import { NumberSequence } from './NumberSequence/NumberSequence';
 import { MathRacing } from './MathRacing/MathRacing';
@@ -68,7 +67,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'fractions': return <FractionGame {...gameProps} />;
     case 'algebra': return <AlgebraGame {...gameProps} />;
     case 'criticalthinking': return <CriticalThinking {...gameProps} />;
-    case 'carrom': return <CarromGame {...gameProps} />;
     case 'roadsafety': return <RoadSafetyGame {...gameProps} />;
     case 'numbersequence': return <NumberSequence {...gameProps} />;
     case 'mathracing': return <MathRacing {...gameProps} />;
