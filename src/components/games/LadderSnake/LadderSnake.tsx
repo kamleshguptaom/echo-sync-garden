@@ -1,71 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
+import { GameBoard } from './GameBoard';
+import { GameControls } from './GameControls';
+import { getGameConfig, getPowerUps } from './gameConfig';
+import { GameState, GameMode, GameStats } from './types';
 
 interface LadderSnakeProps {
   onBack: () => void;
 }
-
-type GameMode = 'classic' | 'educational' | 'challenge' | 'speed';
-type Player = 'player1' | 'player2' | 'computer';
-
-interface GameState {
-  currentPlayer: Player;
-  player1Position: number;
-  player2Position: number;
-  computerPosition?: number;
-  diceValue: number;
-  gameEnded: boolean;
-  winner: Player | null;
-  isRolling: boolean;
-  consecutiveTurns: number;
-  powerUps: { [key: string]: boolean };
-}
-
-interface LadderSnake {
-  start: number;
-  end: number;
-  type: 'ladder' | 'snake';
-  concept?: string;
-  animation?: string;
-  sound?: string;
-}
-
-interface PowerUp {
-  position: number;
-  type: 'double-move' | 'skip-snake' | 'extra-turn' | 'teleport';
-  icon: string;
-  description: string;
-}
-
-const classicLaddersSnakes: LadderSnake[] = [
-  { start: 4, end: 14, type: 'ladder', concept: 'Hard work pays off!', animation: 'climb' },
-  { start: 9, end: 31, type: 'ladder', concept: 'Knowledge lifts you up!', animation: 'climb' },
-  { start: 21, end: 42, type: 'ladder', concept: 'Persistence leads to success!', animation: 'climb' },
-  { start: 28, end: 84, type: 'ladder', concept: 'Great effort brings great rewards!', animation: 'climb' },
-  { start: 51, end: 67, type: 'ladder', concept: 'Teamwork helps you rise!', animation: 'climb' },
-  { start: 71, end: 91, type: 'ladder', concept: 'Wisdom opens new paths!', animation: 'climb' },
-  { start: 80, end: 100, type: 'ladder', concept: 'Excellence leads to victory!', animation: 'climb' },
-  { start: 17, end: 7, type: 'snake', concept: 'Shortcuts often lead backwards', animation: 'slide' },
-  { start: 54, end: 34, type: 'snake', concept: 'Greed brings downfall', animation: 'slide' },
-  { start: 62, end: 19, type: 'snake', concept: 'Pride comes before a fall', animation: 'slide' },
-  { start: 64, end: 60, type: 'snake', concept: 'Small mistakes can cost', animation: 'slide' },
-  { start: 87, end: 24, type: 'snake', concept: 'Overconfidence leads to failure', animation: 'slide' },
-  { start: 93, end: 73, type: 'snake', concept: 'Near success requires caution', animation: 'slide' },
-  { start: 95, end: 75, type: 'snake', concept: 'Success can make you careless', animation: 'slide' },
-  { start: 99, end: 78, type: 'snake', concept: 'Final steps need most care', animation: 'slide' }
-];
-
-const powerUps: PowerUp[] = [
-  { position: 15, type: 'double-move', icon: '⚡', description: 'Double your next move!' },
-  { position: 35, type: 'skip-snake', icon: '🛡️', description: 'Immunity to next snake!' },
-  { position: 55, type: 'extra-turn', icon: '🎯', description: 'Get an extra turn!' },
-  { position: 75, type: 'teleport', icon: '🌟', description: 'Jump forward 10 spaces!' }
-];
 
 export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
   const [gameMode, setGameMode] = useState<GameMode>('classic');
@@ -82,19 +26,22 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
     consecutiveTurns: 0,
     powerUps: {}
   });
-  const [showConcept, setShowConcept] = useState(false);
   const [conceptMessage, setConceptMessage] = useState('');
   const [showAnimation, setShowAnimation] = useState('');
-  const [gameStats, setGameStats] = useState({
+  const [gameStats, setGameStats] = useState<GameStats>({
     laddersClimbed: 0,
     snakesBitten: 0,
     powerUpsCollected: 0,
     totalMoves: 0
   });
 
-  const getLaddersSnakes = () => {
-    return classicLaddersSnakes;
-  };
+  // Real-time game updates when mode or players change
+  useEffect(() => {
+    resetGame();
+  }, [gameMode, players]);
+
+  const laddersSnakes = [...getGameConfig(gameMode).ladders, ...getGameConfig(gameMode).snakes];
+  const powerUps = getPowerUps(gameMode);
 
   const rollDice = () => {
     if (gameState.isRolling || gameState.gameEnded) return;
@@ -127,6 +74,11 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
         newState.powerUps = { ...prev.powerUps, 'double-move': false };
       }
       
+      if (prev.powerUps['mega-jump']) {
+        newPosition = Math.min(100, currentPos + 15);
+        newState.powerUps = { ...prev.powerUps, 'mega-jump': false };
+      }
+      
       // Don't move beyond 100
       if (newPosition > 100) {
         newPosition = currentPos;
@@ -146,11 +98,16 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
       }
       
       // Check for ladders and snakes
-      const ladderSnake = getLaddersSnakes().find(ls => ls.start === newPosition);
+      const ladderSnake = laddersSnakes.find(ls => ls.start === newPosition);
       if (ladderSnake) {
         // Check snake immunity
-        if (ladderSnake.type === 'snake' && prev.powerUps['skip-snake']) {
-          newState.powerUps = { ...prev.powerUps, 'skip-snake': false };
+        if (ladderSnake.type === 'snake' && (prev.powerUps['skip-snake'] || prev.powerUps['shield'])) {
+          if (prev.powerUps['skip-snake']) {
+            newState.powerUps = { ...prev.powerUps, 'skip-snake': false };
+          } else if (prev.powerUps['shield']) {
+            // Shield protects from 2 snakes, so we keep it active
+            setConceptMessage('🔰 Shield protection activated!');
+          }
           setConceptMessage('🛡️ Snake immunity used! Safe passage!');
           setTimeout(() => setConceptMessage(''), 3000);
         } else {
@@ -231,78 +188,6 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
     setShowAnimation('');
   };
 
-  const getSquareContent = (position: number) => {
-    const ladderSnake = getLaddersSnakes().find(ls => ls.start === position);
-    const powerUp = powerUps.find(p => p.position === position);
-    
-    if (powerUp) return powerUp.icon;
-    if (ladderSnake) return ladderSnake.type === 'ladder' ? '🪜' : '🐍';
-    if (position === 100) return '👑';
-    return position.toString();
-  };
-
-  const getSquareColor = (position: number) => {
-    const ladderSnake = getLaddersSnakes().find(ls => ls.start === position);
-    const powerUp = powerUps.find(p => p.position === position);
-    
-    if (position === 100) return 'bg-gradient-to-br from-yellow-300 to-yellow-500 border-yellow-600';
-    if (powerUp) return 'bg-gradient-to-br from-purple-300 to-purple-500';
-    if (ladderSnake) {
-      return ladderSnake.type === 'ladder' 
-        ? 'bg-gradient-to-br from-green-300 to-green-500' 
-        : 'bg-gradient-to-br from-red-300 to-red-500';
-    }
-    return (Math.floor((position - 1) / 10) + (position - 1)) % 2 === 0 
-      ? 'bg-gradient-to-br from-blue-200 to-blue-300' 
-      : 'bg-gradient-to-br from-amber-200 to-amber-300';
-  };
-
-  const renderBoard = () => {
-    const squares = [];
-    
-    for (let row = 9; row >= 0; row--) {
-      for (let col = 0; col < 10; col++) {
-        const position = row % 2 === 1 
-          ? row * 10 + (10 - col) 
-          : row * 10 + col + 1;
-        
-        const isPlayer1Here = gameState.player1Position === position;
-        const isPlayer2Here = gameState.player2Position === position;
-        const isComputerHere = players === 'computer' && gameState.computerPosition === position;
-        
-        squares.push(
-          <div
-            key={position}
-            className={`
-              relative w-10 h-10 border-2 border-gray-400 flex items-center justify-center text-xs font-bold
-              transition-all duration-300 hover:scale-105
-              ${getSquareColor(position)}
-              ${showAnimation === 'climb' && position === gameState[`${gameState.currentPlayer}Position`] ? 'animate-bounce' : ''}
-              ${showAnimation === 'slide' && position === gameState[`${gameState.currentPlayer}Position`] ? 'animate-pulse' : ''}
-            `}
-          >
-            {getSquareContent(position)}
-            
-            {/* Players */}
-            <div className="absolute -top-1 -right-1 flex gap-0.5">
-              {isPlayer1Here && (
-                <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-              )}
-              {isPlayer2Here && (
-                <div className="w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-              )}
-              {isComputerHere && (
-                <div className="w-3 h-3 bg-gray-600 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-              )}
-            </div>
-          </div>
-        );
-      }
-    }
-    
-    return squares;
-  };
-
   return (
     <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-violet-400 via-purple-500 to-indigo-600">
       <style>{`
@@ -353,10 +238,8 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
                   <p>• 🛡️ Snake Shield: Immunity to one snake</p>
                   <p>• 🎯 Extra Turn: Roll again immediately</p>
                   <p>• 🌟 Teleport: Jump forward 10 spaces</p>
-                </div>
-                <div>
-                  <h4 className="font-bold text-purple-600">🎨 Player Colors:</h4>
-                  <p>• 🔴 Player 1 • 🔵 Player 2 • ⚫ Computer</p>
+                  <p>• 🚀 Mega Jump: Jump forward 15 spaces</p>
+                  <p>• 🔰 Shield: Immunity to next 2 snakes</p>
                 </div>
               </div>
             </DialogContent>
@@ -368,7 +251,7 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
           <Card className="lg:col-span-2 bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
             <CardHeader>
               <CardTitle className="text-center text-purple-700 text-xl">
-                🎯 Game Board
+                🎯 Game Board - {gameMode.charAt(0).toUpperCase() + gameMode.slice(1)} Mode
                 {showAnimation && (
                   <span className={`ml-2 ${showAnimation === 'climb' ? 'text-green-600' : 'text-red-600'}`}>
                     {showAnimation === 'climb' ? '🪜 Climbing!' : '🐍 Sliding!'}
@@ -377,9 +260,13 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-10 gap-1 border-4 border-purple-300 rounded-lg p-2 mb-4 mx-auto w-fit bg-gradient-to-br from-purple-100 to-indigo-100">
-                {renderBoard()}
-              </div>
+              <GameBoard
+                gameState={gameState}
+                players={players}
+                showAnimation={showAnimation}
+                laddersSnakes={laddersSnakes}
+                powerUps={powerUps}
+              />
               
               {conceptMessage && (
                 <div className="bg-gradient-to-r from-purple-100 to-indigo-100 p-4 rounded-lg text-center animate-bounce border-2 border-purple-300">
@@ -414,100 +301,17 @@ export const LadderSnake: React.FC<LadderSnakeProps> = ({ onBack }) => {
             <CardHeader>
               <CardTitle className="text-center text-purple-700">🎮 Game Controls</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-purple-700">Game Mode</label>
-                <Select value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)}>
-                  <SelectTrigger className="border-purple-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="classic">🎮 Classic</SelectItem>
-                    <SelectItem value="educational">📚 Educational</SelectItem>
-                    <SelectItem value="challenge">🎯 Challenge</SelectItem>
-                    <SelectItem value="speed">⚡ Speed Mode</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2 text-purple-700">Players</label>
-                <Select value={players} onValueChange={(value) => setPlayers(value as '2player' | 'computer')}>
-                  <SelectTrigger className="border-purple-200">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2player">👥 2 Players</SelectItem>
-                    <SelectItem value="computer">🤖 vs Computer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Current Player */}
-              <div className="text-center p-4 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg border-2 border-purple-200">
-                <h3 className="font-semibold mb-2 text-purple-700">Current Turn</h3>
-                <div className={`text-2xl font-bold ${
-                  gameState.currentPlayer === 'player1' ? 'text-red-500' : 
-                  gameState.currentPlayer === 'player2' ? 'text-blue-500' : 'text-gray-600'
-                }`}>
-                  {gameState.currentPlayer === 'player1' ? '🔴 Player 1' :
-                   gameState.currentPlayer === 'player2' ? '🔵 Player 2' : '🤖 Computer'}
-                </div>
-              </div>
-
-              {/* Active Power-ups */}
-              {Object.entries(gameState.powerUps).some(([_, active]) => active) && (
-                <div className="bg-yellow-100 p-3 rounded-lg border-2 border-yellow-300">
-                  <h4 className="font-bold text-yellow-700 mb-2">⚡ Active Power-ups:</h4>
-                  {Object.entries(gameState.powerUps).map(([powerUp, active]) => active && (
-                    <div key={powerUp} className="text-sm text-yellow-600 animate-pulse">
-                      {powerUps.find(p => p.type === powerUp)?.icon} {powerUps.find(p => p.type === powerUp)?.description}
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {/* Dice */}
-              <div className="text-center">
-                <div className={`text-6xl mx-auto mb-4 w-20 h-20 flex items-center justify-center border-4 border-purple-400 rounded-xl bg-gradient-to-br from-white to-purple-50 shadow-lg ${gameState.isRolling ? 'animate-spin' : 'hover:scale-105 transition-transform'}`}>
-                  {gameState.diceValue}
-                </div>
-                <Button 
-                  onClick={rollDice}
-                  disabled={gameState.isRolling || gameState.gameEnded || (gameState.currentPlayer === 'computer' && players === 'computer')}
-                  className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white text-lg px-6 py-3 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
-                >
-                  {gameState.isRolling ? '🎲 Rolling...' : '🎲 Roll Dice'}
-                </Button>
-              </div>
-              
-              {/* Player Positions */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-red-100 to-red-200 rounded-lg border border-red-300">
-                  <span className="font-medium text-red-700 flex items-center gap-2">
-                    🔴 Player 1
-                    <Progress value={(gameState.player1Position / 100) * 100} className="w-16 h-2" />
-                  </span>
-                  <span className="font-bold text-red-800">Square {gameState.player1Position}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gradient-to-r from-blue-100 to-blue-200 rounded-lg border border-blue-300">
-                  <span className="font-medium text-blue-700 flex items-center gap-2">
-                    {players === '2player' ? '🔵 Player 2' : '🤖 Computer'}
-                    <Progress value={((players === '2player' ? gameState.player2Position : gameState.computerPosition) / 100) * 100} className="w-16 h-2" />
-                  </span>
-                  <span className="font-bold text-blue-800">
-                    Square {players === '2player' ? gameState.player2Position : gameState.computerPosition}
-                  </span>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={resetGame} 
-                variant="outline" 
-                className="w-full border-purple-300 text-purple-600 hover:bg-purple-50"
-              >
-                🔄 New Game
-              </Button>
+            <CardContent>
+              <GameControls
+                gameMode={gameMode}
+                setGameMode={setGameMode}
+                players={players}
+                setPlayers={setPlayers}
+                gameState={gameState}
+                rollDice={rollDice}
+                resetGame={resetGame}
+                powerUps={powerUps}
+              />
             </CardContent>
           </Card>
         </div>
