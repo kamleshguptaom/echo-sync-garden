@@ -1,68 +1,252 @@
-
 import { GameInfo } from './GameGrid';
 
 export const gamesData: GameInfo[] = [
-  // Core Cognitive Skills
-  { id: 'memory', title: 'Memory Training', emoji: '🧠', description: 'Enhance memory capacity and recall', category: 'Cognitive Skills', difficulty: 'medium' },
-  { id: 'attention', title: 'Attention Training', emoji: '🎯', description: 'Improve focus and concentration', category: 'Cognitive Skills', difficulty: 'medium' },
-  { id: 'visualperception', title: 'Visual Perception', emoji: '👁️', description: 'Enhance visual processing skills', category: 'Cognitive Skills', difficulty: 'medium' },
-  { id: 'pattern', title: 'Pattern Recognition', emoji: '🔍', description: 'Identify and predict patterns', category: 'Cognitive Skills', difficulty: 'hard' },
-  { id: 'concentration', title: 'Concentration Test', emoji: '🎨', description: 'Stroop test & focus training', category: 'Cognitive Skills', difficulty: 'medium' },
-  { id: 'logic', title: 'Logic Puzzles', emoji: '🧩', description: 'Develop logical reasoning', category: 'Cognitive Skills', difficulty: 'hard' },
-  { id: 'criticalthinking', title: 'Critical Thinking', emoji: '🤔', description: 'Analyze and evaluate information', category: 'Cognitive Skills', difficulty: 'expert' },
-  { id: 'bloodrelations', title: 'Blood Relations', emoji: '👪', description: 'Master family relationship puzzles', category: 'Cognitive Skills', difficulty: 'hard', isNew: true },
-  { id: 'numbersequence', title: 'Number Patterns', emoji: '🔢', description: 'Identify numerical sequences', category: 'Cognitive Skills', difficulty: 'medium' },
-  
-  // Mathematics & Numbers
-  { id: 'math', title: 'Math Challenge', emoji: '🧮', description: 'Comprehensive math training', category: 'Mathematics', difficulty: 'medium' },
-  { id: 'mathracing', title: 'Math Racing', emoji: '🏎️', description: 'Speed math challenges', category: 'Mathematics', difficulty: 'hard' },
-  { id: 'fractions', title: 'Fraction Master', emoji: '½', description: 'Learn fractions visually', category: 'Mathematics', difficulty: 'easy' },
-  { id: 'algebra', title: 'Algebra Quest', emoji: '📊', description: 'Solve algebraic equations', category: 'Mathematics', difficulty: 'hard' },
-  { id: 'geometry', title: 'Geometry Studio', emoji: '📐', description: 'Explore shapes and angles', category: 'Mathematics', difficulty: 'medium' },
-  
-  // Language & Communication
-  { id: 'word', title: 'Word Games', emoji: '📝', description: 'Vocabulary and spelling', category: 'Language', difficulty: 'easy' },
-  { id: 'grammar', title: 'Grammar Master', emoji: '📚', description: 'Master language structure', category: 'Language', difficulty: 'medium', isNew: true, isFeatured: true },
-  { id: 'speedreading', title: 'Speed Reading', emoji: '📖', description: 'Improve reading speed', category: 'Language', difficulty: 'medium' },
-  { id: 'typing', title: 'Typing Master', emoji: '⌨️', description: 'Professional typing skills', category: 'Language', difficulty: 'easy' },
-  
-  // STEM & Technology
-  { id: 'science', title: 'Science Explorer', emoji: '🔬', description: 'Interactive science learning', category: 'STEM', difficulty: 'medium' },
-  { id: 'roadsafety', title: 'Road Safety', emoji: '🚦', description: 'Learn traffic rules and safety', category: 'STEM', difficulty: 'easy' },
-  
-  // World Knowledge
-  { id: 'geography', title: 'Geography Quest', emoji: '🌍', description: 'Explore world geography', category: 'World Knowledge', difficulty: 'medium' },
-  { id: 'history', title: 'History Journey', emoji: '🏛️', description: 'Travel through time', category: 'World Knowledge', difficulty: 'medium' },
-  
-  // Creative & Arts
-  { id: 'drawing', title: 'Art Studio Pro', emoji: '🎨', description: 'Professional digital art', category: 'Creative', difficulty: 'easy', isFeatured: true },
-  { id: 'builder', title: 'Object Builder', emoji: '🏗️', description: 'Create 3D objects', category: 'Creative', difficulty: 'medium' },
-  
-  // Puzzle Games
-  { id: 'sudoku', title: 'Sudoku Master', emoji: '🔢', description: 'Number placement puzzles', category: 'Puzzles', difficulty: 'hard' },
-  { id: 'jigsaw', title: 'Jigsaw Puzzles', emoji: '🧩', description: 'Picture piece puzzles', category: 'Puzzles', difficulty: 'easy' },
-  { id: 'waffle', title: 'Waffle Game', emoji: '🧇', description: 'Word puzzle challenge', category: 'Puzzles', difficulty: 'medium' },
-  
-  // Sports & Action
-  { id: 'aiming', title: 'Archery Master', emoji: '🏹', description: 'Professional archery training', category: 'Sports', difficulty: 'medium', isFeatured: true },
-  
-  // Classic Games
-  { id: 'tictactoe', title: 'Tic Tac Toe Pro', emoji: '⭕', description: 'Advanced strategy game', category: 'Classic', difficulty: 'easy', isFeatured: true },
-  { id: 'laddersnake', title: 'Snakes & Ladders Plus', emoji: '🐍', description: 'Enhanced classic board game', category: 'Classic', difficulty: 'easy' }
-];
+  {
+    id: 'memory',
+    title: 'Memory Match',
+    emoji: '🧠',
+    description: 'Test your memory and matching skills with pairs of cards.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'easy',
+    isFeatured: true,
+  },
+  {
+    id: 'math',
+    title: 'Math Challenge',
+    emoji: '➕',
+    description: 'Sharpen your math skills with addition, subtraction, multiplication, and division problems.',
+    category: '🧮 Math & Logic',
+    difficulty: 'medium',
+  },
+  {
+    id: 'word',
+    title: 'Word Scramble',
+    emoji: '✍️',
+    description: 'Unscramble letters to form words and expand your vocabulary.',
+    category: '🗣️ Language & Vocabulary',
+    difficulty: 'medium',
+  },
+  {
+    id: 'logic',
+    title: 'Logic Puzzles',
+    emoji: '💡',
+    description: 'Solve logic problems and riddles to improve your reasoning skills.',
+    category: '🧮 Math & Logic',
+    difficulty: 'hard',
+  },
+  {
+    id: 'geometry',
+    title: 'Geometry Genius',
+    emoji: '📐',
+    description: 'Explore geometric shapes and solve puzzles related to spatial reasoning.',
+    category: '🧪 Science & Nature',
+    difficulty: 'medium',
+  },
+  {
+    id: 'science',
+    title: 'Science Trivia',
+    emoji: '🔬',
+    description: 'Test your knowledge of science facts and concepts with trivia questions.',
+    category: '🧪 Science & Nature',
+    difficulty: 'hard',
+  },
+  {
+    id: 'geography',
+    title: 'Geography Explorer',
+    emoji: '🌍',
+    description: 'Discover countries, capitals, and landmarks around the world.',
+    category: '🌍 Geography & History',
+    difficulty: 'easy',
+  },
+  {
+    id: 'history',
+    title: 'History Timeline',
+    emoji: '📜',
+    description: 'Learn about historical events and figures by placing them on a timeline.',
+    category: '🌍 Geography & History',
+    difficulty: 'medium',
+  },
+  {
+    id: 'tictactoe',
+    title: 'Tic Tac Toe',
+    emoji: '❌',
+    description: 'A classic game of strategy. Align three symbols in a row to win!',
+    category: '🎮 Classic Games',
+    difficulty: 'easy',
+  },
+  {
+    id: 'sudoku',
+    title: 'Sudoku Solver',
+    emoji: '🔢',
+    description: 'Fill the grid with numbers so that each row, column, and 3x3 box contains all digits from 1 to 9.',
+    category: '🧮 Math & Logic',
+    difficulty: 'hard',
+  },
+  {
+    id: 'jigsaw',
+    title: 'Jigsaw Puzzle',
+    emoji: '🧩',
+    description: 'Piece together a picture by assembling interlocking pieces.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'medium',
+  },
+  {
+    id: 'waffle',
+    title: 'Waffle Game',
+    emoji: '🧇',
+    description: 'Swap letters to spell out words. A tasty word puzzle!',
+    category: '🗣️ Language & Vocabulary',
+    difficulty: 'medium',
+  },
+  {
+    id: 'laddersnake',
+    title: 'Ladders & Snakes',
+    emoji: '🪜',
+    description: 'A classic board game of chance. Climb ladders and avoid snakes to reach the top!',
+    category: '🎮 Classic Games',
+    difficulty: 'easy',
+  },
+  {
+    id: 'builder',
+    title: 'Object Builder',
+    emoji: '🏗️',
+    description: 'Construct 3D structures from blocks. Enhance spatial reasoning and creativity.',
+    category: '🎨 Creativity & Design',
+    difficulty: 'medium',
+  },
+  {
+    id: 'pattern',
+    title: 'Pattern Recognition',
+    emoji: '👁️',
+    description: 'Identify and continue visual patterns. Boost your visual intelligence!',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'medium',
+  },
+  {
+    id: 'concentration',
+    title: 'Concentration Game',
+    emoji: '🃏',
+    description: 'Flip cards to find matching pairs. Improve focus and memory!',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'easy',
+  },
+  {
+    id: 'speedreading',
+    title: 'Speed Reading',
+    emoji: '📖',
+    description: 'Train your eyes to read faster and comprehend more efficiently.',
+    category: '🗣️ Language & Vocabulary',
+    difficulty: 'hard',
+  },
+  {
+    id: 'typing',
+    title: 'Typing Game',
+    emoji: '⌨️',
+    description: 'Improve your typing speed and accuracy with fun exercises.',
+    category: '💻 Skills Training',
+    difficulty: 'medium',
+  },
+  {
+    id: 'drawing',
+    title: 'Drawing Challenge',
+    emoji: '🎨',
+    description: 'Unleash your inner artist with creative drawing prompts and challenges.',
+    category: '🎨 Creativity & Design',
+    difficulty: 'medium',
+  },
+   {
+    id: 'visualperception',
+    title: 'Visual Perception',
+    emoji: '👓',
+    description: 'Enhance your visual skills by identifying hidden objects and patterns.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'medium',
+  },
+  {
+    id: 'attention',
+    title: 'Attention Training',
+    emoji: '🔦',
+    description: 'Improve your focus and attention span with targeted exercises.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'medium',
+  },
+  {
+    id: 'fractions',
+    title: 'Fraction Game',
+    emoji: '⅗',
+    description: 'Learn fractions with visual aids and interactive challenges.',
+    category: '🧮 Math & Logic',
+    difficulty: 'medium',
+  },
+  {
+    id: 'algebra',
+    title: 'Algebra Challenge',
+    emoji: '🧮',
+    description: 'Solve algebraic equations and problems to sharpen your math skills.',
+    category: '🧮 Math & Logic',
+    difficulty: 'hard',
+  },
+  {
+    id: 'criticalthinking',
+    title: 'Critical Thinking',
+    emoji: '🤔',
+    description: 'Enhance your problem-solving skills with real-world scenarios and puzzles.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'hard',
+  },
+  {
+    id: 'roadsafety',
+    title: 'Road Safety Game',
+    emoji: '🚦',
+    description: 'Learn traffic rules and safety tips for pedestrians and drivers.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'easy',
+  },
+  {
+    id: 'numbersequence',
+    title: 'Number Sequence',
+    emoji: '1️⃣2️⃣3️⃣',
+    description: 'Identify the next number in a sequence to improve logical thinking.',
+    category: '🧮 Math & Logic',
+    difficulty: 'medium',
+  },
+  {
+    id: 'mathracing',
+    title: 'Math Racing',
+    emoji: '🏎️',
+    description: 'Race against time while solving math problems to reach the finish line.',
+    category: '🧮 Math & Logic',
+    difficulty: 'medium',
+  },
+  {
+    id: 'grammar',
+    title: 'Grammar Game',
+    emoji: '💬',
+    description: 'Improve your grammar skills by identifying errors and correcting sentences.',
+    category: '🗣️ Language & Vocabulary',
+    difficulty: 'medium',
+  },
+  {
+    id: 'bloodrelations',
+    title: 'Blood Relations',
+    emoji: '🩸',
+    description: 'Solve relationship-based puzzles to enhance analytical skills.',
+    category: '🧠 Memory & Cognition',
+    difficulty: 'hard',
+  },
+  {
+    id: 'logicdashlab',
+    title: 'Logic Dash Lab',
+    emoji: '🧩',
+    description: 'Educational drag-and-drop logic game combining grocery shopping, healthy habits, and fun animations with vibrant colors.',
+    category: '🧠 Logic & Reasoning',
+    difficulty: 'easy',
+    isNew: true,
+    isFeatured: true
+  }
+].filter(game => game.id !== 'archery');
 
 export const getGameCategories = (): string[] => {
-  return [...new Set(gamesData.map(game => game.category))];
-};
-
-export const getGameById = (id: string): GameInfo | undefined => {
-  return gamesData.find(game => game.id === id);
-};
-
-export const getFeaturedGames = (): GameInfo[] => {
-  return gamesData.filter(game => game.isFeatured);
-};
-
-export const getGamesByCategory = (category: string): GameInfo[] => {
-  return gamesData.filter(game => game.category === category);
+  const categories = new Set(gamesData.map(game => game.category));
+  return Array.from(categories);
 };
