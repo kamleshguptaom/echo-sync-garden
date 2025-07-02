@@ -15,7 +15,6 @@ import { Sudoku } from './Sudoku/Sudoku';
 import { JigsawPuzzle } from './JigsawPuzzle/JigsawPuzzle';
 import { WaffleGame } from './WaffleGame/WaffleGame';
 import { LadderSnake } from './LadderSnake/LadderSnake';
-import { AimingGame } from './AimingGame/AimingGame';
 import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
 import { PatternGame } from './PatternGame/PatternGame';
 import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
@@ -55,7 +54,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'jigsaw': return <JigsawPuzzle {...gameProps} />;
     case 'waffle': return <WaffleGame {...gameProps} />;
     case 'laddersnake': return <LadderSnake {...gameProps} />;
-    case 'aiming': return <AimingGame {...gameProps} />;
     case 'builder': return <ObjectBuilder {...gameProps} />;
     case 'pattern': return <PatternGame {...gameProps} />;
     case 'concentration': return <ConcentrationGame {...gameProps} />;
