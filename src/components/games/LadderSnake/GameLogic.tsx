@@ -13,7 +13,14 @@ export const useGameLogic = (gameMode: GameMode, players: '2player' | 'computer'
     winner: null,
     isRolling: false,
     consecutiveTurns: 0,
-    powerUps: {}
+    powerUps: {
+      'double-move': false,
+      'skip-snake': false,
+      'extra-turn': false,
+      'teleport': false,
+      'mega-jump': false,
+      'shield': false
+    }
   });
 
   const [gameStats, setGameStats] = useState<GameStats>({
@@ -167,7 +174,14 @@ export const useGameLogic = (gameMode: GameMode, players: '2player' | 'computer'
       winner: null,
       isRolling: false,
       consecutiveTurns: 0,
-      powerUps: {}
+      powerUps: {
+        'double-move': false,
+        'skip-snake': false,
+        'extra-turn': false,
+        'teleport': false,
+        'mega-jump': false,
+        'shield': false
+      }
     });
     setGameStats({
       laddersClimbed: 0,
