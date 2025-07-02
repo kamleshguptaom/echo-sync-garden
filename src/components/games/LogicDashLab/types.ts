@@ -17,6 +17,8 @@ export interface GameItem {
   emoji: string;
   isHealthy: boolean;
   category: ItemCategory;
+  color?: string;
+  position?: { x: number; y: number };
   description?: string;
 }
 
@@ -28,14 +30,17 @@ export interface LogicBlock {
 }
 
 export interface GameLevel {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   world: string;
   items: GameItem[];
-  targetScore: number;
-  maxMistakes: number;
+  targetScore?: number;
+  maxMistakes?: number;
   timeLimit?: number;
+  difficulty?: Difficulty;
+  targetBasket?: string;
+  rules?: string[];
 }
 
 export interface World {
@@ -45,5 +50,5 @@ export interface World {
   color: string;
 }
 
-export type ItemCategory = 'fruit' | 'vegetable' | 'junk' | 'dairy' | 'protein' | 'shape' | 'emotion' | 'recyclable';
+export type ItemCategory = 'fruit' | 'vegetable' | 'junk' | 'dairy' | 'protein' | 'shape' | 'emotion' | 'recyclable' | 'school' | 'hygiene' | 'bedtime' | 'sports' | 'math' | 'science' | 'weather';
 export type Difficulty = 'easy' | 'medium' | 'hard';
