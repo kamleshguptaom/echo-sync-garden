@@ -4,9 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QuestionManager } from './QuestionManager';
-import { ThemeCustomizer } from './ThemeCustomizer';
 import { MediaManager } from './MediaManager';
-import { ContentLibrary } from './ContentLibrary';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -49,10 +47,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         <div className="flex justify-between items-center mb-8">
           <div className="text-center">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-              🎨 Learning Hub Admin
+              🎓 Educational Content Manager
             </h1>
             <p className="text-gray-700 text-xl font-medium">
-              Create, customize, and manage educational content
+              Create interactive questions and rich media content for enhanced learning
             </p>
           </div>
           <Button 
@@ -65,18 +63,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-4 admin-card p-3 gap-3">
+          <TabsList className="grid w-full grid-cols-2 admin-card p-3 gap-3">
             <TabsTrigger value="questions" className="admin-tab">
-              📝 Questions & Learning
+              📚 Questions & Learning Studio
             </TabsTrigger>
             <TabsTrigger value="media" className="admin-tab">
-              🎨 Media Library
-            </TabsTrigger>
-            <TabsTrigger value="themes" className="admin-tab">
-              🌈 Theme Studio
-            </TabsTrigger>
-            <TabsTrigger value="content" className="admin-tab">
-              📚 Content Hub
+              🎨 Advanced Media Library
             </TabsTrigger>
           </TabsList>
 
@@ -86,14 +78,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
           <TabsContent value="media">
             <MediaManager />
-          </TabsContent>
-
-          <TabsContent value="themes">
-            <ThemeCustomizer />
-          </TabsContent>
-
-          <TabsContent value="content">
-            <ContentLibrary />
           </TabsContent>
         </Tabs>
       </div>

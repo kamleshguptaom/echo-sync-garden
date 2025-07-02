@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { QuestionForm } from './QuestionManager/QuestionForm';
+import { QuestionBuilder } from './QuestionManager/QuestionBuilder';
 import { QuestionList } from './QuestionManager/QuestionList';
 
 interface Question {
@@ -53,6 +53,30 @@ export const QuestionManager: React.FC = () => {
       cognitiveLevel: 'Remember',
       ageGroup: '9-11 years',
       prerequisites: ['Basic Chemistry Knowledge']
+    },
+    {
+      id: '2',
+      question: 'What is 7 × 8?',
+      options: ['54', '56', '48', '64'],
+      correctAnswer: 1,
+      explanation: '7 × 8 = 56. This is a basic multiplication fact.',
+      category: 'arithmetic',
+      difficulty: 'easy',
+      emoji: '🔢',
+      points: 5,
+      subject: 'Mathematics',
+      topic: 'Multiplication',
+      concept: 'Times Tables',
+      visualAid: 'grid-visualization',
+      animation: 'fade',
+      timeLimit: 20,
+      tags: ['multiplication', 'arithmetic', 'basic'],
+      learningObjective: 'Master multiplication tables up to 10',
+      hints: ['Think of 8 × 7', 'Count by 7s eight times'],
+      relatedTopics: ['Division', 'Number Patterns'],
+      cognitiveLevel: 'Remember',
+      ageGroup: '6-8 years',
+      prerequisites: ['Basic Addition']
     }
   ]);
 
@@ -161,7 +185,7 @@ export const QuestionManager: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <QuestionForm
+      <QuestionBuilder
         question={newQuestion}
         onQuestionChange={setNewQuestion}
         onSubmit={addQuestion}
