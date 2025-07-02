@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { GameState, GameMode, PowerUp } from './types';
+import { GameState, GameMode, PowerUpItem } from './types';
 
 interface GameControlsProps {
   gameMode: GameMode;
@@ -13,7 +13,7 @@ interface GameControlsProps {
   gameState: GameState;
   rollDice: () => void;
   resetGame: () => void;
-  powerUps: PowerUp[];
+  powerUps: PowerUpItem[];
 }
 
 export const GameControls: React.FC<GameControlsProps> = ({

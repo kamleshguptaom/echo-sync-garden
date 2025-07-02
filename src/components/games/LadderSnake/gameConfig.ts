@@ -1,5 +1,5 @@
 
-import { LadderSnake, PowerUp, GameMode } from './types';
+import { LadderSnake, PowerUpItem, GameMode } from './types';
 
 export const getGameConfig = (gameMode: GameMode) => {
   const baseConfig = {
@@ -65,7 +65,7 @@ export const getGameConfig = (gameMode: GameMode) => {
   };
 };
 
-export const getPowerUps = (gameMode: GameMode): PowerUp[] => {
+export const getPowerUps = (gameMode: GameMode): PowerUpItem[] => {
   const basePowerUps = [
     { position: 15, type: 'double-move' as const, icon: '⚡', description: 'Double your next move!' },
     { position: 35, type: 'skip-snake' as const, icon: '🛡️', description: 'Immunity to next snake!' },

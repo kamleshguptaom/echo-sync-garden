@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { GameState, LadderSnake, PowerUp } from './types';
+import { GameState, LadderSnake, PowerUpItem } from './types';
 
 interface GameBoardProps {
   gameState: GameState;
   players: '2player' | 'computer';
   showAnimation: string;
   laddersSnakes: LadderSnake[];
-  powerUps: PowerUp[];
+  powerUps: PowerUpItem[];
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({

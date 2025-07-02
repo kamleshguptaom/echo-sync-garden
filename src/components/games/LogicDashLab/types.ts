@@ -1,43 +1,4 @@
 
-export interface LogicBlock {
-  id: string;
-  type: 'IF' | 'THEN' | 'AND' | 'OR';
-  condition?: string;
-  action?: string;
-  position: { x: number; y: number };
-  isConnected: boolean;
-}
-
-export interface GameItem {
-  id: string;
-  name: string;
-  category: 'fruit' | 'vegetable' | 'junk' | 'dairy' | 'shape' | 'emotion' | 'recyclable';
-  color?: string;
-  shape?: string;
-  isHealthy?: boolean;
-  emoji: string;
-  position: { x: number; y: number };
-}
-
-export interface GameRule {
-  id: string;
-  condition: string;
-  action: string;
-  explanation: string;
-  example: string;
-}
-
-export interface GameLevel {
-  id: string;
-  title: string;
-  world: string;
-  description: string;
-  items: GameItem[];
-  rules: GameRule[];
-  targetBasket: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-}
-
 export interface GameState {
   currentLevel: number;
   score: number;
@@ -50,4 +11,39 @@ export interface GameState {
   timer: number;
 }
 
-export type WorldType = 'grocery' | 'kitchen' | 'lab' | 'shapes' | 'emotions' | 'recycle';
+export interface GameItem {
+  id: string;
+  name: string;
+  emoji: string;
+  isHealthy: boolean;
+  category: ItemCategory;
+  description?: string;
+}
+
+export interface LogicBlock {
+  id: string;
+  type: 'condition' | 'action' | 'connector';
+  content: string;
+  position: { x: number; y: number };
+}
+
+export interface GameLevel {
+  id: number;
+  title: string;
+  description: string;
+  world: string;
+  items: GameItem[];
+  targetScore: number;
+  maxMistakes: number;
+  timeLimit?: number;
+}
+
+export interface World {
+  name: string;
+  emoji: string;
+  description: string;
+  color: string;
+}
+
+export type ItemCategory = 'fruit' | 'vegetable' | 'junk' | 'dairy' | 'protein' | 'shape' | 'emotion' | 'recyclable';
+export type Difficulty = 'easy' | 'medium' | 'hard';

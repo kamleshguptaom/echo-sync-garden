@@ -33,6 +33,6 @@ export interface PowerUpItem {
   description: string;
 }
 
-export type GameMode = 'basic' | 'educational' | 'advanced';
+export type GameMode = 'classic' | 'educational' | 'challenge' | 'speed' | 'extreme';
 export type Player = 'player1' | 'player2' | 'computer';
 export type PowerUp = 'double-move' | 'skip-snake' | 'extra-turn' | 'teleport' | 'mega-jump' | 'shield';

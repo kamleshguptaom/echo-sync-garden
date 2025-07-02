@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { GameState, GameMode, Player, GameStats, LadderSnake, PowerUp } from './types';
+import { GameState, GameMode, Player, GameStats, LadderSnake, PowerUpItem } from './types';
 import { getGameConfig, getPowerUps } from './gameConfig';
 
 export const useGameLogic = (gameMode: GameMode, players: '2player' | 'computer') => {
