@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MediaForm } from './MediaManager/MediaForm';
 import { MediaLibrary } from './MediaManager/MediaLibrary';
+import { MediaEdit } from './MediaManager/MediaEdit';
 import { GameCreator } from './MediaManager/GameCreator';
 
 interface MediaItem {
@@ -88,6 +88,7 @@ export const MediaManager: React.FC = () => {
   ]);
 
   const [gameTemplates, setGameTemplates] = useState<GameTemplate[]>([]);
+  const [editingMedia, setEditingMedia] = useState<MediaItem | null>(null);
 
   const [newMedia, setNewMedia] = useState<Partial<MediaItem>>({
     name: '',
@@ -161,6 +162,19 @@ export const MediaManager: React.FC = () => {
     setMediaItems(mediaItems.filter(item => item.id !== id));
   };
 
+  const editMediaItem = (item: MediaItem) => {
+    setEditingMedia(item);
+  };
+
+  const saveEditedMedia = (editedMedia: MediaItem) => {
+    setMediaItems(mediaItems.map(item => item.id === editedMedia.id ? editedMedia : item));
+    setEditingMedia(null);
+  };
+
+  const cancelMediaEdit = () => {
+    setEditingMedia(null);
+  };
+
   const addTag = () => {
     if (newTag.trim() && !newMedia.tags?.includes(newTag.trim())) {
       setNewMedia({ 
@@ -181,6 +195,16 @@ export const MediaManager: React.FC = () => {
   const handleCreateGame = (game: GameTemplate) => {
     setGameTemplates([...gameTemplates, game]);
   };
+
+  if (editingMedia) {
+    return (
+      <MediaEdit
+        media={editingMedia}
+        onSave={saveEditedMedia}
+        onCancel={cancelMediaEdit}
+      />
+    );
+  }
 
   return (
     <Tabs defaultValue="media" className="space-y-8">
@@ -210,6 +234,7 @@ export const MediaManager: React.FC = () => {
         <MediaLibrary
           mediaItems={mediaItems}
           onDeleteItem={deleteMediaItem}
+          onEditItem={editMediaItem}
           filterType={filterType}
           filterCategory={filterCategory}
           filterSubject={filterSubject}
@@ -270,7 +295,7 @@ export const MediaManager: React.FC = () => {
           <h2 className="text-2xl font-bold text-center text-green-700 mb-4">📚 Integrated Content Library</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/80 p-4 rounded-lg">
-              <h3 className="font-bold text-green-600 mb-2">📝 Questions Created: {/* questions count would go here */}</h3>
+              <h3 className="font-bold text-green-600 mb-2">📝 Questions Created: Interactive Learning</h3>
               <p className="text-sm text-gray-600">Interactive questions with hints, explanations, and learning objectives</p>
             </div>
             <div className="bg-white/80 p-4 rounded-lg">

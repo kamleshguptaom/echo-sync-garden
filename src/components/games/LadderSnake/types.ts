@@ -1,27 +1,9 @@
 
-export type GameMode = 'classic' | 'educational' | 'challenge' | 'speed' | 'extreme';
-export type Player = 'player1' | 'player2' | 'computer';
-
-export interface GameState {
-  currentPlayer: Player;
-  player1Position: number;
-  player2Position: number;
-  computerPosition?: number;
-  diceValue: number;
-  gameEnded: boolean;
-  winner: Player | null;
-  isRolling: boolean;
-  consecutiveTurns: number;
-  powerUps: { [key: string]: boolean };
-}
-
 export interface LadderSnake {
   start: number;
   end: number;
   type: 'ladder' | 'snake';
-  concept?: string;
-  animation?: string;
-  sound?: string;
+  concept: string;
 }
 
 export interface PowerUp {
@@ -31,9 +13,29 @@ export interface PowerUp {
   description: string;
 }
 
-export interface GameStats {
-  laddersClimbed: number;
-  snakesBitten: number;
-  powerUpsCollected: number;
-  totalMoves: number;
+export type GameMode = 'classic' | 'challenge' | 'extreme';
+
+export interface Player {
+  id: number;
+  name: string;
+  position: number;
+  color: string;
+  isActive: boolean;
+  powerUps: PowerUp['type'][];
+}
+
+export interface GameState {
+  players: Player[];
+  currentPlayerIndex: number;
+  diceValue: number;
+  gameMode: GameMode;
+  isGameOver: boolean;
+  winner: Player | null;
+  moveHistory: Array<{
+    player: string;
+    from: number;
+    to: number;
+    dice: number;
+    special?: string;
+  }>;
 }

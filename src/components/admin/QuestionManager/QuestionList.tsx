@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -33,6 +34,7 @@ interface Question {
 interface QuestionListProps {
   questions: Question[];
   onDeleteQuestion: (id: string) => void;
+  onEditQuestion: (question: Question) => void;
   filterSubject: string;
   filterDifficulty: string;
   onFilterSubjectChange: (subject: string) => void;
@@ -42,6 +44,7 @@ interface QuestionListProps {
 export const QuestionList: React.FC<QuestionListProps> = ({
   questions,
   onDeleteQuestion,
+  onEditQuestion,
   filterSubject,
   filterDifficulty,
   onFilterSubjectChange,
@@ -60,7 +63,7 @@ export const QuestionList: React.FC<QuestionListProps> = ({
     <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 shadow-xl">
       <CardHeader className="bg-gradient-to-r from-blue-400 to-indigo-400 text-white rounded-t-lg">
         <CardTitle className="flex justify-between items-center">
-          <span className="text-xl font-bold">📚 Educational Content Library ({filteredQuestions.length})</span>
+          <span className="text-xl font-bold">📚 Questions Library ({filteredQuestions.length})</span>
           <div className="flex gap-2">
             <Select value={filterSubject} onValueChange={onFilterSubjectChange}>
               <SelectTrigger className="w-40 bg-white/20 border-white/30 text-white">
@@ -86,14 +89,6 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
-              <Badge variant="outline" className="bg-gradient-to-r from-purple-400 to-pink-400 text-white border-white/30">
-                Total Points: {filteredQuestions.reduce((sum, q) => sum + q.points, 0)}
-              </Badge>
-              <Badge variant="outline" className="bg-gradient-to-r from-green-400 to-teal-400 text-white border-white/30">
-                Avg. Time: {Math.round(filteredQuestions.reduce((sum, q) => sum + q.timeLimit, 0) / filteredQuestions.length || 0)}s
-              </Badge>
-            </div>
           </div>
         </CardTitle>
       </CardHeader>
@@ -116,29 +111,26 @@ export const QuestionList: React.FC<QuestionListProps> = ({
                   <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
                     {question.points} pts
                   </Badge>
-                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-                    {question.timeLimit}s
-                  </Badge>
-                  {question.cognitiveLevel && (
-                    <Badge variant="outline" className="bg-pink-100 text-pink-700 border-pink-300">
-                      {question.cognitiveLevel}
-                    </Badge>
-                  )}
-                  {question.ageGroup && (
-                    <Badge variant="outline" className="bg-teal-100 text-teal-700 border-teal-300">
-                      {question.ageGroup}
-                    </Badge>
-                  )}
                 </div>
               </div>
-              <Button
-                onClick={() => onDeleteQuestion(question.id)}
-                variant="destructive"
-                size="sm"
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
-                🗑️ Delete
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => onEditQuestion(question)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => onDeleteQuestion(question.id)}
+                  variant="destructive"
+                  size="sm" 
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
             <h3 className="text-gray-800 font-semibold mb-3 text-lg">{question.question}</h3>
@@ -156,23 +148,6 @@ export const QuestionList: React.FC<QuestionListProps> = ({
             {question.explanation && (
               <div className="bg-blue-100 p-3 rounded-lg mb-3 border border-blue-300">
                 <p className="text-blue-800 text-sm"><strong>Explanation:</strong> {question.explanation}</p>
-              </div>
-            )}
-            
-            {question.learningObjective && (
-              <div className="bg-purple-100 p-3 rounded-lg mb-3 border border-purple-300">
-                <p className="text-purple-800 text-sm"><strong>Learning Goal:</strong> {question.learningObjective}</p>
-              </div>
-            )}
-
-            {question.hints && question.hints.length > 0 && (
-              <div className="bg-yellow-100 p-3 rounded-lg mb-3 border border-yellow-300">
-                <p className="text-yellow-800 text-sm font-semibold mb-1">Hints:</p>
-                <ul className="text-yellow-700 text-xs space-y-1">
-                  {question.hints.map((hint, index) => (
-                    <li key={index}>• {hint}</li>
-                  ))}
-                </ul>
               </div>
             )}
             

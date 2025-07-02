@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface MediaItem {
   id: string;
@@ -30,6 +31,7 @@ interface MediaItem {
 interface MediaLibraryProps {
   mediaItems: MediaItem[];
   onDeleteItem: (id: string) => void;
+  onEditItem: (item: MediaItem) => void;
   filterType: string;
   filterCategory: string;
   filterSubject: string;
@@ -41,6 +43,7 @@ interface MediaLibraryProps {
 export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   mediaItems,
   onDeleteItem,
+  onEditItem,
   filterType,
   filterCategory,
   filterSubject,
@@ -145,43 +148,30 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                       <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
                         {item.type}
                       </Badge>
-                      {item.ageGroup && (
-                        <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300 text-xs">
-                          {item.ageGroup}
-                        </Badge>
-                      )}
                     </div>
                   </div>
                 </div>
-                <Button
-                  onClick={() => onDeleteItem(item.id)}
-                  variant="destructive"
-                  size="sm"
-                  className="bg-red-500 hover:bg-red-600 text-xs px-2 py-1"
-                >
-                  🗑️
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() => onEditItem(item)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500 px-2 py-1"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    onClick={() => onDeleteItem(item.id)}
+                    variant="destructive"
+                    size="sm"
+                    className="bg-red-500 hover:bg-red-600 text-xs px-2 py-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
               
               <p className="text-gray-700 text-xs mb-2">{item.description}</p>
-              
-              {item.educationalValue && (
-                <div className="bg-blue-100 p-2 rounded-lg mb-2 border border-blue-300">
-                  <p className="text-blue-800 text-xs"><strong>Educational:</strong> {item.educationalValue}</p>
-                </div>
-              )}
-
-              {item.learningOutcome && (
-                <div className="bg-green-100 p-2 rounded-lg mb-2 border border-green-300">
-                  <p className="text-green-800 text-xs"><strong>Learning Outcome:</strong> {item.learningOutcome}</p>
-                </div>
-              )}
-
-              {item.accessibility && (
-                <div className="bg-yellow-100 p-2 rounded-lg mb-2 border border-yellow-300">
-                  <p className="text-yellow-800 text-xs"><strong>Accessibility:</strong> {item.accessibility}</p>
-                </div>
-              )}
               
               <div className="flex justify-between items-center mb-2">
                 <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">

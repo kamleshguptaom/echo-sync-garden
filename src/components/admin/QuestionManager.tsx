@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { QuestionBuilder } from './QuestionManager/QuestionBuilder';
 import { QuestionList } from './QuestionManager/QuestionList';
+import { QuestionEdit } from './QuestionManager/QuestionEdit';
 
 interface Question {
   id: string;
@@ -80,6 +80,7 @@ export const QuestionManager: React.FC = () => {
     }
   ]);
 
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [newQuestion, setNewQuestion] = useState<Partial<Question>>({
     question: '',
     options: ['', '', '', ''],
@@ -166,6 +167,19 @@ export const QuestionManager: React.FC = () => {
     setQuestions(questions.filter(q => q.id !== id));
   };
 
+  const editQuestion = (question: Question) => {
+    setEditingQuestion(question);
+  };
+
+  const saveEditedQuestion = (editedQuestion: Question) => {
+    setQuestions(questions.map(q => q.id === editedQuestion.id ? editedQuestion : q));
+    setEditingQuestion(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingQuestion(null);
+  };
+
   const addTag = () => {
     if (newTag.trim() && !newQuestion.tags?.includes(newTag.trim())) {
       setNewQuestion({ 
@@ -183,6 +197,16 @@ export const QuestionManager: React.FC = () => {
     });
   };
 
+  if (editingQuestion) {
+    return (
+      <QuestionEdit
+        question={editingQuestion}
+        onSave={saveEditedQuestion}
+        onCancel={cancelEdit}
+      />
+    );
+  }
+
   return (
     <div className="space-y-8">
       <QuestionBuilder
@@ -198,6 +222,7 @@ export const QuestionManager: React.FC = () => {
       <QuestionList
         questions={questions}
         onDeleteQuestion={deleteQuestion}
+        onEditQuestion={editQuestion}
         filterSubject={filterSubject}
         filterDifficulty={filterDifficulty}
         onFilterSubjectChange={setFilterSubject}
