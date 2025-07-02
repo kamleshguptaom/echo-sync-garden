@@ -1,5 +1,5 @@
 
-export type GameMode = 'training' | 'challenge' | 'tournament' | 'survival';
+export type GameMode = 'training' | 'challenge' | 'tournament' | 'survival' | 'speed';
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 export type WeaponType = 'bow' | 'gun' | 'dart';
 export type TargetType = 'balloons' | 'birds' | 'fruits' | 'metal';
