@@ -25,17 +25,21 @@ export interface Player {
 }
 
 export interface GameState {
-  players: Player[];
-  currentPlayerIndex: number;
+  currentPlayer: 'player1' | 'player2' | 'computer';
+  player1Position: number;
+  player2Position: number;
+  computerPosition: number;
   diceValue: number;
-  gameMode: GameMode;
-  isGameOver: boolean;
-  winner: Player | null;
-  moveHistory: Array<{
-    player: string;
-    from: number;
-    to: number;
-    dice: number;
-    special?: string;
-  }>;
+  gameEnded: boolean;
+  winner: string | null;
+  isRolling: boolean;
+  consecutiveTurns: number;
+  powerUps: Record<PowerUp['type'], boolean>;
+}
+
+export interface GameStats {
+  laddersClimbed: number;
+  snakesBitten: number;
+  powerUpsCollected: number;
+  totalMoves: number;
 }
