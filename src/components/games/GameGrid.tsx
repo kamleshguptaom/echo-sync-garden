@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,9 @@ export interface GameInfo {
   emoji: string;
   description: string;
   category: string;
-  difficulty?: 'easy' | 'medium' | 'hard' | 'expert';
-  isNew?: boolean;
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
   isFeatured?: boolean;
+  isNew?: boolean;
 }
 
 interface GameGridProps {

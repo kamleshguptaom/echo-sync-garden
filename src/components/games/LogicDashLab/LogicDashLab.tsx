@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GameState, GameItem, GameRule } from './types';
+import { GameState, GameItem } from './types';
 import { gameLevels, worlds } from './gameData';
 import { DragDropItem } from './components/DragDropItem';
-import { LogicBlockBuilder } from './components/LogicBlockBuilder';
 import { DropZone } from './components/DropZone';
+import { HowToPlayDialog } from './components/HowToPlayDialog';
+import { HintPanel } from './components/HintPanel';
 
 interface LogicDashLabProps {
   onBack: () => void;
@@ -28,7 +29,8 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
   const [gameItems, setGameItems] = useState<GameItem[]>(gameLevels[0].items);
   const [healthyBasket, setHealthyBasket] = useState<GameItem[]>([]);
   const [trashBasket, setTrashBasket] = useState<GameItem[]>([]);
-  const [selectedRule, setSelectedRule] = useState<GameRule | null>(null);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showFeedback, setShowFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const currentLevel = gameLevels[gameState.currentLevel];
 
@@ -36,7 +38,6 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
     setGameItems(currentLevel.items);
     setHealthyBasket([]);
     setTrashBasket([]);
-    setSelectedRule(null);
   }, [gameState.currentLevel]);
 
   const handleDragStart = (item: GameItem) => {
@@ -55,7 +56,7 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
     if (!gameState.draggedItem) return;
 
     const item = gameState.draggedItem;
-    const isCorrectDrop = checkLogic(item, zoneId);
+    const isCorrectDrop = (item.isHealthy && zoneId === 'healthy') || (!item.isHealthy && zoneId === 'trash');
 
     if (isCorrectDrop) {
       // Correct drop
@@ -66,28 +67,18 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
       }
       setGameItems(prev => prev.filter(i => i.id !== item.id));
       setGameState(prev => ({ ...prev, score: prev.score + 10 }));
+      
+      setShowFeedback({ type: 'success', message: `Great job! ${item.name} is ${item.isHealthy ? 'healthy' : 'unhealthy'}!` });
+      setTimeout(() => setShowFeedback(null), 2000);
     } else {
       // Wrong drop
       setGameState(prev => ({ ...prev, mistakes: prev.mistakes + 1 }));
-      // Add shake animation or feedback here
+      setShowFeedback({ 
+        type: 'error', 
+        message: `Oops! ${item.name} should go in the ${item.isHealthy ? 'healthy basket' : 'trash bin'}!` 
+      });
+      setTimeout(() => setShowFeedback(null), 3000);
     }
-  };
-
-  const checkLogic = (item: GameItem, zoneId: string): boolean => {
-    if (!selectedRule) return false;
-
-    // Implement logic checking based on selected rule
-    if (selectedRule.id === 'fruit-red') {
-      return item.category === 'fruit' && item.color === 'red' && zoneId === 'healthy';
-    }
-    if (selectedRule.id === 'junk-food') {
-      return item.category === 'junk' && zoneId === 'trash';
-    }
-    if (selectedRule.id === 'green-vegetable') {
-      return item.category === 'vegetable' && item.color === 'green' && zoneId === 'healthy';
-    }
-    
-    return false;
   };
 
   const nextLevel = () => {
@@ -110,13 +101,14 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
       draggedItem: null,
       showHint: false 
     }));
+    setShowFeedback(null);
   };
 
   const isLevelComplete = gameItems.length === 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-4">
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <Button onClick={onBack} className="bg-white/20 hover:bg-white/30 text-white">
@@ -125,8 +117,16 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
           <h1 className="text-4xl font-bold text-white text-center flex items-center gap-2">
             🧩 Logic Dash Lab
           </h1>
-          <div className="text-white font-bold">
-            Score: {gameState.score}
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowHowToPlay(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              ❓ How to Play
+            </Button>
+            <div className="text-white font-bold bg-white/20 px-4 py-2 rounded-lg">
+              Score: {gameState.score}
+            </div>
           </div>
         </div>
 
@@ -142,34 +142,40 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
             <p className="text-gray-700 mb-2">{currentLevel.description}</p>
             <div className="flex gap-4 text-sm">
               <span>World: {currentLevel.world}</span>
-              <span>Difficulty: {currentLevel.difficulty}</span>
+              <span>Items to sort: {gameItems.length}</span>
               <span>Mistakes: {gameState.mistakes}</span>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Logic Builder */}
+        {/* Feedback Message */}
+        {showFeedback && (
+          <div className={`mb-4 p-4 rounded-lg text-center font-bold ${
+            showFeedback.type === 'success' 
+              ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+              : 'bg-red-100 text-red-800 border-2 border-red-300'
+          }`}>
+            {showFeedback.message}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Hint Panel */}
           <div className="lg:col-span-1">
-            <LogicBlockBuilder
-              rules={currentLevel.rules}
-              onRuleSelect={setSelectedRule}
-              selectedRule={selectedRule}
-              showExplanation={gameState.showExplanation}
-              onToggleExplanation={() => setGameState(prev => ({ 
-                ...prev, 
-                showExplanation: !prev.showExplanation 
-              }))}
+            <HintPanel 
+              isVisible={gameState.showHint}
+              onToggle={() => setGameState(prev => ({ ...prev, showHint: !prev.showHint }))}
+              currentItems={gameItems}
             />
           </div>
 
           {/* Game Area */}
-          <div className="lg:col-span-2">
-            <div className="bg-white/80 backdrop-blur rounded-lg p-6 min-h-96">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">🛒 Shopping Area</h3>
+          <div className="lg:col-span-3">
+            <div className="bg-white/90 backdrop-blur rounded-lg p-6 min-h-96">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">🛒 Food Items to Sort</h3>
               
-              {/* Items */}
-              <div className="relative mb-6 min-h-32 bg-gray-50 rounded-lg p-4">
+              {/* Items Grid */}
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-6 p-4 bg-gray-50 rounded-lg min-h-32">
                 {gameItems.map((item) => (
                   <DragDropItem
                     key={item.id}
@@ -179,10 +185,15 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
                     isDragging={gameState.draggedItem?.id === item.id}
                   />
                 ))}
+                {gameItems.length === 0 && (
+                  <div className="col-span-full text-center text-gray-500 py-8">
+                    All items sorted! 🎉
+                  </div>
+                )}
               </div>
 
               {/* Drop Zones */}
-              <div className="flex gap-4 justify-center">
+              <div className="flex gap-6 justify-center">
                 <DropZone
                   id="healthy"
                   title="Healthy Basket"
@@ -191,7 +202,7 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   items={healthyBasket}
-                  isCorrectZone={selectedRule?.action.includes('healthy') || false}
+                  isCorrectZone={true}
                 />
                 <DropZone
                   id="trash"
@@ -201,7 +212,7 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                   items={trashBasket}
-                  isCorrectZone={selectedRule?.action.includes('trash') || false}
+                  isCorrectZone={true}
                 />
               </div>
             </div>
@@ -212,22 +223,30 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
         {isLevelComplete && (
           <Card className="mt-6 bg-green-100 border-green-500">
             <CardContent className="text-center py-6">
-              <div className="text-4xl mb-2">🎉</div>
-              <h3 className="text-2xl font-bold text-green-800 mb-2">Level Complete!</h3>
-              <p className="text-green-700 mb-4">Great job! You sorted all items correctly!</p>
+              <div className="text-6xl mb-4">🎉</div>
+              <h3 className="text-3xl font-bold text-green-800 mb-2">Level Complete!</h3>
+              <p className="text-green-700 mb-4">Fantastic! You sorted all the food items correctly!</p>
+              <p className="text-sm text-green-600 mb-4">
+                Score: {gameState.score} points | Mistakes: {gameState.mistakes}
+              </p>
               <div className="flex gap-4 justify-center">
                 <Button onClick={resetLevel} variant="outline">
                   Try Again
                 </Button>
                 {gameState.currentLevel < gameLevels.length - 1 && (
                   <Button onClick={nextLevel} className="bg-green-500 hover:bg-green-600">
-                    Next Level
+                    Next Level →
                   </Button>
                 )}
               </div>
             </CardContent>
           </Card>
         )}
+
+        <HowToPlayDialog 
+          isOpen={showHowToPlay} 
+          onClose={() => setShowHowToPlay(false)} 
+        />
       </div>
     </div>
   );

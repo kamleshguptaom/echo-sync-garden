@@ -1,40 +1,15 @@
 
-export interface LadderSnake {
-  start: number;
-  end: number;
-  type: 'ladder' | 'snake';
-  concept: string;
-}
-
-export interface PowerUp {
-  position: number;
-  type: 'double-move' | 'skip-snake' | 'extra-turn' | 'teleport' | 'mega-jump' | 'shield';
-  icon: string;
-  description: string;
-}
-
-export type GameMode = 'classic' | 'challenge' | 'extreme';
-
-export interface Player {
-  id: number;
-  name: string;
-  position: number;
-  color: string;
-  isActive: boolean;
-  powerUps: PowerUp['type'][];
-}
-
 export interface GameState {
-  currentPlayer: 'player1' | 'player2' | 'computer';
+  currentPlayer: Player;
   player1Position: number;
   player2Position: number;
   computerPosition: number;
   diceValue: number;
   gameEnded: boolean;
-  winner: string | null;
+  winner: Player | null;
   isRolling: boolean;
   consecutiveTurns: number;
-  powerUps: Record<PowerUp['type'], boolean>;
+  powerUps: Record<PowerUp, boolean>;
 }
 
 export interface GameStats {
@@ -43,3 +18,21 @@ export interface GameStats {
   powerUpsCollected: number;
   totalMoves: number;
 }
+
+export interface LadderSnake {
+  start: number;
+  end: number;
+  type: 'ladder' | 'snake';
+  concept?: string;
+}
+
+export interface PowerUpItem {
+  position: number;
+  type: PowerUp;
+  icon: string;
+  description: string;
+}
+
+export type GameMode = 'basic' | 'educational' | 'advanced';
+export type Player = 'player1' | 'player2' | 'computer';
+export type PowerUp = 'double-move' | 'skip-snake' | 'extra-turn' | 'teleport' | 'mega-jump' | 'shield';

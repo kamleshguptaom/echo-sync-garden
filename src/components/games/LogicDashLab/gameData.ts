@@ -1,39 +1,15 @@
 
-import { GameLevel, GameItem, GameRule } from './types';
-
-export const gameRules: GameRule[] = [
-  {
-    id: 'fruit-red',
-    condition: 'IF fruit AND red',
-    action: 'THEN put in healthy basket',
-    explanation: 'Red fruits like apples and strawberries are healthy choices!',
-    example: 'Apple (red fruit) → Healthy Basket ✅'
-  },
-  {
-    id: 'junk-food',
-    condition: 'IF junk food OR cartoon character',
-    action: 'THEN put in trash bin',
-    explanation: 'Foods with cartoons or junk foods should be avoided for health.',
-    example: 'Candy with cartoon → Trash Bin ❌'
-  },
-  {
-    id: 'green-vegetable',
-    condition: 'IF vegetable AND green',
-    action: 'THEN put in healthy basket',
-    explanation: 'Green vegetables are packed with vitamins and minerals!',
-    example: 'Broccoli (green vegetable) → Healthy Basket ✅'
-  }
-];
+import { GameLevel, GameItem } from './types';
 
 export const gameLevels: GameLevel[] = [
   {
     id: 'level-1',
-    title: 'Fruit Logic Basics',
+    title: 'Healthy vs Unhealthy',
     world: 'Grocery Dash',
-    description: 'Learn to sort red fruits into the healthy basket!',
+    description: 'Sort healthy foods into the basket and unhealthy foods into the bin!',
     difficulty: 'easy',
     targetBasket: 'healthy',
-    rules: [gameRules[0]],
+    rules: [],
     items: [
       {
         id: 'apple',
@@ -42,63 +18,7 @@ export const gameLevels: GameLevel[] = [
         color: 'red',
         isHealthy: true,
         emoji: '🍎',
-        position: { x: 100, y: 200 }
-      },
-      {
-        id: 'strawberry',
-        name: 'Strawberry',
-        category: 'fruit',
-        color: 'red',
-        isHealthy: true,
-        emoji: '🍓',
-        position: { x: 200, y: 200 }
-      },
-      {
-        id: 'broccoli',
-        name: 'Broccoli',
-        category: 'vegetable',
-        color: 'green',
-        isHealthy: true,
-        emoji: '🥦',
-        position: { x: 300, y: 200 }
-      },
-      {
-        id: 'candy',
-        name: 'Candy',
-        category: 'junk',
-        color: 'colorful',
-        isHealthy: false,
-        emoji: '🍭',
-        position: { x: 400, y: 200 }
-      }
-    ]
-  },
-  {
-    id: 'level-2',
-    title: 'Healthy vs Junk',
-    world: 'Grocery Dash',
-    description: 'Sort healthy foods and avoid junk food!',
-    difficulty: 'medium',
-    targetBasket: 'healthy',
-    rules: [gameRules[0], gameRules[1]],
-    items: [
-      {
-        id: 'banana',
-        name: 'Banana',
-        category: 'fruit',
-        color: 'yellow',
-        isHealthy: true,
-        emoji: '🍌',
-        position: { x: 150, y: 200 }
-      },
-      {
-        id: 'chips',
-        name: 'Chips',
-        category: 'junk',
-        color: 'yellow',
-        isHealthy: false,
-        emoji: '🍟',
-        position: { x: 250, y: 200 }
+        position: { x: 50, y: 50 }
       },
       {
         id: 'carrot',
@@ -107,7 +27,155 @@ export const gameLevels: GameLevel[] = [
         color: 'orange',
         isHealthy: true,
         emoji: '🥕',
-        position: { x: 350, y: 200 }
+        position: { x: 150, y: 50 }
+      },
+      {
+        id: 'banana',
+        name: 'Banana',
+        category: 'fruit',
+        color: 'yellow',
+        isHealthy: true,
+        emoji: '🍌',
+        position: { x: 250, y: 50 }
+      },
+      {
+        id: 'broccoli',
+        name: 'Broccoli',
+        category: 'vegetable',
+        color: 'green',
+        isHealthy: true,
+        emoji: '🥦',
+        position: { x: 350, y: 50 }
+      },
+      {
+        id: 'candy',
+        name: 'Candy',
+        category: 'junk',
+        color: 'colorful',
+        isHealthy: false,
+        emoji: '🍭',
+        position: { x: 450, y: 50 }
+      },
+      {
+        id: 'chips',
+        name: 'Chips',
+        category: 'junk',
+        color: 'yellow',
+        isHealthy: false,
+        emoji: '🍟',
+        position: { x: 550, y: 50 }
+      }
+    ]
+  },
+  {
+    id: 'level-2',
+    title: 'Fruits & Veggies',
+    world: 'Grocery Dash',
+    description: 'Identify and sort fresh produce vs processed foods!',
+    difficulty: 'easy',
+    targetBasket: 'healthy',
+    rules: [],
+    items: [
+      {
+        id: 'strawberry',
+        name: 'Strawberry',
+        category: 'fruit',
+        color: 'red',
+        isHealthy: true,
+        emoji: '🍓',
+        position: { x: 100, y: 50 }
+      },
+      {
+        id: 'orange',
+        name: 'Orange',
+        category: 'fruit',
+        color: 'orange',
+        isHealthy: true,
+        emoji: '🍊',
+        position: { x: 200, y: 50 }
+      },
+      {
+        id: 'lettuce',
+        name: 'Lettuce',
+        category: 'vegetable',
+        color: 'green',
+        isHealthy: true,
+        emoji: '🥬',
+        position: { x: 300, y: 50 }
+      },
+      {
+        id: 'pizza',
+        name: 'Pizza',
+        category: 'junk',
+        color: 'mixed',
+        isHealthy: false,
+        emoji: '🍕',
+        position: { x: 400, y: 50 }
+      },
+      {
+        id: 'donut',
+        name: 'Donut',
+        category: 'junk',
+        color: 'brown',
+        isHealthy: false,
+        emoji: '🍩',
+        position: { x: 500, y: 50 }
+      }
+    ]
+  },
+  {
+    id: 'level-3',
+    title: 'Dairy & Proteins',
+    world: 'Kitchen Creator',
+    description: 'Sort nutritious proteins and dairy from sugary treats!',
+    difficulty: 'medium',
+    targetBasket: 'healthy',
+    rules: [],
+    items: [
+      {
+        id: 'milk',
+        name: 'Milk',
+        category: 'dairy',
+        color: 'white',
+        isHealthy: true,
+        emoji: '🥛',
+        position: { x: 80, y: 50 }
+      },
+      {
+        id: 'cheese',
+        name: 'Cheese',
+        category: 'dairy',
+        color: 'yellow',
+        isHealthy: true,
+        emoji: '🧀',
+        position: { x: 180, y: 50 }
+      },
+      {
+        id: 'egg',
+        name: 'Egg',
+        category: 'protein',
+        color: 'white',
+        isHealthy: true,
+        emoji: '🥚',
+        position: { x: 280, y: 50 }
+      },
+      {
+        id: 'cookie',
+        name: 'Cookie',
+        category: 'junk',
+        color: 'brown',
+        isHealthy: false,
+        emoji: '🍪',
+        position: { x: 380, y: 50 }
+      },
+      {
+        id: 'icecream',
+        name: 'Ice Cream',
+        category: 'junk',
+        color: 'pink',
+        isHealthy: false,
+        emoji: '🍦',
+        position: { x: 480, y: 50 }
       }
     ]
   }
@@ -116,8 +184,5 @@ export const gameLevels: GameLevel[] = [
 export const worlds = [
   { id: 'grocery', name: 'Grocery Dash', emoji: '🛒', color: 'bg-green-400' },
   { id: 'kitchen', name: 'Kitchen Creator', emoji: '👨‍🍳', color: 'bg-orange-400' },
-  { id: 'lab', name: 'Logic Lab', emoji: '🧪', color: 'bg-purple-400' },
-  { id: 'shapes', name: 'Shape Store', emoji: '🔺', color: 'bg-blue-400' },
-  { id: 'emotions', name: 'Emotion Park', emoji: '😊', color: 'bg-pink-400' },
-  { id: 'recycle', name: 'Recycle Zone', emoji: '♻️', color: 'bg-teal-400' }
+  { id: 'lab', name: 'Logic Lab', emoji: '🧪', color: 'bg-purple-400' }
 ];
