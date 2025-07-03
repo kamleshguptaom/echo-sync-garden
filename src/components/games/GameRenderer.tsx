@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Import all game components
@@ -39,12 +40,12 @@ import { HealthyChoices } from './HealthyChoices/HealthyChoices';
 import { FeelingFaces } from './FeelingFaces/FeelingFaces';
 import { TimeMaster } from './TimeMaster/TimeMaster';
 import { CoinCounter } from './CoinCounter/CoinCounter';
-import { RhythmMaster } from './RhythmMaster/RhythmMaster';
 import { WeatherWizard } from './WeatherWizard/WeatherWizard';
 import { AnimalHomes } from './AnimalHomes/AnimalHomes';
 import { SpaceExplorer } from './SpaceExplorer/SpaceExplorer';
 import { MagnetMagic } from './MagnetMagic/MagnetMagic';
 import { GardenGuru } from './GardenGuru/GardenGuru';
+import { BodyParts } from './BodyParts/BodyParts';
 
 interface GameRendererProps {
   gameId: string;
@@ -93,12 +94,12 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'emotions': return <FeelingFaces {...gameProps} />;
     case 'clocklearning': return <TimeMaster {...gameProps} />;
     case 'moneymath': return <CoinCounter {...gameProps} />;
-    case 'musicrhythm': return <RhythmMaster {...gameProps} />;
     case 'weatherscience': return <WeatherWizard {...gameProps} />;
     case 'animalhabitats': return <AnimalHomes {...gameProps} />;
     case 'solarsystem': return <SpaceExplorer {...gameProps} />;
     case 'magnetscience': return <MagnetMagic {...gameProps} />;
     case 'plantgrowth': return <GardenGuru {...gameProps} />;
+    case 'bodyparts': return <BodyParts {...gameProps} />;
     default: 
       console.error(`Game not found: ${gameId}`);
       return (
