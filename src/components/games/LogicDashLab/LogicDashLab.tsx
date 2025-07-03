@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +32,46 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
   const [showFeedback, setShowFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const currentLevel = gameLevels[gameState.currentLevel];
+
+  // Dynamic basket name based on level
+  const getBasketName = () => {
+    switch (currentLevel.world) {
+      case 'Grocery Dash':
+      case 'Kitchen Creator':
+        return 'Healthy Basket';
+      case 'School Zone':
+        return 'School Bag';
+      case 'Bathroom Zone':
+        return 'Hygiene Kit';
+      case 'Bedroom Zone':
+        return 'Bedtime Box';
+      case 'Eco Zone':
+        return 'Recycle Bin';
+      case 'Math Zone':
+        return 'Keep Box';
+      default:
+        return 'Good Items';
+    }
+  };
+
+  const getBasketEmoji = () => {
+    switch (currentLevel.world) {
+      case 'Grocery Dash':
+      case 'Kitchen Creator':
+        return '🥗';
+      case 'School Zone':
+      case 'Math Zone':
+        return '🎒';
+      case 'Bathroom Zone':
+        return '🧴';
+      case 'Bedroom Zone':
+        return '📦';
+      case 'Eco Zone':
+        return '♻️';
+      default:
+        return '✅';
+    }
+  };
 
   useEffect(() => {
     setGameItems(currentLevel.items);
@@ -71,13 +110,14 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
       setShowFeedback({ type: 'success', message: `Great job! ${item.name} is ${item.isHealthy ? 'healthy' : 'unhealthy'}!` });
       setTimeout(() => setShowFeedback(null), 2000);
     } else {
-      // Wrong drop
+      // Wrong drop - animated error message
       setGameState(prev => ({ ...prev, mistakes: prev.mistakes + 1 }));
       setShowFeedback({ 
         type: 'error', 
-        message: `Oops! ${item.name} should go in the ${item.isHealthy ? 'healthy basket' : 'trash bin'}!` 
+        message: `Oops! ${item.name} should go in the ${item.isHealthy ? getBasketName() : 'trash bin'}!` 
       });
-      setTimeout(() => setShowFeedback(null), 3000);
+      // Vanish error message after exactly 1 second
+      setTimeout(() => setShowFeedback(null), 1000);
     }
   };
 
@@ -148,14 +188,21 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
           </CardContent>
         </Card>
 
-        {/* Feedback Message */}
+        {/* Animated Feedback Message */}
         {showFeedback && (
-          <div className={`mb-4 p-4 rounded-lg text-center font-bold ${
-            showFeedback.type === 'success' 
-              ? 'bg-green-100 text-green-800 border-2 border-green-300' 
-              : 'bg-red-100 text-red-800 border-2 border-red-300'
-          }`}>
-            {showFeedback.message}
+          <div className={`
+            mb-4 p-4 rounded-lg text-center font-bold transform transition-all duration-300
+            ${showFeedback.type === 'success' 
+              ? 'bg-green-100 text-green-800 border-2 border-green-300 animate-bounce' 
+              : 'bg-red-100 text-red-800 border-2 border-red-300 animate-pulse scale-105'
+            }
+          `}>
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-2xl">
+                {showFeedback.type === 'success' ? '🎉' : '❌'}
+              </span>
+              {showFeedback.message}
+            </div>
           </div>
         )}
 
@@ -172,7 +219,7 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
           {/* Game Area */}
           <div className="lg:col-span-3">
             <div className="bg-white/90 backdrop-blur rounded-lg p-6 min-h-96">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">🛒 Food Items to Sort</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">🛒 Items to Sort</h3>
               
               {/* Items Grid */}
               <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-6 p-4 bg-gray-50 rounded-lg min-h-32">
@@ -192,12 +239,12 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
                 )}
               </div>
 
-              {/* Drop Zones */}
+              {/* Drop Zones with Dynamic Names */}
               <div className="flex gap-6 justify-center">
                 <DropZone
                   id="healthy"
-                  title="Healthy Basket"
-                  emoji="🥗"
+                  title={getBasketName()}
+                  emoji={getBasketEmoji()}
                   color="bg-green-100"
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
@@ -225,7 +272,7 @@ export const LogicDashLab: React.FC<LogicDashLabProps> = ({ onBack }) => {
             <CardContent className="text-center py-6">
               <div className="text-6xl mb-4">🎉</div>
               <h3 className="text-3xl font-bold text-green-800 mb-2">Level Complete!</h3>
-              <p className="text-green-700 mb-4">Fantastic! You sorted all the food items correctly!</p>
+              <p className="text-green-700 mb-4">Fantastic! You sorted all the items correctly!</p>
               <p className="text-sm text-green-600 mb-4">
                 Score: {gameState.score} points | Mistakes: {gameState.mistakes}
               </p>
