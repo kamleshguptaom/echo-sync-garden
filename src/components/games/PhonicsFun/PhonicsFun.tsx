@@ -127,7 +127,7 @@ export const PhonicsFun: React.FC<PhonicsFunProps> = ({ onBack }) => {
     const childVoice = voices.find(voice => 
       voice.name.toLowerCase().includes('child') || 
       voice.name.toLowerCase().includes('young') ||
-      voice.pitch > 1
+      voice.name.toLowerCase().includes('female')
     );
     if (childVoice) utterance.voice = childVoice;
     
@@ -397,16 +397,18 @@ export const PhonicsFun: React.FC<PhonicsFunProps> = ({ onBack }) => {
         )}
       </div>
 
-      <style jsx>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
+          .animate-shake {
+            animation: shake 0.5s ease-in-out;
+          }
+        `}
+      </style>
     </div>
   );
 };
