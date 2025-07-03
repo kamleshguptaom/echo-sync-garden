@@ -37,6 +37,14 @@ import { EcoWarrior } from './EcoWarrior/EcoWarrior';
 import { VehicleVoyage } from './VehicleVoyage/VehicleVoyage';
 import { HealthyChoices } from './HealthyChoices/HealthyChoices';
 import { FeelingFaces } from './FeelingFaces/FeelingFaces';
+import { TimeMaster } from './TimeMaster/TimeMaster';
+import { CoinCounter } from './CoinCounter/CoinCounter';
+import { RhythmMaster } from './RhythmMaster/RhythmMaster';
+import { WeatherWizard } from './WeatherWizard/WeatherWizard';
+import { AnimalHomes } from './AnimalHomes/AnimalHomes';
+import { SpaceExplorer } from './SpaceExplorer/SpaceExplorer';
+import { MagnetMagic } from './MagnetMagic/MagnetMagic';
+import { GardenGuru } from './GardenGuru/GardenGuru';
 
 interface GameRendererProps {
   gameId: string;
@@ -83,6 +91,14 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'transportation': return <VehicleVoyage {...gameProps} />;
     case 'nutrition': return <HealthyChoices {...gameProps} />;
     case 'emotions': return <FeelingFaces {...gameProps} />;
+    case 'clocklearning': return <TimeMaster {...gameProps} />;
+    case 'moneymath': return <CoinCounter {...gameProps} />;
+    case 'musicrhythm': return <RhythmMaster {...gameProps} />;
+    case 'weatherscience': return <WeatherWizard {...gameProps} />;
+    case 'animalhabitats': return <AnimalHomes {...gameProps} />;
+    case 'solarsystem': return <SpaceExplorer {...gameProps} />;
+    case 'magnetscience': return <MagnetMagic {...gameProps} />;
+    case 'plantgrowth': return <GardenGuru {...gameProps} />;
     default: 
       console.error(`Game not found: ${gameId}`);
       return (
