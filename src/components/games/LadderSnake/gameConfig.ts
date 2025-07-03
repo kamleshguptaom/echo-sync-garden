@@ -70,6 +70,10 @@ export const getGameConfig = (mode: GameMode) => {
   }
 };
 
+export const getPowerUps = (mode: GameMode): PowerUpItem[] => {
+  return getGameConfig(mode).powerUps;
+};
+
 const getClassicPowerUps = (): PowerUpItem[] => [
   { position: 15, type: 'double-move', icon: '⚡', description: 'Roll twice next turn' },
   { position: 35, type: 'skip-snake', icon: '🛡️', description: 'Immune to next snake' },

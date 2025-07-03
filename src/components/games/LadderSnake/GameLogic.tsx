@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { GameState, GameMode, Player, GameStats, LadderSnake, PowerUpItem } from './types';
 import { getGameConfig, getPowerUps } from './gameConfig';
@@ -34,7 +33,7 @@ export const useGameLogic = (gameMode: GameMode, players: '2player' | 'computer'
   const [conceptMessage, setConceptMessage] = useState('');
   const [showAnimation, setShowAnimation] = useState('');
 
-  const laddersSnakes = [...getGameConfig(gameMode).ladders, ...getGameConfig(gameMode).snakes];
+  const laddersSnakes = getGameConfig(gameMode).laddersSnakes;
   const powerUps = getPowerUps(gameMode);
 
   // Real-time game updates when mode or players change

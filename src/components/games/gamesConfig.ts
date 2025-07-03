@@ -1,14 +1,13 @@
-
 import { GameInfo } from './GameGrid';
 
-export const gamesConfig: GameInfo[] = [
+export const gamesData: GameInfo[] = [
   {
     id: 'memory',
     title: 'Memory Match',
     emoji: '🧠',
     description: 'Test your memory with colorful cards and fun patterns!',
     category: 'Memory',
-    difficulty: 'easy' as const,
+    difficulty: 'easy',
     isFeatured: true
   },
   {
@@ -17,7 +16,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🔢',
     description: 'Solve exciting math problems and build number skills!',
     category: 'Math',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'word',
@@ -25,7 +24,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '📝',
     description: 'Discover new words and improve your vocabulary!',
     category: 'Language',
-    difficulty: 'easy' as const
+    difficulty: 'easy'
   },
   {
     id: 'logic',
@@ -33,7 +32,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🧩',
     description: 'Challenge your mind with brain-teasing logic games!',
     category: 'Logic',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'geometry',
@@ -41,7 +40,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '📐',
     description: 'Learn about shapes, angles, and spatial reasoning!',
     category: 'Math',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'science',
@@ -49,7 +48,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🔬',
     description: 'Explore the wonders of science through experiments!',
     category: 'Science',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'geography',
@@ -57,7 +56,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🌍',
     description: 'Discover countries, capitals, and amazing places!',
     category: 'Geography',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'history',
@@ -65,7 +64,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🏛️',
     description: 'Journey through history and meet famous figures!',
     category: 'History',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'tictactoe',
@@ -73,7 +72,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '⭕',
     description: 'Classic strategy game with a colorful twist!',
     category: 'Strategy',
-    difficulty: 'easy' as const
+    difficulty: 'easy'
   },
   {
     id: 'sudoku',
@@ -81,7 +80,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🔢',
     description: 'Fill the grid with numbers using logic and reasoning!',
     category: 'Logic',
-    difficulty: 'expert' as const
+    difficulty: 'expert'
   },
   {
     id: 'jigsaw',
@@ -89,7 +88,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🧩',
     description: 'Piece together beautiful pictures and scenes!',
     category: 'Puzzle',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'waffle',
@@ -97,7 +96,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🧇',
     description: 'Swap letters to create words in this tasty puzzle!',
     category: 'Word',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'laddersnake',
@@ -105,7 +104,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🐍',
     description: 'Climb ladders and avoid snakes in this classic board game!',
     category: 'Board Game',
-    difficulty: 'easy' as const
+    difficulty: 'easy'
   },
   {
     id: 'builder',
@@ -113,7 +112,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🏗️',
     description: 'Build amazing structures and unleash your creativity!',
     category: 'Creative',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'pattern',
@@ -121,7 +120,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🔍',
     description: 'Spot patterns and sequences in this observational game!',
     category: 'Logic',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'concentration',
@@ -129,7 +128,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🎯',
     description: 'Focus your mind and improve your attention span!',
     category: 'Focus',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'speedreading',
@@ -137,7 +136,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '📚',
     description: 'Read faster while maintaining comprehension!',
     category: 'Reading',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'typing',
@@ -145,7 +144,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '⌨️',
     description: 'Improve your typing speed and accuracy!',
     category: 'Skill',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'drawing',
@@ -153,7 +152,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🎨',
     description: 'Create beautiful digital artwork and express yourself!',
     category: 'Creative',
-    difficulty: 'easy' as const
+    difficulty: 'easy'
   },
   {
     id: 'visualperception',
@@ -161,7 +160,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '👁️',
     description: 'Train your eyes to see details and differences!',
     category: 'Perception',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'attention',
@@ -169,7 +168,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🧘',
     description: 'Strengthen your focus and attention skills!',
     category: 'Focus',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'fractions',
@@ -177,7 +176,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🍕',
     description: 'Learn fractions with pizza slices and fun visuals!',
     category: 'Math',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'algebra',
@@ -185,7 +184,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🧮',
     description: 'Solve equations and master algebraic thinking!',
     category: 'Math',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'criticalthinking',
@@ -193,7 +192,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🤔',
     description: 'Develop reasoning and analytical thinking skills!',
     category: 'Logic',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'roadsafety',
@@ -201,7 +200,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🚦',
     description: 'Learn important road safety rules and signs!',
     category: 'Safety',
-    difficulty: 'easy' as const
+    difficulty: 'easy'
   },
   {
     id: 'numbersequence',
@@ -209,7 +208,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🔢',
     description: 'Find patterns in number sequences and continue them!',
     category: 'Math',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'mathracing',
@@ -217,7 +216,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🏎️',
     description: 'Race against time solving math problems!',
     category: 'Math',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'grammar',
@@ -225,7 +224,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '📖',
     description: 'Master grammar rules with fun exercises!',
     category: 'Language',
-    difficulty: 'medium' as const
+    difficulty: 'medium'
   },
   {
     id: 'bloodrelations',
@@ -233,7 +232,7 @@ export const gamesConfig: GameInfo[] = [
     emoji: '👨‍👩‍👧‍👦',
     description: 'Understand family relationships and connections!',
     category: 'Logic',
-    difficulty: 'hard' as const
+    difficulty: 'hard'
   },
   {
     id: 'logicdashlab',
@@ -241,7 +240,15 @@ export const gamesConfig: GameInfo[] = [
     emoji: '🧩',
     description: 'Learn logic, healthy habits, and sorting through fun drag-and-drop gameplay!',
     category: 'Logic',
-    difficulty: 'easy' as const,
+    difficulty: 'easy',
     isNew: true
   }
 ];
+
+export const getGameCategories = (): string[] => {
+  const categories = Array.from(new Set(gamesData.map(game => game.category)));
+  return categories.sort();
+};
+
+// Keep the old export for backwards compatibility
+export const gamesConfig = gamesData;
