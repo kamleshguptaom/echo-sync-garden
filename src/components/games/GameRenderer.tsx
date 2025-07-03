@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // Import all game components
@@ -31,6 +32,7 @@ import { CriticalThinking } from './CriticalThinking/CriticalThinking';
 import { GrammarGame } from './GrammarGame/GrammarGame';
 import { BloodRelations } from './BloodRelations/BloodRelations';
 import { LogicDashLab } from './LogicDashLab/LogicDashLab';
+import { PhonicsFun } from './PhonicsFun/PhonicsFun';
 
 interface GameRendererProps {
   gameId: string;
@@ -71,6 +73,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'grammar': return <GrammarGame {...gameProps} />;
     case 'bloodrelations': return <BloodRelations {...gameProps} />;
     case 'logicdashlab': return <LogicDashLab {...gameProps} />;
+    case 'phonics': return <PhonicsFun {...gameProps} />;
     default: 
       console.error(`Game not found: ${gameId}`);
       return (
