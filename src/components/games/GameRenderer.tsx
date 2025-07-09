@@ -33,7 +33,6 @@ import { GrammarGame } from './GrammarGame/GrammarGame';
 import { BloodRelations } from './BloodRelations/BloodRelations';
 import { LogicDashLab } from './LogicDashLab/LogicDashLab';
 import { PhonicsFun } from './PhonicsFun/PhonicsFun';
-import { ColorLab } from './ColorLab/ColorLab';
 import { EcoWarrior } from './EcoWarrior/EcoWarrior';
 import { VehicleVoyage } from './VehicleVoyage/VehicleVoyage';
 import { HealthyChoices } from './HealthyChoices/HealthyChoices';
@@ -43,8 +42,6 @@ import { CoinCounter } from './CoinCounter/CoinCounter';
 import { WeatherWizard } from './WeatherWizard/WeatherWizard';
 import { AnimalHomes } from './AnimalHomes/AnimalHomes';
 import { SpaceExplorer } from './SpaceExplorer/SpaceExplorer';
-import { MagnetMagic } from './MagnetMagic/MagnetMagic';
-import { GardenGuru } from './GardenGuru/GardenGuru';
 import { BodyParts } from './BodyParts/BodyParts';
 
 interface GameRendererProps {
@@ -87,7 +84,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'bloodrelations': return <BloodRelations {...gameProps} />;
     case 'logicdashlab': return <LogicDashLab {...gameProps} />;
     case 'phonics': return <PhonicsFun {...gameProps} />;
-    case 'colormixing': return <ColorLab {...gameProps} />;
+    
     case 'recycling': return <EcoWarrior {...gameProps} />;
     case 'transportation': return <VehicleVoyage {...gameProps} />;
     case 'nutrition': return <HealthyChoices {...gameProps} />;
@@ -97,8 +94,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'weatherscience': return <WeatherWizard {...gameProps} />;
     case 'animalhabitats': return <AnimalHomes {...gameProps} />;
     case 'solarsystem': return <SpaceExplorer {...gameProps} />;
-    case 'magnetscience': return <MagnetMagic {...gameProps} />;
-    case 'plantgrowth': return <GardenGuru {...gameProps} />;
     case 'bodyparts': return <BodyParts {...gameProps} />;
     default: 
       console.error(`Game not found: ${gameId}`);

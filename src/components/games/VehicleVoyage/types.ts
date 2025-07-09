@@ -23,4 +23,5 @@ export interface GameProgress {
   vehiclesSorted: number;
   perfectSorts: number;
   categoriesMastered: Set<string>;
+  soundEnabled: boolean;
 }

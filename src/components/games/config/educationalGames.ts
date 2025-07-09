@@ -93,16 +93,6 @@ export const educationalGames: GameInfo[] = [
     isNew: true
   },
   {
-    id: 'colormixing',
-    title: 'Magic Color Lab',
-    emoji: '🎨',
-    description: 'Build an interactive color mixing lab with Professor Hue!',
-    category: 'Art',
-    difficulty: 'easy',
-    isNew: true,
-    isFeatured: true
-  },
-  {
     id: 'recycling',
     title: 'Eco Warrior',
     emoji: '♻️',

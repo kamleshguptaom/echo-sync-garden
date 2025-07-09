@@ -15,6 +15,7 @@ export interface Bin {
   color: string;
   description: string;
   examples: string[];
+  items?: RecycleItem[];
 }
 
 export interface GameState {
@@ -24,4 +25,5 @@ export interface GameState {
   itemsRecycled: number;
   correctCategories: string[];
   showCelebration: boolean;
+  soundEnabled: boolean;
 }
