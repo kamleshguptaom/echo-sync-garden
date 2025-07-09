@@ -286,62 +286,40 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
             </div>
           </div>
         ) : (
-        {/* Learn Mode */}
-        {selectedVehicle && (
-          <Card className="mb-6 bg-white/95 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-center text-2xl">
-                {gameMode === 'sort' ? 'Where does this vehicle travel?' : 'Learn about this vehicle!'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-center">
-              <div 
-                className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full w-40 h-40 mx-auto flex items-center justify-center mb-4 cursor-pointer animate-bounce hover:scale-110 transition-transform"
-                onClick={speakVehicleSound}
-              >
-                <span className="text-7xl">{currentVehicle.emoji}</span>
-              </div>
-              <h3 className="text-3xl font-bold text-gray-800 mb-2">{currentVehicle.name}</h3>
-              <p className="text-lg text-gray-600 mb-2">Click to hear the sound!</p>
-              <p className="text-xl font-semibold text-purple-600">{currentVehicle.sound}</p>
-              
-              {showFact && (
-                <div className="mt-4 p-4 bg-blue-100 rounded-lg border-2 border-blue-300 animate-pulse">
+          selectedVehicle && (
+            <Card className="mb-6 bg-white/95 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">
+                  Learn about this vehicle!
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div 
+                  className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full w-40 h-40 mx-auto flex items-center justify-center mb-4 cursor-pointer animate-bounce hover:scale-110 transition-transform"
+                  onClick={() => speakVehicleInfo(selectedVehicle)}
+                >
+                  <span className="text-7xl">{selectedVehicle.emoji}</span>
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800 mb-2">{selectedVehicle.name}</h3>
+                <p className="text-lg text-gray-600 mb-2">Click to hear the sound!</p>
+                <p className="text-xl font-semibold text-purple-600">{selectedVehicle.sound}</p>
+                
+                <div className="mt-4 p-4 bg-blue-100 rounded-lg border-2 border-blue-300">
                   <p className="text-lg font-medium text-blue-800">
-                    💡 {currentVehicle.fact}
+                    💡 {selectedVehicle.fact}
                   </p>
                 </div>
-              )}
-              
-              {feedback && (
-                <div className={`mt-4 p-3 rounded-lg ${
-                  feedback.includes('Correct') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  <p className="text-lg font-medium">{feedback}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Categories */}
-        {gameMode === 'sort' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {categories.map((category) => (
-              <Card 
-                key={category.name}
-                className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-white/95 backdrop-blur"
-                onClick={() => handleCategoryClick(category.name)}
-              >
-                <CardContent className="p-8 text-center">
-                  <div className={`${category.color} rounded-full w-24 h-24 mx-auto flex items-center justify-center mb-4`}>
-                    <span className="text-4xl">{category.emoji}</span>
+                
+                {feedback && (
+                  <div className={`mt-4 p-3 rounded-lg ${
+                    feedback.includes('Perfect') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    <p className="text-lg font-medium">{feedback}</p>
                   </div>
-                  <h4 className="text-2xl font-bold text-gray-800">{category.name}</h4>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                )}
+              </CardContent>
+            </Card>
+          )
         )}
 
         {/* Learn Mode - All Vehicles */}
@@ -351,7 +329,7 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
               <Card 
                 key={index}
                 className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-white/95 backdrop-blur"
-                onClick={() => setCurrentVehicle(vehicle)}
+                onClick={() => setSelectedVehicle(vehicle)}
               >
                 <CardContent className="p-4 text-center">
                   <div className="text-4xl mb-2">{vehicle.emoji}</div>
@@ -362,6 +340,7 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
             ))}
           </div>
         )}
+
       </div>
     </div>
   );
