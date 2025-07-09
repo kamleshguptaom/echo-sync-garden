@@ -12,15 +12,6 @@ export const educationalGames: GameInfo[] = [
     isNew: true
   },
   {
-    id: 'storytelling',
-    title: 'Story Builder',
-    emoji: '📚',
-    description: 'Create amazing stories and boost creativity!',
-    category: 'Creative',
-    difficulty: 'easy',
-    isNew: true
-  },
-  {
     id: 'clocklearning',
     title: 'Time Master',
     emoji: '🕐',
@@ -103,12 +94,13 @@ export const educationalGames: GameInfo[] = [
   },
   {
     id: 'colormixing',
-    title: 'Color Lab',
+    title: 'Magic Color Lab',
     emoji: '🎨',
-    description: 'Mix colors and learn about color theory!',
+    description: 'Build an interactive color mixing lab with Professor Hue!',
     category: 'Art',
     difficulty: 'easy',
-    isNew: true
+    isNew: true,
+    isFeatured: true
   },
   {
     id: 'recycling',
@@ -116,24 +108,6 @@ export const educationalGames: GameInfo[] = [
     emoji: '♻️',
     description: 'Learn about recycling and protecting our planet!',
     category: 'Environment',
-    difficulty: 'easy',
-    isNew: true
-  },
-  {
-    id: 'magnetscience',
-    title: 'Magnet Magic',
-    emoji: '🧲',
-    description: 'Discover how magnets work through experiments!',
-    category: 'Science',
-    difficulty: 'medium',
-    isNew: true
-  },
-  {
-    id: 'plantgrowth',
-    title: 'Garden Guru',
-    emoji: '🌱',
-    description: 'Learn how plants grow and what they need!',
-    category: 'Science',
     difficulty: 'easy',
     isNew: true
   },

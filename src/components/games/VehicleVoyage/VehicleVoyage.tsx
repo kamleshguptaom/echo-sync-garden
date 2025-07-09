@@ -266,24 +266,54 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
         </Card>
 
         {gameMode === 'drag' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <VehicleGarage 
-              vehicles={vehicles} 
-              onVehicleSelect={handleVehicleSelect}
-              selectedVehicle={selectedVehicle}
-            />
-            <div className="space-y-4">
-              {categories.map((category) => (
-                <TransportZone
-                  key={category.name}
-                  category={category}
-                  isActive={activeZone === category.name.toLowerCase()}
-                  onDrop={handleDrop}
-                  onDragOver={(e) => handleDragOver(e, category.name.toLowerCase())}
-                  vehicleCount={vehicleCounts[category.name.toLowerCase()]}
-                />
-              ))}
-            </div>
+          <div className="space-y-6">
+            {/* All Vehicles in Single Row */}
+            <Card className="bg-white/95 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">🚗 Vehicle Fleet</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {vehicles.map((vehicle) => (
+                    <div
+                      key={vehicle.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, vehicle)}
+                      onClick={() => handleVehicleSelect(vehicle)}
+                      className={`min-w-[120px] p-4 rounded-lg cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105 text-center ${
+                        selectedVehicle?.id === vehicle.id ? 'ring-4 ring-blue-500 bg-blue-100' : 'bg-gradient-to-br from-yellow-100 to-orange-100'
+                      }`}
+                    >
+                      <div className="text-4xl mb-2 animate-bounce">{vehicle.emoji}</div>
+                      <h4 className="font-bold text-gray-800">{vehicle.name}</h4>
+                      <p className="text-sm text-gray-600 capitalize">{vehicle.category}</p>
+                      <p className="text-xs text-gray-500">{vehicle.speed}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Transport Categories in Single Row */}
+            <Card className="bg-white/95 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-center text-2xl">🌍 Transport Zones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {categories.map((category) => (
+                    <TransportZone
+                      key={category.name}
+                      category={category}
+                      isActive={activeZone === category.name.toLowerCase()}
+                      onDrop={handleDrop}
+                      onDragOver={(e) => handleDragOver(e, category.name.toLowerCase())}
+                      vehicleCount={vehicleCounts[category.name.toLowerCase()]}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         ) : (
           selectedVehicle && (
