@@ -43,6 +43,9 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
     gameProgress,
     selectedVehicle,
     vehicleCounts,
+    vehiclesInZones,
+    countdown,
+    challengeLevel,
     handleVehicleSort,
     handleVehicleSelect,
     toggleSound,
@@ -127,33 +130,39 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
         {/* Stats */}
         <Card className="mb-6 bg-white/90 backdrop-blur border-0 shadow-xl">
           <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                  <span className="font-bold">Level {gameProgress.level}</span>
+                  <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 fill-current" />
+                  <span className="font-bold text-sm sm:text-base">Level {gameProgress.level}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Trophy className="w-5 h-5 text-purple-500" />
-                  <span className="font-bold">{gameProgress.score}</span>
+                  <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
+                  <span className="font-bold text-sm sm:text-base">{gameProgress.score}</span>
                 </div>
-                <div className="text-sm">Sorted: {gameProgress.vehiclesSorted}</div>
+                <div className="text-xs sm:text-sm">Sorted: {gameProgress.vehiclesSorted}</div>
+                <div className="text-xs sm:text-sm">Challenge: {challengeLevel}</div>
+                {countdown > 0 && (
+                  <div className="text-xs sm:text-sm bg-orange-100 px-2 py-1 rounded">
+                    New vehicle in: {countdown}s
+                  </div>
+                )}
               </div>
-              <span className="text-sm font-medium">Mode: {gameMode === 'sort' ? 'Sorting' : 'Learning'}</span>
+              <span className="text-xs sm:text-sm font-medium">Mode: {gameMode === 'sort' ? 'Sorting' : 'Learning'}</span>
             </div>
           </CardContent>
         </Card>
 
         {gameMode === 'sort' ? (
           <div className="space-y-6">
-            {/* All Vehicles in Single Row */}
+            {/* Vehicle Fleet - Limit to 5 vehicles */}
             <Card className="bg-white/95 backdrop-blur border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-center text-2xl">🚗 Vehicle Fleet</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {vehicles.map((vehicle) => (
+                <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
+                  {vehicles.slice(0, 5).map((vehicle) => (
                     <VehicleCard
                       key={vehicle.id}
                       vehicle={vehicle}
@@ -174,7 +183,7 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
                 <CardTitle className="text-center text-2xl">🌍 Transport Zones</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-wrap justify-center gap-4">
                   {categories.map((category) => (
                     <TransportZone
                       key={category.name}
@@ -184,6 +193,7 @@ export const VehicleVoyage: React.FC<VehicleVoyageProps> = ({ onBack }) => {
                       onDragOver={(e) => handleDragOver(e, category.name.toLowerCase())}
                       onDragLeave={handleDragLeave}
                       vehicleCount={vehicleCounts[category.name.toLowerCase()]}
+                      vehiclesInZone={vehiclesInZones[category.name.toLowerCase()]}
                     />
                   ))}
                 </div>

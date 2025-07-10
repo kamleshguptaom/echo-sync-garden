@@ -121,7 +121,7 @@ export const EcoWarrior: React.FC<EcoWarriorProps> = ({ onBack }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
               {currentItems.map((item) => (
                 <ItemCard
                   key={item.id}
@@ -144,7 +144,7 @@ export const EcoWarrior: React.FC<EcoWarriorProps> = ({ onBack }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
               {bins.map((bin) => (
                 <RecycleBin
                   key={bin.category}

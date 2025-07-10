@@ -24,7 +24,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
       onDragStart={(e) => onDragStart(e, vehicle)}
       onDragEnd={onDragEnd}
       onClick={() => onSelect(vehicle)}
-      className={`p-4 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-300 ${
+      className={`w-full max-w-[140px] sm:max-w-[160px] p-2 sm:p-4 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-300 ${
         isDragging ? 'opacity-50 scale-95' : 'hover:scale-105 hover:shadow-xl'
       } ${
         isSelected 
@@ -33,16 +33,16 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({
       }`}
     >
       <div className="text-center">
-        <div className="text-6xl mb-3 animate-bounce">{vehicle.emoji}</div>
-        <h4 className="font-bold text-gray-800 text-lg mb-1">{vehicle.name}</h4>
-        <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium text-white mb-2 ${
+        <div className="text-4xl sm:text-6xl mb-2 sm:mb-3 animate-bounce">{vehicle.emoji}</div>
+        <h4 className="font-bold text-gray-800 text-sm sm:text-lg mb-1">{vehicle.name}</h4>
+        <div className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium text-white mb-1 sm:mb-2 ${
           vehicle.category === 'land' ? 'bg-green-500' :
           vehicle.category === 'air' ? 'bg-blue-500' : 'bg-cyan-500'
         }`}>
           {vehicle.category}
         </div>
-        <p className="text-gray-600 text-sm mb-1">{vehicle.speed}</p>
-        <p className="text-gray-500 text-xs">{vehicle.environment}</p>
+        <p className="text-gray-600 text-xs sm:text-sm mb-1 hidden sm:block">{vehicle.speed}</p>
+        <p className="text-gray-500 text-xs hidden sm:block">{vehicle.environment}</p>
       </div>
     </div>
   );

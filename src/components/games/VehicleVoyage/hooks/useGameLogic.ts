@@ -101,6 +101,15 @@ export const useGameLogic = () => {
     water: 0
   });
 
+  const [vehiclesInZones, setVehiclesInZones] = useState<Record<string, Vehicle[]>>({
+    land: [],
+    air: [],
+    water: []
+  });
+
+  const [countdown, setCountdown] = useState<number>(0);
+  const [challengeLevel, setChallengeLevel] = useState<number>(1);
+
   const playSound = useCallback((vehicle: Vehicle) => {
     if (!gameProgress.soundEnabled) return;
     
@@ -144,9 +153,15 @@ export const useGameLogic = () => {
     if (isCorrect) {
       playSuccessSound();
       
+      // Add vehicle to zone
+      setVehiclesInZones(prev => ({
+        ...prev,
+        [category]: [...prev[category], vehicle]
+      }));
+      
       setGameProgress(prev => ({
         ...prev,
-        score: prev.score + 15,
+        score: prev.score + (15 * challengeLevel),
         vehiclesSorted: prev.vehiclesSorted + 1,
         perfectSorts: prev.perfectSorts + 1,
         categoriesMastered: new Set([...prev.categoriesMastered, category])
@@ -157,16 +172,31 @@ export const useGameLogic = () => {
         [category]: prev[category] + 1
       }));
 
-      // Check for level up
+      // Start countdown for new vehicle
+      const countdownTime = Math.max(3, 8 - challengeLevel);
+      setCountdown(countdownTime);
+      
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Check for level up and increase challenge
       if ((gameProgress.vehiclesSorted + 1) % 5 === 0) {
         setGameProgress(prev => ({ ...prev, level: prev.level + 1 }));
+        setChallengeLevel(prev => prev + 1);
       }
     } else {
       setGameProgress(prev => ({ ...prev, perfectSorts: 0 }));
     }
 
     return isCorrect;
-  }, [gameProgress.vehiclesSorted, playSuccessSound]);
+  }, [gameProgress.vehiclesSorted, challengeLevel, playSuccessSound]);
 
   const handleVehicleSelect = useCallback((vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
@@ -187,7 +217,10 @@ export const useGameLogic = () => {
       soundEnabled: prev.soundEnabled
     }));
     setVehicleCounts({ land: 0, air: 0, water: 0 });
+    setVehiclesInZones({ land: [], air: [], water: [] });
     setSelectedVehicle(null);
+    setCountdown(0);
+    setChallengeLevel(1);
   }, []);
 
   return {
@@ -195,6 +228,9 @@ export const useGameLogic = () => {
     gameProgress,
     selectedVehicle,
     vehicleCounts,
+    vehiclesInZones,
+    countdown,
+    challengeLevel,
     handleVehicleSort,
     handleVehicleSelect,
     toggleSound,
