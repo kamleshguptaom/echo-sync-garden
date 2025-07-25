@@ -22,7 +22,8 @@ export const gameCategories = [
   'Music',
   'Art',
   'Environment',
-  'General'
+  'General',
+  'STEM'
 ] as const;
 
 export type GameCategory = typeof gameCategories[number];

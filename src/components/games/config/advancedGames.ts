@@ -162,5 +162,50 @@ export const advancedGames: GameInfo[] = [
     category: 'Logic',
     difficulty: 'easy',
     isNew: true
+  },
+  {
+    id: 'braintraining',
+    title: 'Brain Training',
+    emoji: '🧠',
+    description: 'Boost cognitive skills with memory, focus, and speed challenges!',
+    category: 'Focus',
+    difficulty: 'medium',
+    isNew: true
+  },
+  {
+    id: 'codingadventure',
+    title: 'Coding Adventure',
+    emoji: '🤖',
+    description: 'Learn programming basics by guiding a robot through challenges!',
+    category: 'STEM',
+    difficulty: 'medium',
+    isNew: true
+  },
+  {
+    id: 'virtuallab',
+    title: 'Virtual Lab',
+    emoji: '🔬',
+    description: 'Conduct safe science experiments in a virtual laboratory!',
+    category: 'Science',
+    difficulty: 'medium',
+    isNew: true
+  },
+  {
+    id: 'creativestudio',
+    title: 'Creative Studio',
+    emoji: '🎨',
+    description: 'Draw, animate, and create music in one creative platform!',
+    category: 'Art',
+    difficulty: 'easy',
+    isNew: true
+  },
+  {
+    id: 'mindmaze',
+    title: 'Mind Maze',
+    emoji: '🧩',
+    description: 'Navigate cognitive challenges and puzzle mazes!',
+    category: 'Logic',
+    difficulty: 'hard',
+    isNew: true
   }
 ];
