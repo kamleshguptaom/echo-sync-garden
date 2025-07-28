@@ -43,6 +43,11 @@ import { WeatherWizard } from './WeatherWizard/WeatherWizard';
 import { AnimalHomes } from './AnimalHomes/AnimalHomes';
 import { SpaceExplorer } from './SpaceExplorer/SpaceExplorer';
 import { BodyParts } from './BodyParts/BodyParts';
+import BrainTraining from './BrainTraining/BrainTraining';
+import CodingAdventure from './CodingAdventure/CodingAdventure';
+import VirtualLab from './VirtualLab/VirtualLab';
+import CreativeStudio from './CreativeStudio/CreativeStudio';
+import MindMaze from './MindMaze/MindMaze';
 
 interface GameRendererProps {
   gameId: string;
@@ -95,7 +100,13 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'animalhabitats': return <AnimalHomes {...gameProps} />;
     case 'solarsystem': return <SpaceExplorer {...gameProps} />;
     case 'bodyparts': return <BodyParts {...gameProps} />;
-    default: 
+    
+    case 'braintraining': return <BrainTraining {...gameProps} />;
+    case 'codingadventure': return <CodingAdventure {...gameProps} />;
+    case 'virtuallab': return <VirtualLab {...gameProps} />;
+    case 'creativestudio': return <CreativeStudio {...gameProps} />;
+    case 'mindmaze': return <MindMaze {...gameProps} />;
+    default:
       console.error(`Game not found: ${gameId}`);
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 via-pink-500 to-red-500">

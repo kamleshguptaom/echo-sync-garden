@@ -606,7 +606,7 @@ const CreativeStudio: React.FC<CreativeStudioProps> = ({ onBack }) => {
                   {['Kick', 'Snare', 'Hi-Hat', 'Crash'].map(drum => (
                     <Button
                       key={drum}
-                      onClick={() => playNote('C', 'drums')}
+                      onClick={() => playNote('C')}
                       variant="outline"
                       size="sm"
                     >
