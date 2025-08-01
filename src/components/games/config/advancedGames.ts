@@ -173,15 +173,6 @@ export const advancedGames: GameInfo[] = [
     isNew: true
   },
   {
-    id: 'codingadventure',
-    title: 'Coding Adventure',
-    emoji: '🤖',
-    description: 'Learn programming basics by guiding a robot through challenges!',
-    category: 'STEM',
-    difficulty: 'medium',
-    isNew: true
-  },
-  {
     id: 'virtuallab',
     title: 'Virtual Lab',
     emoji: '🔬',
