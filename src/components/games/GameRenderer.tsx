@@ -5,6 +5,7 @@ import React from 'react';
 import { MemoryGame } from './MemoryGame/MemoryGame';
 import { MathGame } from './MathGame/MathGame';
 import { WordGame } from './WordGame/WordGame';
+import { WordMaster } from './WordMaster/WordMaster';
 import { LogicGame } from './LogicGame/LogicGame';
 import { GeometryGame } from './GeometryGame/GeometryGame';
 import { ScienceGame } from './ScienceGame/ScienceGame';
@@ -106,6 +107,13 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'virtuallab': return <VirtualLab {...gameProps} />;
     case 'creativestudio': return <CreativeStudio {...gameProps} />;
     case 'mindmaze': return <MindMaze {...gameProps} />;
+    case 'mind-maze': return <MindMaze {...gameProps} />;
+    case 'creative-studio': return <CreativeStudio {...gameProps} />;
+    case 'virtual-lab': return <VirtualLab {...gameProps} />;
+    case 'brain-training': return <BrainTraining {...gameProps} />;
+    case 'word-game': return <WordMaster {...gameProps} />;
+    case 'objectbuilder': return <ObjectBuilder {...gameProps} />;
+    case 'visual-perception': return <VisualPerception {...gameProps} />;
     default:
       console.error(`Game not found: ${gameId}`);
       return (
