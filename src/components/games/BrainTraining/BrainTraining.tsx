@@ -110,7 +110,10 @@ const BrainTraining: React.FC<BrainTrainingProps> = ({ onBack }) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-gradient-to-br from-blue-400 to-blue-600 text-white">
+                <Card 
+                  className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-gradient-to-br from-blue-400 to-blue-600 text-white"
+                  onClick={() => startNewChallenge('memory')}
+                >
                   <CardContent className="p-6 text-center">
                     <div className="text-6xl mb-4">🧠</div>
                     <h3 className="text-xl font-bold mb-2">Memory Challenge</h3>
@@ -118,7 +121,10 @@ const BrainTraining: React.FC<BrainTrainingProps> = ({ onBack }) => {
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-gradient-to-br from-green-400 to-green-600 text-white">
+                <Card 
+                  className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-gradient-to-br from-green-400 to-green-600 text-white"
+                  onClick={() => startNewChallenge('focus')}
+                >
                   <CardContent className="p-6 text-center">
                     <div className="text-6xl mb-4">🎯</div>
                     <h3 className="text-xl font-bold mb-2">Focus Challenge</h3>
@@ -126,7 +132,10 @@ const BrainTraining: React.FC<BrainTrainingProps> = ({ onBack }) => {
                   </CardContent>
                 </Card>
 
-                <Card className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-gradient-to-br from-purple-400 to-purple-600 text-white">
+                <Card 
+                  className="cursor-pointer hover:shadow-xl transition-all duration-200 transform hover:scale-105 bg-gradient-to-br from-purple-400 to-purple-600 text-white"
+                  onClick={() => startNewChallenge('speed')}
+                >
                   <CardContent className="p-6 text-center">
                     <div className="text-6xl mb-4">⚡</div>
                     <h3 className="text-xl font-bold mb-2">Speed Challenge</h3>
@@ -136,7 +145,7 @@ const BrainTraining: React.FC<BrainTrainingProps> = ({ onBack }) => {
               </div>
 
               <Button 
-                onClick={startNewChallenge}
+                onClick={() => startNewChallenge()}
                 className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xl py-6"
               >
                 Start Random Challenge

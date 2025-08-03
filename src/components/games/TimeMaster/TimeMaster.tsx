@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Star, Trophy, Clock, RotateCcw } from 'lucide-react';
+import { InteractiveClock } from './components/InteractiveClock';
 
 interface TimeMasterProps {
   onBack: () => void;
@@ -149,63 +150,15 @@ export const TimeMaster: React.FC<TimeMasterProps> = ({ onBack }) => {
               <CardTitle className="text-center text-2xl">Move the Clock Hands</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              {/* Clock Face */}
-              <div className="relative w-80 h-80 mx-auto mb-6">
-                <div className="w-full h-full rounded-full border-8 border-gray-800 bg-white relative">
-                  {/* Clock Numbers */}
-                  {[...Array(12)].map((_, i) => {
-                    const number = i + 1;
-                    const angle = (i * 30) - 90;
-                    const x = Math.cos(angle * Math.PI / 180) * 120;
-                    const y = Math.sin(angle * Math.PI / 180) * 120;
-                    return (
-                      <div
-                        key={i}
-                        className="absolute text-2xl font-bold text-gray-800"
-                        style={{
-                          left: `calc(50% + ${x}px)`,
-                          top: `calc(50% + ${y}px)`,
-                          transform: 'translate(-50%, -50%)'
-                        }}
-                      >
-                        {number}
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Hour Hand */}
-                  <div
-                    className="absolute w-2 bg-black rounded-full"
-                    style={{
-                      height: '80px',
-                      left: '50%',
-                      top: '50%',
-                      marginLeft: '-4px',
-                      marginTop: '-80px',
-                      ...getClockHandStyle(userHour + userMinute / 60, true)
-                    }}
-                  />
-                  
-                  {/* Minute Hand */}
-                  <div
-                    className="absolute w-1 bg-red-500 rounded-full"
-                    style={{
-                      height: '110px',
-                      left: '50%',
-                      top: '50%',
-                      marginLeft: '-2px',
-                      marginTop: '-110px',
-                      ...getClockHandStyle(userMinute, false)
-                    }}
-                  />
-                  
-                  {/* Center dot */}
-                  <div className="absolute w-4 h-4 bg-black rounded-full" style={{
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)'
-                  }} />
-                </div>
+              {/* Interactive Clock */}
+              <div className="flex justify-center mb-6">
+                <InteractiveClock
+                  hour={userHour}
+                  minute={userMinute}
+                  onHourChange={setUserHour}
+                  onMinuteChange={setUserMinute}
+                  size={320}
+                />
               </div>
 
               {/* Controls */}

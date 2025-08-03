@@ -3,6 +3,24 @@ import { GameInfo } from '../GameGrid';
 
 export const educationalGames: GameInfo[] = [
   {
+    id: 'speed-reading',
+    title: 'Speed Reading',
+    emoji: '📚',
+    description: 'Improve reading speed and comprehension!',
+    category: 'Language',
+    difficulty: 'medium',
+    isNew: true
+  },
+  {
+    id: 'physics',
+    title: 'Physics Fun',
+    emoji: '⚛️',
+    description: 'Explore physics concepts with fun experiments!',
+    category: 'Science',
+    difficulty: 'medium',
+    isNew: true
+  },
+  {
     id: 'phonics',
     title: 'Phonics Fun',
     emoji: '🔤',

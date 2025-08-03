@@ -20,6 +20,7 @@ import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
 import { PatternGame } from './PatternGame/PatternGame';
 import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
 import { SpeedReading } from './SpeedReading/SpeedReading';
+import { PhysicsFun } from './PhysicsFun/PhysicsFun';
 import { TypingGame } from './TypingGame/TypingGame';
 import { DrawingGame } from './DrawingGame/DrawingGame';
 import { RoadSafetyGame } from './RoadSafetyGame/RoadSafetyGame';
@@ -47,7 +48,7 @@ import { BodyParts } from './BodyParts/BodyParts';
 import BrainTraining from './BrainTraining/BrainTraining';
 
 import VirtualLab from './VirtualLab/VirtualLab';
-import CreativeStudio from './CreativeStudio/CreativeStudio';
+
 import MindMaze from './MindMaze/MindMaze';
 
 interface GameRendererProps {
@@ -105,10 +106,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'braintraining': return <BrainTraining {...gameProps} />;
     
     case 'virtuallab': return <VirtualLab {...gameProps} />;
-    case 'creativestudio': return <CreativeStudio {...gameProps} />;
+    case 'speed-reading': return <SpeedReading {...gameProps} />;
+    case 'physics': return <PhysicsFun {...gameProps} />;
     case 'mindmaze': return <MindMaze {...gameProps} />;
     case 'mind-maze': return <MindMaze {...gameProps} />;
-    case 'creative-studio': return <CreativeStudio {...gameProps} />;
+    
     case 'virtual-lab': return <VirtualLab {...gameProps} />;
     case 'brain-training': return <BrainTraining {...gameProps} />;
     case 'word-game': return <WordMaster {...gameProps} />;

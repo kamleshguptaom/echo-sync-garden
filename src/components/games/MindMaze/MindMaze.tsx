@@ -71,7 +71,7 @@ const MindMaze: React.FC<MindMazeProps> = ({ onBack }) => {
     { type: 'sequence', name: 'Memory Chain', icon: '🔗', color: 'bg-green-500' },
     { type: 'pattern', name: 'Pattern Match', icon: '🔳', color: 'bg-purple-500' },
     { type: 'logic', name: 'Logic Quest', icon: '🧠', color: 'bg-orange-500' },
-    { type: 'spatial', name: 'Shape Shift', icon: '📐', color: 'bg-red-500' }
+    { type: 'spatial', name: 'Shape Shift', icon: '🔄', color: 'bg-red-500' }
   ];
 
   const playSound = useCallback((type: 'move' | 'success' | 'fail' | 'tick') => {

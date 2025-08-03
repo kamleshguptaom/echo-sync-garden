@@ -21,11 +21,11 @@ export const useBrainTraining = () => {
 
   const challenges: ('memory' | 'focus' | 'speed')[] = ['memory', 'focus', 'speed'];
 
-  const startNewChallenge = useCallback(() => {
-    const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+  const startNewChallenge = useCallback((challengeType?: 'memory' | 'focus' | 'speed') => {
+    const selectedChallenge = challengeType || challenges[Math.floor(Math.random() * challenges.length)];
     setGameState(prev => ({
       ...prev,
-      currentChallenge: randomChallenge
+      currentChallenge: selectedChallenge
     }));
   }, []);
 
