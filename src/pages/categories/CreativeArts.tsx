@@ -8,13 +8,6 @@ const CreativeArts = () => {
 
   const creativeGames = [
     {
-      id: 'creative-studio',
-      title: 'Creative Studio',
-      emoji: '🎨',
-      description: 'Advanced drawing and animation studio with layers and professional tools!',
-      difficulty: 'medium'
-    },
-    {
       id: 'drawing',
       title: 'Digital Artist',
       emoji: '🖌️',

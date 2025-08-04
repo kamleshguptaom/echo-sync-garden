@@ -51,9 +51,15 @@ const Index = () => {
       'word': 'Word Explorer',
       'grammar': 'Grammar Guide',
       'typing': 'Typing Master',
-      'speedreading': 'Speed Reading'
+      'speed-reading': 'Speed Reading',
+      'physics': 'Physics Fun',
+      'drawing': 'Digital Artist',
+      'mindmaze': 'Mind Maze',
+      'concentration': 'Concentration',
+      'memory': 'Memory Match',
+      'attention': 'Attention Training'
     };
-    return titles[id] || id;
+    return titles[id] || id.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const getGameEmoji = (id: string): string => {
@@ -63,7 +69,13 @@ const Index = () => {
       'word': '📝',
       'grammar': '📖',
       'typing': '⌨️',
-      'speedreading': '⚡'
+      'speed-reading': '⚡',
+      'physics': '⚛️',
+      'drawing': '🖌️',
+      'mindmaze': '🧩',
+      'concentration': '🧠',
+      'memory': '🃏',
+      'attention': '👁️'
     };
     return emojis[id] || '🎮';
   };

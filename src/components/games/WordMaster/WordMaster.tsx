@@ -11,13 +11,14 @@ import { toast } from '@/components/ui/use-toast';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { CrosswordGame } from './components/CrosswordGame';
 
 interface WordMasterProps {
   onBack: () => void;
 }
 
 type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
-type GameMode = 'word-search' | 'crossword' | 'scramble' | 'match' | 'quest' | 'smart-grid' | 'trail' | 'word-wipe' | 'outspell' | 'opposite' | 'letter-logic' | 'mixed';
+type GameMode = 'word-search' | 'crossword' | 'scramble' | 'smart-grid' | 'trail';
 
 interface GameStats {
   wordsFound: number;
@@ -919,7 +920,6 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
                       <SelectItem value="smart-grid">🎯 Smart Grid Challenge</SelectItem>
                       <SelectItem value="trail">🛤️ Word Trail</SelectItem>
                       <SelectItem value="crossword">✏️ Crossword Puzzle</SelectItem>
-                      <SelectItem value="mixed">🎲 Mixed Mode Challenge</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1004,12 +1004,13 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
             {/* Game Area */}
             <Card className="bg-white/95 backdrop-blur-sm">
               <CardContent className="p-6">
-                <Tabs value={gameMode} className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 mb-6">
+                <Tabs value={gameMode} onValueChange={(value) => setGameMode(value as GameMode)} className="w-full">
+                  <TabsList className="grid w-full grid-cols-5 mb-6">
                     <TabsTrigger value="word-search" className="text-sm">🔍 Search</TabsTrigger>
                     <TabsTrigger value="scramble" className="text-sm">🔀 Scramble</TabsTrigger>
                     <TabsTrigger value="smart-grid" className="text-sm">🎯 Smart Grid</TabsTrigger>
                     <TabsTrigger value="trail" className="text-sm">🛤️ Trail</TabsTrigger>
+                    <TabsTrigger value="crossword" className="text-sm">✏️ Crossword</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="word-search" className="space-y-6">
@@ -1041,6 +1042,14 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
                   
                   <TabsContent value="trail" className="space-y-6">
                     {renderWordTrail()}
+                  </TabsContent>
+                  
+                  <TabsContent value="crossword" className="space-y-6">
+                    <CrosswordGame 
+                      difficulty={difficulty}
+                      onWordFound={handleWordFound}
+                      onComplete={() => setGameComplete(true)}
+                    />
                   </TabsContent>
                 </Tabs>
               </CardContent>

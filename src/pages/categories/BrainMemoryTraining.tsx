@@ -22,13 +22,6 @@ const BrainMemoryTraining = () => {
       difficulty: 'medium'
     },
     {
-      id: 'brain-training',
-      title: 'Brain Training',
-      emoji: '🧠',
-      description: 'Comprehensive cognitive training with multiple challenges!',
-      difficulty: 'hard'
-    },
-    {
       id: 'memory',
       title: 'Memory Match',
       emoji: '🃏',

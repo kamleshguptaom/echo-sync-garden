@@ -504,14 +504,14 @@ export const PhysicsFun: React.FC<PhysicsFunProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 p-4">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <Button onClick={onBack} className="bg-white/20 hover:bg-white/30 text-white">
+          <Button onClick={onBack} className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm">
             ← Back to Games
           </Button>
-          <h1 className="text-4xl font-bold text-white text-center flex items-center gap-2">
+          <h1 className="text-4xl font-bold text-white text-center flex items-center gap-2 animate-pulse">
             ⚛️ Physics Fun Lab
           </h1>
           <div className="flex items-center gap-2">
@@ -519,7 +519,7 @@ export const PhysicsFun: React.FC<PhysicsFunProps> = ({ onBack }) => {
               variant="outline"
               size="sm"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="bg-white/20 text-white hover:bg-white/30"
+              className="bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
@@ -528,18 +528,20 @@ export const PhysicsFun: React.FC<PhysicsFunProps> = ({ onBack }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Experiment Selection */}
-          <Card className="bg-white/95 backdrop-blur">
+          <Card className="bg-white/95 backdrop-blur-sm shadow-xl">
             <CardHeader>
-              <CardTitle className="text-lg">🧪 Experiments</CardTitle>
+              <CardTitle className="text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                🧪 Physics Experiments
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {experiments.map(experiment => (
                 <div
                   key={experiment.id}
-                  className={`p-3 rounded-lg cursor-pointer transition-all ${
+                  className={`p-3 rounded-lg cursor-pointer transition-all duration-300 hover:scale-105 ${
                     currentExperiment === experiment.id
-                      ? 'bg-blue-100 border-2 border-blue-300'
-                      : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'
+                      ? 'bg-gradient-to-r from-blue-100 to-purple-100 border-2 border-blue-300 shadow-lg'
+                      : 'bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-purple-50 border-2 border-transparent'
                   }`}
                   onClick={() => {
                     setCurrentExperiment(experiment.id as ExperimentType);
@@ -547,7 +549,7 @@ export const PhysicsFun: React.FC<PhysicsFunProps> = ({ onBack }) => {
                   }}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{experiment.icon}</span>
+                    <span className="text-lg animate-bounce">{experiment.icon}</span>
                     <span className="font-medium text-sm">{experiment.name}</span>
                   </div>
                   <p className="text-xs text-gray-600">{experiment.description}</p>
@@ -558,35 +560,48 @@ export const PhysicsFun: React.FC<PhysicsFunProps> = ({ onBack }) => {
 
           {/* Canvas */}
           <div className="lg:col-span-2">
-            <Card className="bg-white/95 backdrop-blur">
+            <Card className="bg-white/95 backdrop-blur-sm shadow-xl">
               <CardHeader>
-                <CardTitle className="text-lg">🔬 Physics Simulator</CardTitle>
+                <CardTitle className="text-lg bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                  🔬 Interactive Physics Simulator
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-gray-300 rounded-lg overflow-hidden mb-4">
+                <div className="border-4 border-gradient-to-r from-blue-300 to-purple-300 rounded-xl overflow-hidden mb-4 shadow-inner">
                   <canvas
                     ref={canvasRef}
                     width={600}
                     height={400}
-                    className="block w-full h-auto bg-white"
+                    className="block w-full h-auto bg-gradient-to-br from-blue-50 to-purple-50"
                   />
                 </div>
                 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     onClick={() => setIsPlaying(!isPlaying)}
-                    className={isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}
+                    className={`${isPlaying 
+                      ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
+                      : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                    } text-white shadow-lg hover:scale-105 transition-all duration-200`}
                   >
                     {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                     {isPlaying ? 'Pause' : 'Play'}
                   </Button>
-                  <Button onClick={resetExperiment} variant="outline">
+                  <Button 
+                    onClick={resetExperiment} 
+                    variant="outline"
+                    className="hover:scale-105 transition-all duration-200 bg-white/80 backdrop-blur-sm"
+                  >
                     <RotateCcw className="w-4 h-4 mr-1" />
                     Reset
                   </Button>
                   {(currentExperiment === 'gravity' || currentExperiment === 'collision') && (
-                    <Button onClick={addBall} variant="outline">
-                      Add Ball
+                    <Button 
+                      onClick={addBall} 
+                      variant="outline"
+                      className="hover:scale-105 transition-all duration-200 bg-gradient-to-r from-yellow-100 to-orange-100 hover:from-yellow-200 hover:to-orange-200"
+                    >
+                      ➕ Add Ball
                     </Button>
                   )}
                 </div>
