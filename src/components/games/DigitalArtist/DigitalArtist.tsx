@@ -2,26 +2,21 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Volume2, VolumeX, Grid, Eye, Palette, Brush, Type, Shapes, Eraser, Hand, Download, Plus, Trash2, Copy } from 'lucide-react';
+import { Volume2, VolumeX, Shapes, Download, Plus, Trash2, Eye, Grid } from 'lucide-react';
+import { ToolManager } from './components/ToolManager';
+import { LayerManager } from './components/LayerManager';
+import { ColorPalette } from './components/ColorPalette';
+import { CanvasManager } from './components/CanvasManager';
+import { ShapeMenu } from './components/ShapeMenu';
 
 interface DigitalArtistProps {
   onBack: () => void;
 }
 
-type Tool = 'brush' | 'eraser' | 'spray' | 'text' | 'rectangle' | 'circle' | 'triangle' | 'line' | 'fill' | 'eyedropper' | 'blur';
+export type Tool = 'brush' | 'eraser' | 'spray' | 'text' | 'rectangle' | 'circle' | 'triangle' | 'line' | 'fill' | 'eyedropper' | 'blur' | 'shape' | 'object';
 
-interface DrawingState {
-  tool: Tool;
-  color: string;
-  size: number;
-  opacity: number;
-  isDrawing: boolean;
-}
-
-interface Layer {
+export interface Layer {
   id: string;
   name: string;
   canvas: HTMLCanvasElement;
@@ -31,7 +26,6 @@ interface Layer {
 
 export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [gridEnabled, setGridEnabled] = useState(false);
@@ -50,20 +44,6 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
     '#FFA500', '#800080', '#FFC0CB', '#A52A2A', '#808080', '#90EE90', '#FFB6C1', '#DDA0DD'
   ];
-
-  const tools = [
-    { id: 'brush', icon: Brush, name: 'Brush' },
-    { id: 'eraser', icon: Eraser, name: 'Eraser' },
-    { id: 'spray', icon: '🎨', name: 'Spray' },
-    { id: 'text', icon: Type, name: 'Text' },
-    { id: 'rectangle', icon: '▭', name: 'Rectangle' },
-    { id: 'circle', icon: '●', name: 'Circle' },
-    { id: 'triangle', icon: '▲', name: 'Triangle' },
-    { id: 'line', icon: '─', name: 'Line' },
-    { id: 'fill', icon: '🪣', name: 'Fill' },
-    { id: 'eyedropper', icon: '💧', name: 'Eyedropper' },
-    { id: 'blur', icon: '🌀', name: 'Blur' }
-  ] as const;
 
   const playSound = useCallback((type: 'draw' | 'erase' | 'click') => {
     if (!soundEnabled) return;
@@ -95,7 +75,6 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
   }, [soundEnabled]);
 
   useEffect(() => {
-    // Initialize first layer
     if (layers.length === 0) {
       addLayer();
     }
@@ -126,7 +105,6 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Grid snapping
     if (gridEnabled) {
       const gridSize = 20;
       return {
@@ -191,11 +169,10 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
         break;
         
       case 'fill':
-        floodFill(ctx, pos.x, pos.y, currentColor);
+        fillShape(ctx, pos.x, pos.y, currentColor);
         break;
     }
     
-    // Symmetry mode
     if (symmetryEnabled) {
       const centerX = canvas.width / 2;
       const mirrorX = centerX * 2 - pos.x;
@@ -247,9 +224,59 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     ctx.putImageData(imageData, x - size/2, y - size/2);
   };
 
-  const floodFill = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string) => {
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const fillShape = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string) => {
+    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const data = imageData.data;
+    const targetPixel = getPixel(data, x, y, ctx.canvas.width);
+    
+    if (colorMatch(targetPixel, hexToRgb(color))) return;
+    
+    floodFill(data, x, y, targetPixel, hexToRgb(color), ctx.canvas.width, ctx.canvas.height);
+    ctx.putImageData(imageData, 0, 0);
+  };
+
+  const getPixel = (data: Uint8ClampedArray, x: number, y: number, width: number) => {
+    const index = (y * width + x) * 4;
+    return [data[index], data[index + 1], data[index + 2], data[index + 3]];
+  };
+
+  const colorMatch = (a: number[], b: number[]) => {
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
+  };
+
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16),
+      255
+    ] : [0, 0, 0, 255];
+  };
+
+  const floodFill = (data: Uint8ClampedArray, x: number, y: number, targetColor: number[], replacementColor: number[], width: number, height: number) => {
+    const stack = [[x, y]];
+    
+    while (stack.length > 0) {
+      const [currentX, currentY] = stack.pop()!;
+      
+      if (currentX < 0 || currentX >= width || currentY < 0 || currentY >= height) continue;
+      
+      const currentPixel = getPixel(data, currentX, currentY, width);
+      
+      if (!colorMatch(currentPixel, targetColor)) continue;
+      
+      const index = (currentY * width + currentX) * 4;
+      data[index] = replacementColor[0];
+      data[index + 1] = replacementColor[1];
+      data[index + 2] = replacementColor[2];
+      data[index + 3] = replacementColor[3];
+      
+      stack.push([currentX + 1, currentY]);
+      stack.push([currentX - 1, currentY]);
+      stack.push([currentX, currentY + 1]);
+      stack.push([currentX, currentY - 1]);
+    }
   };
 
   const addText = () => {
@@ -277,12 +304,10 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw grid if enabled
     if (gridEnabled) {
       drawGrid(ctx);
     }
     
-    // Draw all visible layers
     layers.forEach(layer => {
       if (layer.visible) {
         ctx.globalAlpha = layer.opacity / 100;
@@ -341,46 +366,15 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     redrawCanvas();
   };
 
-  const ShapeMenu = () => {
-    const shapes = [
-      { id: 'rectangle', icon: '▭', name: 'Rectangle' },
-      { id: 'circle', icon: '●', name: 'Circle' },
-      { id: 'triangle', icon: '▲', name: 'Triangle' },
-      { id: 'line', icon: '─', name: 'Line' }
-    ];
-
-    return (
-      <div className="absolute top-12 left-0 bg-white border border-gray-300 rounded-lg shadow-lg p-2 z-10">
-        <div className="grid grid-cols-2 gap-2">
-          {shapes.map(shape => (
-            <Button
-              key={shape.id}
-              variant={selectedTool === shape.id ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => {
-                setSelectedTool(shape.id as Tool);
-                setShowShapeMenu(false);
-                playSound('click');
-              }}
-              className="p-2 text-lg"
-            >
-              {shape.icon}
-            </Button>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-accent/20 to-secondary/20 p-4">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <Button onClick={onBack} className="bg-white/20 hover:bg-white/30 text-white">
+          <Button onClick={onBack} className="bg-background/20 hover:bg-background/30">
             ← Back to Games
           </Button>
-          <h1 className="text-4xl font-bold text-white text-center flex items-center gap-2">
+          <h1 className="text-4xl font-bold text-center flex items-center gap-2">
             🎨 Digital Artist Studio
           </h1>
           <div className="flex items-center gap-2">
@@ -388,7 +382,7 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
               variant="outline"
               size="sm"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className="bg-white/20 text-white hover:bg-white/30"
+              className="bg-background/20 hover:bg-background/30"
             >
               {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </Button>
@@ -397,83 +391,27 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Tools Panel */}
-          <Card className="bg-white/95 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-lg">🛠️ Tools</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Tool Selection */}
-              <div className="grid grid-cols-2 gap-2">
-                {tools.slice(0, -4).map(tool => (
-                  <Button
-                    key={tool.id}
-                    variant={selectedTool === tool.id ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTool(tool.id as Tool);
-                      playSound('click');
-                    }}
-                    className="p-2 text-xs"
-                  >
-                    {typeof tool.icon === 'string' ? tool.icon : <tool.icon className="w-4 h-4" />}
-                  </Button>
-                ))}
-                
-                {/* Shapes Menu */}
-                <div className="relative">
-                  <Button
-                    variant={['rectangle', 'circle', 'triangle', 'line'].includes(selectedTool) ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setShowShapeMenu(!showShapeMenu)}
-                    className="p-2 text-xs"
-                  >
-                    <Shapes className="w-4 h-4" />
-                  </Button>
-                  {showShapeMenu && <ShapeMenu />}
-                </div>
+          <div className="space-y-4">
+            <ToolManager 
+              selectedTool={selectedTool}
+              onToolSelect={setSelectedTool}
+              showShapeMenu={showShapeMenu}
+              onShowShapeMenu={setShowShapeMenu}
+              playSound={playSound}
+            />
 
-                {/* Remaining tools */}
-                {tools.slice(-3).map(tool => (
-                  <Button
-                    key={tool.id}
-                    variant={selectedTool === tool.id ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTool(tool.id as Tool);
-                      playSound('click');
-                    }}
-                    className="p-2 text-xs"
-                  >
-                    {typeof tool.icon === 'string' ? tool.icon : <tool.icon className="w-4 h-4" />}
-                  </Button>
-                ))}
-              </div>
+            <ColorPalette 
+              colors={colors}
+              currentColor={currentColor}
+              onColorChange={setCurrentColor}
+            />
 
-              {/* Color Palette */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Colors</label>
-                <div className="grid grid-cols-4 gap-1 mb-2">
-                  {colors.map(color => (
-                    <div
-                      key={color}
-                      className={`w-8 h-8 rounded cursor-pointer border-2 ${
-                        currentColor === color ? 'border-black' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      onClick={() => setCurrentColor(color)}
-                    />
-                  ))}
-                </div>
-                <input
-                  type="color"
-                  value={currentColor}
-                  onChange={(e) => setCurrentColor(e.target.value)}
-                  className="w-full h-8 rounded border"
-                />
-              </div>
-
-              {/* Brush Settings */}
-              <div className="space-y-3">
+            {/* Brush Settings */}
+            <Card className="bg-background/95 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-lg">🖌️ Brush Settings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Size: {brushSize}px</label>
                   <Slider
@@ -496,120 +434,104 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
                     className="w-full"
                   />
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Options */}
-              <div className="space-y-2">
+            {/* Canvas Options */}
+            <Card className="bg-background/95 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-lg">⚙️ Canvas Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Grid Snap</label>
-                  <Switch checked={gridEnabled} onCheckedChange={setGridEnabled} />
+                  <Switch
+                    checked={gridEnabled}
+                    onCheckedChange={setGridEnabled}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium">Symmetry</label>
-                  <Switch checked={symmetryEnabled} onCheckedChange={setSymmetryEnabled} />
-                </div>
-              </div>
-
-              {/* Text Input */}
-              {selectedTool === 'text' && textPosition && (
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={textInput}
-                    onChange={(e) => setTextInput(e.target.value)}
-                    placeholder="Enter text..."
-                    className="w-full p-2 border rounded"
-                  />
-                  <Button onClick={addText} size="sm" className="w-full">
-                    Add Text
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Canvas */}
-          <div className="lg:col-span-2">
-            <Card className="bg-white/95 backdrop-blur">
-              <CardContent className="p-4">
-                <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden">
-                  <canvas
-                    ref={canvasRef}
-                    width={800}
-                    height={600}
-                    className="block max-w-full h-auto cursor-crosshair"
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
+                  <Switch
+                    checked={symmetryEnabled}
+                    onCheckedChange={setSymmetryEnabled}
                   />
                 </div>
-                
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={clearCanvas} variant="outline" size="sm">
+                <div className="flex gap-2">
+                  <Button onClick={clearCanvas} variant="outline" size="sm" className="flex-1">
+                    <Trash2 className="w-4 h-4 mr-1" />
                     Clear
                   </Button>
-                  <Button onClick={downloadCanvas} variant="outline" size="sm">
+                  <Button onClick={downloadCanvas} variant="outline" size="sm" className="flex-1">
                     <Download className="w-4 h-4 mr-1" />
-                    Download
+                    Save
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Layers Panel */}
-          <Card className="bg-white/95 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="text-lg">📚 Layers</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button onClick={addLayer} size="sm" className="w-full">
-                <Plus className="w-4 h-4 mr-1" />
-                Add Layer
-              </Button>
-              
-              <div className="space-y-1">
-                {layers.map((layer, index) => (
-                  <div
-                    key={layer.id}
-                    className={`p-2 border rounded cursor-pointer ${
-                      activeLayer === index ? 'bg-blue-100 border-blue-300' : 'bg-gray-50'
-                    }`}
-                    onClick={() => setActiveLayer(index)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{layer.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleLayerVisibility(index);
-                        }}
-                      >
-                        {layer.visible ? <Eye className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                      </Button>
-                    </div>
-                    <Slider
-                      value={[layer.opacity]}
-                      onValueChange={(value) => {
-                        setLayers(prev => prev.map((l, i) => 
-                          i === index ? { ...l, opacity: value[0] } : l
-                        ));
-                        redrawCanvas();
-                      }}
-                      max={100}
-                      min={0}
-                      step={1}
-                      className="w-full mt-1"
+          {/* Canvas Area */}
+          <div className="lg:col-span-2">
+            <CanvasManager
+              canvasRef={canvasRef}
+              gridEnabled={gridEnabled}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+            />
+
+            {/* Text Input */}
+            {textPosition && (
+              <Card className="mt-4 bg-background/95 backdrop-blur">
+                <CardContent className="p-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={textInput}
+                      onChange={(e) => setTextInput(e.target.value)}
+                      placeholder="Enter text..."
+                      className="flex-1 px-3 py-2 border rounded"
+                      autoFocus
                     />
+                    <Button onClick={addText} disabled={!textInput.trim()}>
+                      Add Text
+                    </Button>
+                    <Button variant="outline" onClick={() => setTextPosition(null)}>
+                      Cancel
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Layers Panel */}
+          <LayerManager
+            layers={layers}
+            activeLayer={activeLayer}
+            onLayerSelect={setActiveLayer}
+            onAddLayer={addLayer}
+            onToggleVisibility={toggleLayerVisibility}
+            onDeleteLayer={(index) => {
+              if (layers.length > 1) {
+                setLayers(prev => prev.filter((_, i) => i !== index));
+                setActiveLayer(Math.max(0, activeLayer - 1));
+              }
+            }}
+          />
         </div>
+
+        {/* Shape Menu */}
+        {showShapeMenu && (
+          <ShapeMenu
+            selectedTool={selectedTool}
+            onToolSelect={setSelectedTool}
+            onClose={() => setShowShapeMenu(false)}
+            playSound={playSound}
+          />
+        )}
       </div>
     </div>
   );
