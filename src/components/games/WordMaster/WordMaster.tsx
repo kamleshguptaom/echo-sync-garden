@@ -14,7 +14,7 @@ import { WordTrailGame } from './components/WordTrailGame';
 import { CrosswordGame } from './components/CrosswordGame';
 import { GameStats } from './components/GameStats';
 import { WordDefinitionDialog } from './components/WordDefinitionDialog';
-
+import { validateWordWithDictionaryAPI, fetchWordDetails, suggestWordsByDifficulty } from '@/lib/wordApi';
 interface WordMasterProps {
   onBack: () => void;
 }
@@ -90,24 +90,24 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
     ]
   };
 
-  // Validate word using Google Dictionary API (simplified mock for now)
+  // Validate word using Free Dictionary API; fallback to local DB
   const validateWord = async (word: string): Promise<boolean> => {
     try {
-      // In a real implementation, you would call the Google Dictionary API
-      // For now, we'll check against our word database and common words
+      const apiValid = await validateWordWithDictionaryAPI(word);
+      if (apiValid) return true;
       const allWords = Object.values(wordDatabase).flat().map(w => w.word);
-      const commonWords = ['THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE', 'OUR', 'HAD', 'BY'];
-      
-      return allWords.includes(word.toUpperCase()) || commonWords.includes(word.toUpperCase());
+      return allWords.includes(word.toUpperCase());
     } catch (error) {
       console.error('Word validation error:', error);
       return false;
     }
   };
 
-  const initializeGame = useCallback(() => {
-    const words = wordDatabase[difficulty].slice(0, 8);
-    setCurrentWords(words.map(w => w.word));
+  const initializeGame = useCallback(async () => {
+    const base = wordDatabase[difficulty].slice(0, 8).map(w => w.word);
+    const suggested = await suggestWordsByDifficulty(difficulty as any, 10);
+    const combined = Array.from(new Set([...base, ...suggested])).slice(0, 12);
+    setCurrentWords(combined);
     setFoundWords([]);
     
     const timeLimit = {
@@ -119,7 +119,7 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
 
     setGameStats({
       wordsFound: 0,
-      totalWords: words.length,
+      totalWords: combined.length,
       score: 0,
       timeRemaining: timeLimit,
       streak: 0,
@@ -144,9 +144,8 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
       return false;
     }
 
-    const wordData = wordDatabase[difficulty].find(w => w.word === word);
-    
-    if (wordData && !foundWords.includes(word)) {
+    // Accept words validated by external API, not just local DB
+    if (!foundWords.includes(word)) {
       const newFoundWords = [...foundWords, word];
       setFoundWords(newFoundWords);
       
@@ -161,8 +160,28 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
         combo: prev.combo + 1
       }));
       
-      setCurrentWordDef(wordData);
-      setShowMeaning(true);
+      // Fetch definition details (prefer local DB, then API)
+      const localData = wordDatabase[difficulty].find(w => w.word === word);
+      let details: WordDefinition | null = null;
+      if (localData) {
+        details = localData;
+      } else {
+        const apiDetails = await fetchWordDetails(word);
+        if (apiDetails) {
+          details = {
+            word: apiDetails.word,
+            definition: apiDetails.definition,
+            synonyms: apiDetails.synonyms,
+            antonyms: apiDetails.antonyms,
+            example: apiDetails.example,
+            pronunciation: apiDetails.pronunciation,
+          };
+        }
+      }
+      if (details) {
+        setCurrentWordDef(details);
+        setShowMeaning(true);
+      }
       
       toast({
         title: "🎉 Word Found!",
@@ -178,11 +197,7 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
     const newMode = value as GameMode;
     setCurrentTab(newMode);
     setGameMode(newMode);
-    
-    // Reset game when switching modes
-    if (gameStarted) {
-      setGameStarted(false);
-    }
+    // Keep the current session running; do not auto-stop on tab change
   };
 
   const renderGameContent = () => {
