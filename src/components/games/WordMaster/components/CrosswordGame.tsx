@@ -15,7 +15,7 @@ interface CrosswordClue {
 
 interface CrosswordGameProps {
   difficulty: 'easy' | 'medium' | 'hard' | 'expert';
-  onWordFound: (word: string, points: number) => boolean;
+  onWordFound: (word: string, points: number) => Promise<boolean>;
   onComplete: () => void;
 }
 

@@ -209,8 +209,11 @@ export const WordMaster: React.FC<WordMasterProps> = ({ onBack }) => {
         />;
       case 'crossword':
         return <CrosswordGame 
-          words={wordDatabase[difficulty]}
+          difficulty={difficulty}
           onWordFound={handleWordFound}
+          onComplete={() => {
+            setGameStarted(false);
+          }}
         />;
       case 'scramble':
         return <ScrambleGame 
