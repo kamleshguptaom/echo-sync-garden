@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 interface InteractiveClockProps {
   hour: number;
@@ -17,42 +17,7 @@ export const InteractiveClock: React.FC<InteractiveClockProps> = ({
   size = 240,
   showNumbers = true
 }) => {
-  const [dragging, setDragging] = useState<'hour' | 'minute' | null>(null);
-
-  const handleMouseDown = (e: React.MouseEvent, hand: 'hour' | 'minute') => {
-    e.preventDefault();
-    setDragging(hand);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!dragging) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    
-    const x = e.clientX - centerX;
-    const y = e.clientY - centerY;
-    
-    const angle = Math.atan2(y, x) * 180 / Math.PI + 90;
-    const normalizedAngle = (angle + 360) % 360;
-    
-    if (dragging === 'hour') {
-      const newHour = Math.round(normalizedAngle / 30) || 12;
-      onHourChange(newHour > 12 ? newHour - 12 : newHour);
-    } else if (dragging === 'minute') {
-      const newMinute = Math.round(normalizedAngle / 6) * 5;
-      onMinuteChange(newMinute % 60);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setDragging(null);
-  };
-
   const handleClockClick = (e: React.MouseEvent) => {
-    if (dragging) return;
-    
     const rect = e.currentTarget.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -71,7 +36,7 @@ export const InteractiveClock: React.FC<InteractiveClockProps> = ({
     if (distance < hourHandLength + 20) {
       // Clicked near hour hand
       const newHour = Math.round(normalizedAngle / 30) || 12;
-      onHourChange(newHour > 12 ? newHour - 12 : newHour);
+      onHourChange(newHour);
     } else if (distance < minuteHandLength + 20) {
       // Clicked near minute hand
       const newMinute = Math.round(normalizedAngle / 6) * 5;
@@ -92,9 +57,6 @@ export const InteractiveClock: React.FC<InteractiveClockProps> = ({
       <div 
         className="w-full h-full rounded-full border-8 border-gray-800 bg-white relative cursor-pointer shadow-2xl"
         onClick={handleClockClick}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
       >
         {/* Clock Numbers */}
         {showNumbers && [...Array(12)].map((_, i) => {
@@ -159,7 +121,7 @@ export const InteractiveClock: React.FC<InteractiveClockProps> = ({
         
         {/* Hour Hand */}
         <div
-          className={`absolute bg-black rounded-full z-10 cursor-grab ${dragging === 'hour' ? 'cursor-grabbing scale-110' : ''}`}
+          className="absolute bg-black rounded-full z-10"
           style={{
             width: 6,
             height: size * 0.3,
@@ -169,12 +131,11 @@ export const InteractiveClock: React.FC<InteractiveClockProps> = ({
             marginTop: -size * 0.3,
             ...getClockHandStyle(hour + minute / 60, true)
           }}
-          onMouseDown={(e) => handleMouseDown(e, 'hour')}
         />
         
         {/* Minute Hand */}
         <div
-          className={`absolute bg-red-500 rounded-full z-10 cursor-grab ${dragging === 'minute' ? 'cursor-grabbing scale-110' : ''}`}
+          className="absolute bg-red-500 rounded-full z-10"
           style={{
             width: 4,
             height: size * 0.4,
@@ -184,7 +145,6 @@ export const InteractiveClock: React.FC<InteractiveClockProps> = ({
             marginTop: -size * 0.4,
             ...getClockHandStyle(minute, false)
           }}
-          onMouseDown={(e) => handleMouseDown(e, 'minute')}
         />
         
         {/* Center dot */}

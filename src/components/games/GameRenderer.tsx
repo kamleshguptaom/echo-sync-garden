@@ -5,7 +5,6 @@ import React from 'react';
 import { MemoryGame } from './MemoryGame/MemoryGame';
 import { MathGame } from './MathGame/MathGame';
 import { WordGame } from './WordGame/WordGame';
-import { WordMaster } from './WordMaster/WordMaster';
 import { LogicGame } from './LogicGame/LogicGame';
 import { GeometryGame } from './GeometryGame/GeometryGame';
 import { ScienceGame } from './ScienceGame/ScienceGame';
@@ -20,7 +19,6 @@ import { ObjectBuilder } from './ObjectBuilder/ObjectBuilder';
 import { PatternGame } from './PatternGame/PatternGame';
 import { ConcentrationGame } from './ConcentrationGame/ConcentrationGame';
 import { SpeedReading } from './SpeedReading/SpeedReading';
-import { PhysicsFun } from './PhysicsFun/PhysicsFun';
 import { TypingGame } from './TypingGame/TypingGame';
 import { DrawingGame } from './DrawingGame/DrawingGame';
 import { RoadSafetyGame } from './RoadSafetyGame/RoadSafetyGame';
@@ -45,11 +43,6 @@ import { WeatherWizard } from './WeatherWizard/WeatherWizard';
 import { AnimalHomes } from './AnimalHomes/AnimalHomes';
 import { SpaceExplorer } from './SpaceExplorer/SpaceExplorer';
 import { BodyParts } from './BodyParts/BodyParts';
-import BrainTraining from './BrainTraining/BrainTraining';
-
-import VirtualLab from './VirtualLab/VirtualLab';
-
-import MindMaze from './MindMaze/MindMaze';
 
 interface GameRendererProps {
   gameId: string;
@@ -102,21 +95,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ gameId, onBack }) =>
     case 'animalhabitats': return <AnimalHomes {...gameProps} />;
     case 'solarsystem': return <SpaceExplorer {...gameProps} />;
     case 'bodyparts': return <BodyParts {...gameProps} />;
-    
-    case 'braintraining': return <BrainTraining {...gameProps} />;
-    
-    case 'virtuallab': return <VirtualLab {...gameProps} />;
-    case 'speed-reading': return <SpeedReading {...gameProps} />;
-    case 'physics': return <PhysicsFun {...gameProps} />;
-    case 'mindmaze': return <MindMaze {...gameProps} />;
-    case 'mind-maze': return <MindMaze {...gameProps} />;
-    
-    case 'virtual-lab': return <VirtualLab {...gameProps} />;
-    case 'brain-training': return <BrainTraining {...gameProps} />;
-    case 'word-game': return <WordMaster {...gameProps} />;
-    case 'objectbuilder': return <ObjectBuilder {...gameProps} />;
-    case 'visual-perception': return <VisualPerception {...gameProps} />;
-    default:
+    default: 
       console.error(`Game not found: ${gameId}`);
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 via-pink-500 to-red-500">

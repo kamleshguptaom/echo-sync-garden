@@ -3,24 +3,6 @@ import { GameInfo } from '../GameGrid';
 
 export const educationalGames: GameInfo[] = [
   {
-    id: 'speed-reading',
-    title: 'Speed Reading',
-    emoji: '📚',
-    description: 'Improve reading speed and comprehension!',
-    category: 'Language',
-    difficulty: 'medium',
-    isNew: true
-  },
-  {
-    id: 'physics',
-    title: 'Physics Fun',
-    emoji: '⚛️',
-    description: 'Explore physics concepts with fun experiments!',
-    category: 'Science',
-    difficulty: 'medium',
-    isNew: true
-  },
-  {
     id: 'phonics',
     title: 'Phonics Fun',
     emoji: '🔤',
@@ -75,6 +57,15 @@ export const educationalGames: GameInfo[] = [
     isNew: true
   },
   {
+    id: 'bodyparts',
+    title: 'Body Builder',
+    emoji: '🫀',
+    description: 'Learn about human body parts and systems!',
+    category: 'Health',
+    difficulty: 'easy',
+    isNew: true
+  },
+  {
     id: 'nutrition',
     title: 'Healthy Choices',
     emoji: '🥕',
@@ -90,6 +81,15 @@ export const educationalGames: GameInfo[] = [
     description: 'Recognize and understand different emotions!',
     category: 'Social',
     difficulty: 'easy',
+    isNew: true
+  },
+  {
+    id: 'musicrhythm',
+    title: 'Rhythm Master',
+    emoji: '🎵',
+    description: 'Learn musical notes and create rhythms!',
+    category: 'Music',
+    difficulty: 'medium',
     isNew: true
   },
   {
