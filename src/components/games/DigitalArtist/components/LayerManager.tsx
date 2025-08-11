@@ -77,7 +77,8 @@ export const LayerManager: React.FC<LayerManagerProps> = ({
               <Slider
                 value={[layer.opacity]}
                 onValueChange={(value) => {
-                  // Update layer opacity logic would go here
+                  // Update locally for immediate feedback
+                  layer.opacity = value[0];
                 }}
                 max={100}
                 min={0}

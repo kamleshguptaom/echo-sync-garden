@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brush, Eraser, Type, Shapes, Hand } from 'lucide-react';
@@ -19,6 +19,8 @@ export const ToolManager: React.FC<ToolManagerProps> = ({
   onShowShapeMenu,
   playSound
 }) => {
+  const shapeBtnRef = useRef<HTMLDivElement>(null);
+
   const tools = [
     { id: 'brush', icon: Brush, name: 'Brush' },
     { id: 'eraser', icon: Eraser, name: 'Eraser' },
@@ -35,9 +37,21 @@ export const ToolManager: React.FC<ToolManagerProps> = ({
       onShowShapeMenu(!showShapeMenu);
     } else {
       onToolSelect(toolId as Tool);
+      onShowShapeMenu(false);
     }
     playSound('click');
   };
+
+  const shapes = [
+    { id: 'rectangle', label: '▭' },
+    { id: 'circle', label: '●' },
+    { id: 'triangle', label: '▲' },
+    { id: 'line', label: '─' },
+    { id: 'star', label: '⭐' },
+    { id: 'heart', label: '♥' },
+    { id: 'diamond', label: '♦' },
+    { id: 'arrow', label: '➤' },
+  ];
 
   return (
     <Card className="bg-background/95 backdrop-blur">
@@ -58,11 +72,11 @@ export const ToolManager: React.FC<ToolManagerProps> = ({
               {typeof tool.icon === 'string' ? tool.icon : <tool.icon className="w-4 h-4" />}
             </Button>
           ))}
-          
-          {/* Shapes Menu Button */}
-          <div className="relative">
+          <div className="relative" ref={shapeBtnRef}>
             <Button
-              variant={['rectangle', 'circle', 'triangle', 'line'].includes(selectedTool) ? 'default' : 'outline'}
+              variant={[
+                'rectangle','circle','triangle','line','star','heart','diamond','arrow'
+              ].includes(selectedTool) ? 'default' : 'outline'}
               size="sm"
               onClick={() => handleToolClick('shape')}
               className="p-2 text-xs"
@@ -70,6 +84,25 @@ export const ToolManager: React.FC<ToolManagerProps> = ({
             >
               <Shapes className="w-4 h-4" />
             </Button>
+            {showShapeMenu && (
+              <div className="absolute left-0 mt-2 z-50 animate-scale-in">
+                <Card className="bg-background/95 backdrop-blur border shadow-xl">
+                  <CardContent className="p-2 grid grid-cols-4 gap-2">
+                    {shapes.map(s => (
+                      <Button
+                        key={s.id}
+                        variant={selectedTool === (s.id as Tool) ? 'default' : 'outline'}
+                        size="sm"
+                        className="p-2 text-lg"
+                        onClick={() => onToolSelect(s.id as Tool)}
+                      >
+                        {s.label}
+                      </Button>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

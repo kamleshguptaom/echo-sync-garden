@@ -9,12 +9,13 @@ import { LayerManager } from './components/LayerManager';
 import { ColorPalette } from './components/ColorPalette';
 import { CanvasManager } from './components/CanvasManager';
 import { ShapeMenu } from './components/ShapeMenu';
+import { sprayPaint, blurArea, fillAt, drawGrid, drawShape } from './utils/canvasTools';
 
 interface DigitalArtistProps {
   onBack: () => void;
 }
 
-export type Tool = 'brush' | 'eraser' | 'spray' | 'text' | 'rectangle' | 'circle' | 'triangle' | 'line' | 'fill' | 'eyedropper' | 'blur' | 'shape' | 'object';
+export type Tool = 'brush' | 'eraser' | 'spray' | 'text' | 'rectangle' | 'circle' | 'triangle' | 'line' | 'fill' | 'eyedropper' | 'blur' | 'shape' | 'object' | 'star' | 'heart' | 'diamond' | 'arrow';
 
 export interface Layer {
   id: string;
@@ -39,6 +40,8 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
   const [activeLayer, setActiveLayer] = useState(0);
   const [textInput, setTextInput] = useState('');
   const [textPosition, setTextPosition] = useState<{x: number, y: number} | null>(null);
+  const [shapeStart, setShapeStart] = useState<{x: number, y: number} | null>(null);
+  const lastPosRef = useRef<{x: number, y: number} | null>(null);
 
   const colors = [
     '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
@@ -124,6 +127,13 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
       setTextPosition(pos);
       return;
     }
+
+    // For shape tools, record start only
+    if (['rectangle','circle','triangle','line','star','heart','diamond','arrow'].includes(selectedTool)) {
+      setShapeStart(pos);
+      lastPosRef.current = pos;
+      return;
+    }
     
     draw(e);
   };
@@ -136,10 +146,16 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     if (!ctx) return;
     
     const pos = getCanvasPos(e);
+    lastPosRef.current = pos;
     
     ctx.globalAlpha = brushOpacity / 100;
     ctx.lineWidth = brushSize;
     ctx.lineCap = 'round';
+    
+    // For shape tools, only track position; draw on mouseup
+    if (['rectangle','circle','triangle','line','star','heart','diamond','arrow'].includes(selectedTool)) {
+      return;
+    }
     
     switch (selectedTool) {
       case 'brush':
@@ -169,7 +185,7 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
         break;
         
       case 'fill':
-        fillShape(ctx, pos.x, pos.y, currentColor);
+        fillAt(ctx, pos.x, pos.y, currentColor);
         break;
     }
     
@@ -192,10 +208,24 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     setIsDrawing(false);
     
     const canvas = layers[activeLayer]?.canvas;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx?.beginPath();
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Commit shapes on mouse up
+    if (shapeStart && lastPosRef.current && ['rectangle','circle','triangle','line','star','heart','diamond','arrow'].includes(selectedTool)) {
+      drawShape(ctx, selectedTool as any, shapeStart, lastPosRef.current, currentColor, brushSize);
+      if (symmetryEnabled) {
+        const centerX = canvas.width / 2;
+        const mirroredStart = { x: centerX * 2 - shapeStart.x, y: shapeStart.y };
+        const mirroredEnd = { x: centerX * 2 - lastPosRef.current.x, y: lastPosRef.current.y };
+        drawShape(ctx, selectedTool as any, mirroredStart, mirroredEnd, currentColor, brushSize);
+      }
     }
+
+    ctx.beginPath();
+    setShapeStart(null);
+    redrawCanvas();
   };
 
   const sprayPaint = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) => {
@@ -207,79 +237,8 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
     }
   };
 
-  const blurArea = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-    const imageData = ctx.getImageData(x - size/2, y - size/2, size, size);
-    const data = imageData.data;
-    
-    for (let i = 0; i < data.length; i += 4) {
-      const avgR = (data[i] + data[i + 4] + data[i + 8]) / 3;
-      const avgG = (data[i + 1] + data[i + 5] + data[i + 9]) / 3;
-      const avgB = (data[i + 2] + data[i + 6] + data[i + 10]) / 3;
-      
-      data[i] = avgR;
-      data[i + 1] = avgG;
-      data[i + 2] = avgB;
-    }
-    
-    ctx.putImageData(imageData, x - size/2, y - size/2);
-  };
+  // drawGrid moved to utils (drawGrid)
 
-  const fillShape = (ctx: CanvasRenderingContext2D, x: number, y: number, color: string) => {
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const data = imageData.data;
-    const targetPixel = getPixel(data, x, y, ctx.canvas.width);
-    
-    if (colorMatch(targetPixel, hexToRgb(color))) return;
-    
-    floodFill(data, x, y, targetPixel, hexToRgb(color), ctx.canvas.width, ctx.canvas.height);
-    ctx.putImageData(imageData, 0, 0);
-  };
-
-  const getPixel = (data: Uint8ClampedArray, x: number, y: number, width: number) => {
-    const index = (y * width + x) * 4;
-    return [data[index], data[index + 1], data[index + 2], data[index + 3]];
-  };
-
-  const colorMatch = (a: number[], b: number[]) => {
-    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];
-  };
-
-  const hexToRgb = (hex: string) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? [
-      parseInt(result[1], 16),
-      parseInt(result[2], 16),
-      parseInt(result[3], 16),
-      255
-    ] : [0, 0, 0, 255];
-  };
-
-  const floodFill = (data: Uint8ClampedArray, x: number, y: number, targetColor: number[], replacementColor: number[], width: number, height: number) => {
-    const stack = [[x, y]];
-    
-    while (stack.length > 0) {
-      const [currentX, currentY] = stack.pop()!;
-      
-      if (currentX < 0 || currentX >= width || currentY < 0 || currentY >= height) continue;
-      
-      const currentPixel = getPixel(data, currentX, currentY, width);
-      
-      if (!colorMatch(currentPixel, targetColor)) continue;
-      
-      const index = (currentY * width + currentX) * 4;
-      data[index] = replacementColor[0];
-      data[index + 1] = replacementColor[1];
-      data[index + 2] = replacementColor[2];
-      data[index + 3] = replacementColor[3];
-      
-      stack.push([currentX + 1, currentY]);
-      stack.push([currentX - 1, currentY]);
-      stack.push([currentX, currentY + 1]);
-      stack.push([currentX, currentY - 1]);
-    }
-  };
-
-  const addText = () => {
     if (!textPosition || !textInput || layers.length === 0) return;
     
     const canvas = layers[activeLayer].canvas;
@@ -523,15 +482,7 @@ export const DigitalArtist: React.FC<DigitalArtistProps> = ({ onBack }) => {
           />
         </div>
 
-        {/* Shape Menu */}
-        {showShapeMenu && (
-          <ShapeMenu
-            selectedTool={selectedTool}
-            onToolSelect={setSelectedTool}
-            onClose={() => setShowShapeMenu(false)}
-            playSound={playSound}
-          />
-        )}
+        {/* Shape Menu now inline in ToolManager */}
       </div>
     </div>
   );

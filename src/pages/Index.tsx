@@ -19,10 +19,23 @@ const Index = () => {
     }
   }, []);
 
-  // Handle back from game
-  const handleBackFromGame = () => {
-    setSearchParams({});
-  };
+  // When a game is opened via URL (e.g., from category pages), record it
+  useEffect(() => {
+    if (!gameId) return;
+    const id = gameId;
+    const existing = recentlyPlayed.find(g => g.id === id);
+    const gameInfo: GameInfo = existing || {
+      id,
+      title: getGameTitle(id),
+      emoji: getGameEmoji(id),
+      description: '',
+      category: 'general',
+      difficulty: 'medium'
+    };
+    const updated = [gameInfo, ...recentlyPlayed.filter(g => g.id !== id)].slice(0, 4);
+    setRecentlyPlayed(updated);
+    localStorage.setItem('recentlyPlayed', JSON.stringify(updated));
+  }, [gameId]);
 
   // Handle game selection
   const handleGameSelect = (selectedGameId: string) => {

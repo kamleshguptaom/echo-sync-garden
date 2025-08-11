@@ -26,7 +26,7 @@ export const CanvasManager: React.FC<CanvasManagerProps> = ({
           width={800}
           height={600}
           className={`border border-border cursor-crosshair max-w-full h-auto ${
-            gridEnabled ? 'bg-grid' : 'bg-background'
+            gridEnabled ? '' : 'bg-background'
           }`}
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
@@ -34,7 +34,7 @@ export const CanvasManager: React.FC<CanvasManagerProps> = ({
           onMouseLeave={onMouseLeave}
           style={{
             backgroundImage: gridEnabled 
-              ? `radial-gradient(circle, hsl(var(--muted)) 1px, transparent 1px)`
+              ? `linear-gradient(to right, hsl(var(--muted)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--muted)) 1px, transparent 1px)`
               : 'none',
             backgroundSize: gridEnabled ? '20px 20px' : 'auto'
           }}
